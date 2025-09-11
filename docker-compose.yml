@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: evmarketplace-app-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3310:3306"
+    networks:
+      - evmarketplace-app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: evmarketplace-app-api
+    restart: always
+    depends_on:
+      - mysql
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      # JWT
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+      # Google OAuth2
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
+      GOOGLE_AUTHORIZATION_URI: ${GOOGLE_AUTHORIZATION_URI}
+      GOOGLE_TOKEN_URI: ${GOOGLE_TOKEN_URI}
+      GOOGLE_USER_INFO_URI: ${GOOGLE_USER_INFO_URI}
+      # OpenAPI
+      OPENAPI_SERVER_LOCAL: ${OPENAPI_SERVER_LOCAL}
+      OPENAPI_SERVER_PRODUCT: ${OPENAPI_SERVER_PRODUCT}
+    ports:
+      - "8089:8089"
+    networks:
+      - evmarketplace-app-network
+
+volumes:
+  db_data:
+
+networks:
+  evmarketplace-app-network:
+    driver: bridge

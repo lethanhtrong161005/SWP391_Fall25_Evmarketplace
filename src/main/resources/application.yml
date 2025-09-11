@@ -1,0 +1,69 @@
+# ===== Global config =====
+spring:
+  application:
+    name: evmarketplace
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+server:
+  port: ${PORT:8089}
+
+jwt:
+  key: ${JWT_SECRET_KEY}
+  expiration: ${JWT_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+google:
+  clientId: ${GOOGLE_CLIENT_ID}
+  clientSecret: ${GOOGLE_CLIENT_SECRET}
+  redirectUri: ${GOOGLE_REDIRECT_URI}
+  authUri: ${GOOGLE_AUTHORIZATION_URI}
+  tokenUri: ${GOOGLE_TOKEN_URI}
+  userInfoUri: ${GOOGLE_USER_INFO_URI}
+
+openapi:
+  server:
+    local: ${OPENAPI_SERVER_LOCAL}
+    product: ${OPENAPI_SERVER_PRODUCT}
+
+---
+
+# ===== Local profile (IDE) =====
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://localhost:3307/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: root
+    password: admin123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+---
+# ===== Docker profile =====
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:mysql://mysql:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+---
+# ===== Deploy/Production profile =====
+spring:
+  config:
+    activate:
+      on-profile: deploy
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
