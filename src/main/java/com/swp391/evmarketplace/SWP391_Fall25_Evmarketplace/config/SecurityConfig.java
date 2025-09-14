@@ -27,7 +27,11 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> {
                     //Public Access
-                    auth.requestMatchers("/api/auth/local-login").permitAll();
+                    auth.requestMatchers(
+                            "/api/auth/login-with-phone-number",
+                            "/api/auth/google",
+                            "/api/auth/google/callback"
+                    ).permitAll();
                     auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll();
                     auth.anyRequest().authenticated();
                 })
