@@ -115,7 +115,7 @@ public class AuthenticationServiceImp implements AuthenticationService {
             LoginResponse loginResponse = new LoginResponse();
             String jwtAccessToken = jwtUtil.generateToken(account, account.getProfile());
             String refreshToken = jwtUtil.generateRefreshToken(account);
-            loginResponse.setAccessToken(accessToken);
+            loginResponse.setAccessToken(jwtAccessToken);
             loginResponse.setRefreshToken(refreshToken);
             baseResponse.setData(loginResponse);
             baseResponse.setMessage("Login successful");

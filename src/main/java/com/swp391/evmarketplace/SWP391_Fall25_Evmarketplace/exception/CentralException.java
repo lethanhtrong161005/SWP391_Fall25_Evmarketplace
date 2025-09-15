@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -45,6 +46,19 @@ public class CentralException {
                 LocalDateTime.now()
         );
         return ResponseEntity.status(ex.getStatus()).body(response);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<BaseResponse<Void>> handleExpiredJwtException(ExpiredJwtException ex) {
+        BaseResponse<Void> response = new BaseResponse<>(
+                HttpStatus.UNAUTHORIZED.value(),
+                false,
+                "JWT token is expired",
+                null,
+                null,
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(Exception.class)

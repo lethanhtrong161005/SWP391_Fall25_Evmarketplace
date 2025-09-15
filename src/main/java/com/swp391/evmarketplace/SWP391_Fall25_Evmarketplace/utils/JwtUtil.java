@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -29,24 +30,38 @@ public class JwtUtil {
     }
 
     public String generateToken(Account account, Profile profile) {
+
         return Jwts.builder()
                 .id(account.getId().toString())
-                .subject(account.getPhoneNumber() != null ? account.getPhoneNumber() : account.getEmail())
+                .subject(getIdentifier(account))
                 .claim("fullName", profile != null ? profile.getFullName() : null)
                 .claim("avatar", profile != null ? profile.getAvatarUrl() : null)
                 .claim("phoneVerified", account.isPhoneVerified())
                 .claim("emailVerified", account.isEmailVerified())
-                .claim("role", account.getRole().name())   // enum → string
+                .claim("role", account.getRole().name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSignInKey())
                 .compact();
     }
+    private String getIdentifier(Account account) {
+        String identifier = "";
+
+        if (account.getGoogleId() != null) {
+            identifier = "google_" + account.getGoogleId();
+        } else if (account.getPhoneNumber() != null) {
+            identifier = "phone_" + account.getPhoneNumber();
+        } else {
+            throw new CustomBusinessException("Account must have either GoogleId or PhoneNumber");
+        }
+        return identifier;
+    }
 
     public String generateRefreshToken(Account account) {
+
         return Jwts.builder()
                 .id(account.getId().toString())
-                .subject(account.getPhoneNumber() != null ? account.getPhoneNumber() : account.getEmail())
+                .subject(getIdentifier(account))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtRefreshExpiration))
                 .signWith(getSignInKey())
