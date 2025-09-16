@@ -1,7 +1,11 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.config;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.JwtAuthenticationFilter;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.handlers.CustomSecurityHandlers;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -9,10 +13,17 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthenticationFilter  jwtAuthenticationFilter;
+    @Autowired
+    private CustomSecurityHandlers  customSecurityHandlers;
+
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -27,10 +38,22 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> {
                     //Public Access
-                    auth.requestMatchers("/api/auth/local-login").permitAll();
+                    auth.requestMatchers(
+                            "/api/auth/login-with-phone-number",
+                            "/api/auth/google",
+                            "/api/auth/google/callback",
+                            "/api/accounts/request-otp",
+                            "/api/accounts/verify-otp",
+                            "/api/accounts/register"
+                    ).permitAll();
                     auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll();
                     auth.anyRequest().authenticated();
                 })
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customSecurityHandlers)
+                        .accessDeniedHandler(customSecurityHandlers)
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
