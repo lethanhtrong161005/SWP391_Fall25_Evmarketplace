@@ -41,7 +41,10 @@ public class SecurityConfig {
                     auth.requestMatchers(
                             "/api/auth/login-with-phone-number",
                             "/api/auth/google",
-                            "/api/auth/google/callback"
+                            "/api/auth/google/callback",
+                            "/api/accounts/request-otp",
+                            "/api/accounts/verify-otp",
+                            "/api/accounts/register"
                     ).permitAll();
                     auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll();
                     auth.anyRequest().authenticated();
