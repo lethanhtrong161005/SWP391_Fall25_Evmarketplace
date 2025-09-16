@@ -1,7 +1,10 @@
 # ===== Global config =====
+
 spring:
   application:
     name: evmarketplace
+  profiles:
+    active: local
 
   jpa:
     hibernate:
