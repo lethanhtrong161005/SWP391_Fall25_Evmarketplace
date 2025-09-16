@@ -33,6 +33,12 @@ openapi:
     local: ${OPENAPI_SERVER_LOCAL}
     product: ${OPENAPI_SERVER_PRODUCT}
 
+mocean:
+  token: ${MOCEANAPI_TOKEN}
+  from: ${MOCEANAPI_NAME}
+  endpoint: ${MOCEANAPI_ENDPOINT}
+
+
 ---
 
 # ===== Local profile (IDE) =====
