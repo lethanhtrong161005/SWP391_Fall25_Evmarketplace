@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.GoogleUserInfoDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
@@ -13,6 +14,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.SmsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,8 @@ public class AccountServiceImp implements AccountService {
     private JwtUtil jwtUtil;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private AuthUtil authUtil;
 
     @Override
     public BaseResponse<String> sendOtp(String phoneNumber) {
@@ -209,6 +213,38 @@ public class AccountServiceImp implements AccountService {
 
             return accountRepository.save(newAccount);
         }
+    }
+
+    @Override
+    public BaseResponse<Void> changePassword(ChangePasswordRequest request) {
+        Account currentAccount = authUtil.getCurrentAccount();
+
+        if (currentAccount == null) {
+            throw new CustomBusinessException("Current account is null");
+        }
+
+        if(!currentAccount.isPhoneVerified()){
+            throw new CustomBusinessException("Phone number not verified");
+        }
+
+        if(!passwordEncoder.matches(request.getOldPassword(), currentAccount.getPassword())) {
+            throw new CustomBusinessException("Old password doesn't match");
+        }
+
+        if(passwordEncoder.matches(request.getNewPassword(), currentAccount.getPassword())) {
+            throw new CustomBusinessException("New password can't be the same old password");
+        }
+
+        currentAccount.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        accountRepository.save(currentAccount);
+
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setMessage("Change Password successfully");
+        response.setStatus(200);
+        return response;
+
     }
 
     private String generateOtp() {
