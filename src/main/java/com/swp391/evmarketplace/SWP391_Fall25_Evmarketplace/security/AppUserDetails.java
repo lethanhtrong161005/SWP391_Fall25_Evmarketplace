@@ -54,12 +54,6 @@ public class AppUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        if (account.getGoogleId() != null && account.isEmailVerified()) {
-            return true;
-        }
-        if (account.getPhoneNumber() != null && account.isPhoneVerified()) {
-            return true;
-        }
-        return false;
+        return account.getStatus() == AccountStatus.ACTIVE;
     }
 }

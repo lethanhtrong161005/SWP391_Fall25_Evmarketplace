@@ -59,7 +59,7 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!--		Read file .env-->
+		<!--		Read file ..env-->
 		<dependency>
 			<groupId>me.paulschwarz</groupId>
 			<artifactId>spring-dotenv</artifactId>
