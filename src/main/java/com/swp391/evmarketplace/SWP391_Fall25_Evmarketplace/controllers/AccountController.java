@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RequestOtpDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.VerifyOtpDTO;
@@ -70,11 +71,17 @@ public class AccountController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    //update profile's account
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        BaseResponse<Void> response = accountService.changePassword(request);
+        return  ResponseEntity.status(response.getStatus()).body(response);
+    }
+
     @PutMapping("/update-profile")
     public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequestDTO requestDTO) {
         BaseResponse<ProfileResponseDTO> response = profileService.updateProfile(requestDTO);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+
 
 }
