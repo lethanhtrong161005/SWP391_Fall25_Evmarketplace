@@ -1,9 +1,12 @@
 # ===== Global config =====
+
 spring:
   application:
     name: evmarketplace
   profiles:
+    active: local  profiles:
     active: local
+
   jpa:
     hibernate:
       ddl-auto: none
