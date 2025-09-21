@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.GoogleUserInfoDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ResetPasswordRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.OtpResponse;
@@ -48,36 +49,7 @@ public class AccountServiceImp implements AccountService {
         if (accountRepository.existsByPhoneNumber(phoneNumber)) {
             throw new CustomBusinessException("Phone number already exists");
         }
-
-        String otp = generateOtp();
-        LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(1);
-
-
-        PhoneOtp phoneOtp = phoneOtpRepository.findByPhoneNumber(phoneNumber)
-                .orElse(new PhoneOtp());
-
-        phoneOtp.setPhoneNumber(phoneNumber);
-        phoneOtp.setOtp(otp);
-        phoneOtp.setExpiredAt(expiredAt);
-        phoneOtp.setIsUsed(false);
-        phoneOtp.setTempToken(null);
-        phoneOtp.setTokenExpiredAt(null);
-
-        phoneOtpRepository.save(phoneOtp);
-
-        boolean isSendOtp = smsUtil.sendOtpSms(phoneNumber, otp);
-
-        BaseResponse<String> baseResponse = new BaseResponse<>();
-        if (isSendOtp) {
-            baseResponse.setSuccess(true);
-            baseResponse.setMessage("Send OTP successfully");
-            baseResponse.setStatus(200);
-        } else {
-            baseResponse.setSuccess(false);
-            baseResponse.setMessage("Send OTP failed");
-            baseResponse.setStatus(400);
-        }
-        return baseResponse;
+        return generateAndSendOtp(phoneNumber);
     }
 
     @Override
@@ -151,7 +123,6 @@ public class AccountServiceImp implements AccountService {
         profile.setAccount(account);
 
 
-        phoneOtp.setTempToken(null);
         phoneOtpRepository.save(phoneOtp);
 
         Account savedAccount = accountRepository.save(account);
@@ -245,6 +216,65 @@ public class AccountServiceImp implements AccountService {
         response.setStatus(200);
         return response;
 
+    }
+
+    @Override
+    public BaseResponse<String> getOtpResetPassword(String phoneNumber) {
+        if(!accountRepository.findByPhoneNumber(phoneNumber).isPresent()){
+            throw new CustomBusinessException("Phone number not found");
+        }
+        return generateAndSendOtp(phoneNumber);
+    }
+
+    @Override
+    public BaseResponse<Void> resetPassword(ResetPasswordRequest request) {
+        PhoneOtp phoneOtp = phoneOtpRepository.findByTempToken(request.getTempToken());
+        if (phoneOtp == null) {
+            throw new CustomBusinessException("Token Invalid !");
+        }
+
+        if (phoneOtp.getTokenExpiredAt().isBefore(LocalDateTime.now())) {
+            throw new CustomBusinessException("Token has expired");
+        }
+
+        String phoneNumber = phoneOtp.getPhoneNumber();
+        Optional<Account> accountOptional = accountRepository.findByPhoneNumber(phoneNumber);
+        if(!accountOptional.isPresent()){
+            throw new CustomBusinessException("Phone number not found");
+        }
+        Account account = accountOptional.get();
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setMessage("Reset Password successfully");
+        response.setStatus(200);
+        return response;
+    }
+
+    private BaseResponse<String> generateAndSendOtp(String phoneNumber) {
+        String otp = generateOtp();
+        LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(1);
+
+        PhoneOtp phoneOtp = phoneOtpRepository.findByPhoneNumber(phoneNumber)
+                .orElse(new PhoneOtp());
+
+        phoneOtp.setPhoneNumber(phoneNumber);
+        phoneOtp.setOtp(otp);
+        phoneOtp.setExpiredAt(expiredAt);
+        phoneOtp.setIsUsed(false);
+        phoneOtp.setTempToken(null);
+        phoneOtp.setTokenExpiredAt(null);
+
+        phoneOtpRepository.save(phoneOtp);
+
+        boolean isSendOtp = smsUtil.sendOtpSms(phoneNumber, otp);
+
+        BaseResponse<String> response = new BaseResponse<>();
+        response.setSuccess(isSendOtp);
+        response.setMessage(isSendOtp ? "Send OTP successfully" : "Send OTP failed");
+        response.setStatus(isSendOtp ? 200 : 400);
+        return response;
     }
 
     private String generateOtp() {

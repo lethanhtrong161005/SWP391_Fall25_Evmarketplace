@@ -1,9 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RequestOtpDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.VerifyOtpDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.AccountReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
@@ -69,6 +66,18 @@ public class AccountController {
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         BaseResponse<Void> response = accountService.changePassword(request);
+        return  ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PostMapping("/reset-password-otp")
+    public ResponseEntity<?> getOtpForResetPassword(@Valid @RequestBody RequestOtpDTO request){
+        BaseResponse<String> response = accountService.getOtpResetPassword(request.getPhoneNumber());
+        return  ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        BaseResponse<Void> response = accountService.resetPassword(request);
         return  ResponseEntity.status(response.getStatus()).body(response);
     }
 
