@@ -14,8 +14,14 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
 
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 510MB
+
 server:
   port: ${PORT:8089}
+  url: ${OPENAPI_SERVER_LOCAL}
 
 jwt:
   key: ${JWT_SECRET_KEY}
@@ -39,6 +45,13 @@ mocean:
   token: ${MOCEANAPI_TOKEN}
   from: ${MOCEANAPI_NAME}
   endpoint: ${MOCEANAPI_ENDPOINT}
+
+fileUpload:
+  rootPath: ${UPLOAD_IMAGES_PATH:uploads}
+
+
+
+
 
 
 ---

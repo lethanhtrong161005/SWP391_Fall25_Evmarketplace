@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -86,4 +87,16 @@ public class CentralException {
         );
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<?> handleMaxSizeException(MaxUploadSizeExceededException exc) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", 413); // 413 Payload Too Large
+        body.put("success", false);
+        body.put("message", "File too large! Maximum allowed size is 500MB.");
+        body.put("timestamp", LocalDateTime.now().toString());
+
+        return ResponseEntity.status(413).body(body);
+    }
+
 }
