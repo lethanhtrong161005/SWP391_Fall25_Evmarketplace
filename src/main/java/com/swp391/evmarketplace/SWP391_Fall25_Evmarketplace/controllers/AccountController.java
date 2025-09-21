@@ -4,21 +4,17 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePa
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RequestOtpDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.VerifyOtpDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.profile.UpdateProfileRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.AccountReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.OtpResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.profile.ProfileResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.mapper.AccountMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account.AccountService;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.profile.ProfileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,8 +28,6 @@ public class AccountController {
     private AccountMapper accountMapper;
     @Autowired
     private AccountService accountService;
-    @Autowired
-    private ProfileService profileService;
 
     @GetMapping("/current")
     public ResponseEntity<?> getAccountDetails() {
@@ -75,12 +69,6 @@ public class AccountController {
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         BaseResponse<Void> response = accountService.changePassword(request);
         return  ResponseEntity.status(response.getStatus()).body(response);
-    }
-
-    @PutMapping("/update-profile")
-    public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequestDTO requestDTO) {
-        BaseResponse<ProfileResponseDTO> response = profileService.updateProfile(requestDTO);
-        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
 

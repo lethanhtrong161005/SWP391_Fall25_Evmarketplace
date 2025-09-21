@@ -1,7 +1,11 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -9,42 +13,41 @@ import java.time.LocalDateTime;
 @Table(
         name = "phone_otp",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = "phoneNumber")
+                @UniqueConstraint(columnNames = "phone_number")
         }
 )
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class PhoneOtp {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
 
     @Column(length = 6)
     private String otp;
 
-    @Column(nullable = false)
+    @Column(name = "is_used", nullable = false)
     private Boolean isUsed = false;
 
-    @Column(nullable = false)
+    @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
 
+    @Column(name = "used_at")
     private LocalDateTime usedAt;
 
-    @Column(length = 255)
+    @Column(name = "temp_token", length = 255)
     private String tempToken;
 
+    @Column(name = "token_expired_at")
     private LocalDateTime tokenExpiredAt;
 
-    @Column(updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-    }
 }
