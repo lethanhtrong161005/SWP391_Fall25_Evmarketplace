@@ -41,8 +41,8 @@ public class Account {
     private String googleId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", columnDefinition = "ENUM('MEMBER','ADMIN','MODERATOR') DEFAULT 'MEMBER'")
-    private AccountRole role = AccountRole.MEMBER;
+    @Column(name = "role", nullable = false)
+    private AccountRole role = AccountRole.MEMBER;  // MEMBER, ADMIN, STAFF
 
     @Column(name = "is_phone_verified")
     private boolean phoneVerified = false;
@@ -51,8 +51,8 @@ public class Account {
     private boolean emailVerified = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", columnDefinition = "ENUM('ACTIVE','BLOCKED') DEFAULT 'ACTIVE'")
-    private AccountStatus status = AccountStatus.ACTIVE;
+    @Column(name = "status", nullable = false)
+    private AccountStatus status = AccountStatus.ACTIVE;  // ACTIVE, SUSPENDED
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

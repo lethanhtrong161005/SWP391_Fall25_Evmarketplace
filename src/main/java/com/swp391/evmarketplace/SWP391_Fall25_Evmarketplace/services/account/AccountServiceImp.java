@@ -151,7 +151,6 @@ public class AccountServiceImp implements AccountService {
         profile.setAccount(account);
 
 
-        phoneOtp.setTempToken(null);
         phoneOtpRepository.save(phoneOtp);
 
         Account savedAccount = accountRepository.save(account);
