@@ -16,14 +16,13 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.Account
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.SmsUtil;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.SpeedSMSAPI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
@@ -35,7 +34,7 @@ public class AccountServiceImp implements AccountService {
     @Autowired
     private PhoneOtpRepository phoneOtpRepository;
     @Autowired
-    private SmsUtil smsUtil;
+    private SpeedSMSAPI speedSMSAPI;
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
@@ -65,7 +64,18 @@ public class AccountServiceImp implements AccountService {
 
         phoneOtpRepository.save(phoneOtp);
 
-        boolean isSendOtp = smsUtil.sendOtpSms(phoneNumber, otp);
+        String content = "Your OTP is: " + otp;
+        boolean isSendOtp = false;
+        String result = "";
+        try{
+            result = speedSMSAPI.sendSMS(
+                    phoneNumber,
+                    content
+            );
+            isSendOtp = true;
+        }catch (Exception e){
+            throw new CustomBusinessException("SMS failed");
+        }
 
         BaseResponse<String> baseResponse = new BaseResponse<>();
         if (isSendOtp) {
@@ -77,6 +87,7 @@ public class AccountServiceImp implements AccountService {
             baseResponse.setMessage("Send OTP failed");
             baseResponse.setStatus(400);
         }
+        baseResponse.setData(result);
         return baseResponse;
     }
 
