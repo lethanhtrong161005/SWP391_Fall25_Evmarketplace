@@ -41,10 +41,12 @@ openapi:
     local: ${OPENAPI_SERVER_LOCAL}
     product: ${OPENAPI_SERVER_PRODUCT}
 
-mocean:
-  token: ${MOCEANAPI_TOKEN}
-  from: ${MOCEANAPI_NAME}
-  endpoint: ${MOCEANAPI_ENDPOINT}
+smsSpeed:
+  apiUrl: ${SMS_API_URL}
+  token: ${SMS_ACCESS_TOKEN}
+  sender: ${SMS_SENDER}
+  type: ${SMS_TYPE}
+
 
 fileUpload:
   rootPath: ${UPLOAD_IMAGES_PATH:uploads}

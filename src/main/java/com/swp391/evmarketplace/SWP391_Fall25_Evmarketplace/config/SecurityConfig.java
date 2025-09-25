@@ -45,7 +45,8 @@ public class SecurityConfig {
                             "/api/auth/google/callback",
                             "/api/accounts/request-otp",
                             "/api/accounts/verify-otp",
-                            "/api/accounts/register"
+                            "/api/accounts/register",
+                            "/api/accounts/reset-password"
                     ).permitAll();
 
                     auth.requestMatchers(
