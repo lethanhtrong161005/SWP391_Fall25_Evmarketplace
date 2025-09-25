@@ -41,7 +41,7 @@ public class CentralException {
         BaseResponse<Void> response = new BaseResponse<>(
                 ex.getStatus(),
                 false,
-                ex.getCode(),
+                ex.getMessage(),
                 null,
                 ex.getFieldErrors(),
                 LocalDateTime.now()

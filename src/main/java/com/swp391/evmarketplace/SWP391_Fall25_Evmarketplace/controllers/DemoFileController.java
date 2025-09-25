@@ -30,6 +30,7 @@ public class DemoFileController {
                                           @RequestParam MultipartFile file) {
         String fileName = fileService.saveOrReplaceAvatar(accountId, file);
         String url = "%s/api/profiles/%d/avatar".formatted(serverUrl, accountId);
+        System.out.println(fileName);
         return ResponseEntity.ok(Map.of(
                 "fileName", fileName,
                 "url", url
@@ -37,15 +38,15 @@ public class DemoFileController {
     }
 
     // Xem avatar (PUBLIC)
-    @GetMapping
-    public ResponseEntity<Resource> viewAvatar(@PathVariable Long accountId) throws Exception {
-        Resource res = fileService.loadAvatar(accountId);
-        String ct = Files.probeContentType(res.getFile().toPath());
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + res.getFilename() + "\"")
-                .header(HttpHeaders.CONTENT_TYPE, ct != null ? ct : "application/octet-stream")
-                .body(res);
-    }
+//    @GetMapping
+//    public ResponseEntity<Resource> viewAvatar(@PathVariable Long accountId) throws Exception {
+//        Resource res = fileService.loadAvatar(accountId);
+//        String ct = Files.probeContentType(res.getFile().toPath());
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + res.getFilename() + "\"")
+//                .header(HttpHeaders.CONTENT_TYPE, ct != null ? ct : "application/octet-stream")
+//                .body(res);
+//    }
 
     // Xoá avatar
     @DeleteMapping

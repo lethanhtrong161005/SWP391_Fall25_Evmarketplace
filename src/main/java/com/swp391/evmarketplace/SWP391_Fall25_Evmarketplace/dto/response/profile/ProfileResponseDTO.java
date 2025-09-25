@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ProfileResponseDTO {
     private String fullName;
-    private String avatarUrl;
     private String province;
     private String addressLine;
     private LocalDateTime createAt;
@@ -22,7 +21,6 @@ public class ProfileResponseDTO {
     public ProfileResponseDTO fromEntity(Profile profile) {
         return new ProfileResponseDTO(
                 profile.getFullName(),
-                profile.getAvatarUrl(),
                 profile.getProvince(),
                 profile.getAddressLine(),
                 profile.getCreatedAt(),

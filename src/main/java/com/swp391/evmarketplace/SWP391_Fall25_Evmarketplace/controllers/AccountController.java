@@ -11,15 +11,25 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginRe
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.OtpResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.profile.ProfileResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.mapper.AccountMapper;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account.AccountService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.profile.ProfileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -33,6 +43,11 @@ public class AccountController {
     private AccountService accountService;
     @Autowired
     private ProfileService profileService;
+    @Autowired
+    private ProfileRepository profileRepository;
+    @Autowired
+    private FileService fileService;
+
 
     @GetMapping("/current")
     public ResponseEntity<?> getAccountDetails() {
@@ -70,6 +85,8 @@ public class AccountController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+
+
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         BaseResponse<Void> response = accountService.changePassword(request);
@@ -81,6 +98,21 @@ public class AccountController {
         BaseResponse<ProfileResponseDTO> response = profileService.updateProfile(requestDTO);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+
+    @PutMapping(value = "/update-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<BaseResponse<String>> updateAvatar( @RequestParam("file") MultipartFile file) {
+        BaseResponse<String> response = profileService.updateAvatar(file);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @GetMapping("/{fileName:.+}/avatar")
+    public ResponseEntity<Resource> viewAvatar(
+            @PathVariable String fileName) {
+        return profileService.viewAvatar(fileName);
+    }
+
+
+
 
 
 }

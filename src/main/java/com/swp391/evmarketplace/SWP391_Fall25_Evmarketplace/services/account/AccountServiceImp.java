@@ -3,9 +3,11 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.GoogleUserInfoDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.CreateStaffAccountRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.OtpResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.StaffAccountResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.PhoneOtp;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
@@ -14,10 +16,12 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.SmsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +46,8 @@ public class AccountServiceImp implements AccountService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private AuthUtil authUtil;
+    @Autowired
+    private ProfileRepository profileRepository;
 
     @Override
     public BaseResponse<String> sendOtp(String phoneNumber) {
@@ -193,7 +199,7 @@ public class AccountServiceImp implements AccountService {
             account.setProfile(profile);
 
             return accountRepository.save(account);
-        }else{
+        } else {
             // create new
             Account newAccount = new Account();
             newAccount.setEmail(userInfo.getEmail());
@@ -222,15 +228,15 @@ public class AccountServiceImp implements AccountService {
             throw new CustomBusinessException("Current account is null");
         }
 
-        if(!currentAccount.isPhoneVerified()){
+        if (!currentAccount.isPhoneVerified()) {
             throw new CustomBusinessException("Phone number not verified");
         }
 
-        if(!passwordEncoder.matches(request.getOldPassword(), currentAccount.getPassword())) {
+        if (!passwordEncoder.matches(request.getOldPassword(), currentAccount.getPassword())) {
             throw new CustomBusinessException("Old password doesn't match");
         }
 
-        if(passwordEncoder.matches(request.getNewPassword(), currentAccount.getPassword())) {
+        if (passwordEncoder.matches(request.getNewPassword(), currentAccount.getPassword())) {
             throw new CustomBusinessException("New password can't be the same old password");
         }
 
@@ -245,6 +251,125 @@ public class AccountServiceImp implements AccountService {
         return response;
 
     }
+
+    @Override
+    public List<Account> getAllAccounts() {
+        List<Account> accounts = accountRepository.findAll();
+        if (accounts.isEmpty()) {
+            throw new CustomBusinessException("ACCOUNT_EMPTY");
+        }
+        return accounts;
+    }
+
+    @Override
+    public List<Account> searchAccountByName(String keyword) {
+        if (keyword == null || keyword.isEmpty())
+            throw new CustomBusinessException("KEYWORD_NOT_FOUND");
+
+        List<Account> accounts = accountRepository.findByProfileFullNameContainingIgnoreCase(keyword);
+        if (accounts.isEmpty()) {
+            throw new CustomBusinessException("NOT_FOUND_ANY_ACCOUNT");
+        }
+
+        return accounts;
+    }
+
+    @Override
+    public BaseResponse<Void> blockAccount(Long accountId) {
+        if (accountId == null) {
+            throw new CustomBusinessException("ACCOUNT_ID_NOT_FOUND");
+        }
+        Optional<Account> OptAcc = accountRepository.findById(accountId);
+        if (OptAcc.isEmpty()) throw new CustomBusinessException("ACCOUNT_NOT_FOUND");
+
+        Account account = OptAcc.get();
+
+        if (account.getStatus() == AccountStatus.DELETED) {
+            throw new CustomBusinessException("CANNOT_BLOCK_DELETED");
+        }
+
+        if (account.getStatus() == AccountStatus.SUSPENDED) {
+            BaseResponse<Void> response = new BaseResponse<>();
+            response.setMessage("ALREADY_SUSPENDED");
+            response.setStatus(200);
+            response.setSuccess(true);
+            return response;
+        }
+
+        account.setStatus(AccountStatus.SUSPENDED);
+        accountRepository.save(account);
+
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage("ACCOUNT_BLOCKED");
+        return response;
+    }
+
+    @Override
+    public BaseResponse<Void> unblockAccount(Long accountId) {
+        if (accountId == null) {
+            throw new CustomBusinessException("ACCOUNT_ID_NOT_FOUND");
+        }
+        Optional<Account> OptAcc = accountRepository.findById(accountId);
+        if (OptAcc.isEmpty()) throw new CustomBusinessException("ACCOUNT_NOT_FOUND");
+
+        Account account = OptAcc.get();
+
+        if (account.getStatus() == AccountStatus.DELETED) {
+            throw new CustomBusinessException("CANNOT_BLOCK_DELETED");
+        }
+
+        if (account.getStatus() == AccountStatus.ACTIVE) {
+            BaseResponse<Void> response = new BaseResponse<>();
+            response.setMessage("ALREADY_ACTIVE");
+            response.setStatus(200);
+            response.setSuccess(true);
+            return response;
+        }
+
+        account.setStatus(AccountStatus.ACTIVE);
+        accountRepository.save(account);
+
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage("ACCOUNT_UNBLOCKED");
+        return response;
+    }
+
+    @Override
+    public BaseResponse<StaffAccountResponseDTO> createStaffAccount(CreateStaffAccountRequestDTO requestDTO) {
+
+        if (accountRepository.existsByPhoneNumber(requestDTO.getPhoneNumber())) {
+            throw new CustomBusinessException("PHONE_NUMBER_EXIST");
+        }
+
+        Account account = new Account();
+        account.setPhoneNumber(requestDTO.getPhoneNumber());
+        account.setPassword(requestDTO.getPassword());
+
+        Profile profile = new Profile();
+        profile.setFullName(requestDTO.getFullName());
+        account.setProfile(profile);
+        profile.setAccount(account);
+
+        accountRepository.save(account);
+        profileRepository.save(profile);
+
+        StaffAccountResponseDTO responseDTO = new StaffAccountResponseDTO();
+        responseDTO.setFullName(profile.getFullName());
+        responseDTO.setPhoneNumber(account.getPhoneNumber());
+        responseDTO.setPassword(account.getPassword());
+
+        BaseResponse<StaffAccountResponseDTO> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setData(responseDTO);
+
+        return response;
+    }
+
 
     private String generateOtp() {
         Random random = new Random();

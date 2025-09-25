@@ -14,9 +14,6 @@ public class UpdateProfileRequestDTO {
     @Size(max = 255, message = "PROFILE.FULL_NAME_TOO_LONG")
     private String fullName;
 
-    @Size(max = 500, message = "PROFILE.AVATAR_URL_TOO_LONG")
-    private String avatarUrl;
-
     @Size(max = 100, message = "PROFILE.PROVINCE_TOO_LONG")
     private String province;
 
