@@ -1,14 +1,13 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RequestOtpDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.VerifyOtpDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.AccountReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.OtpResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OtpType;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.mapper.AccountMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account.AccountService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
@@ -48,8 +47,15 @@ public class AccountController {
     }
 
     @PostMapping("/request-otp")
-    public ResponseEntity<?> requestOtp(@Valid @RequestBody RequestOtpDTO requestOtpDTO) {
-        BaseResponse<String> response = accountService.sendOtp(requestOtpDTO.getPhoneNumber());
+    public ResponseEntity<BaseResponse<String>> requestOtp(@Valid @RequestBody RequestOtpDTO dto) {
+        BaseResponse<String> response;
+        if (dto.getType() == OtpType.REGISTER) {
+            response = accountService.sendOtpRegister(dto.getPhoneNumber());
+        } else if (dto.getType() == OtpType.RESET) {
+            response = accountService.sendOtpReset(dto.getPhoneNumber());
+        } else {
+            throw new CustomBusinessException("Unsupported OTP type");
+        }
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
@@ -71,5 +77,10 @@ public class AccountController {
         return  ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        BaseResponse<Void> response = accountService.resetPassword(request);
+        return  ResponseEntity.status(response.getStatus()).body(response);
+    }
 
 }
