@@ -119,13 +119,13 @@ public class ProfileServiceImp implements ProfileService {
         profile.setAvatarUrl(fileName);
         profileRepository.save(profile);
 
-        String avatarUrl = serverUrl + "/api/accounts/" + fileName + "/avatar?v=" + v;
+        String avatarUrl = serverUrl + "/api/accounts/image/" + fileName + "/avatar?v=" + v;
 
         BaseResponse<String> response = new BaseResponse<>();
         response.setSuccess(true);
         response.setStatus(200);
         response.setMessage("AVATAR_UPDATED");
-        response.setData(avatarUrl);
+        response.setData(fileName);
         return response;
     }
 

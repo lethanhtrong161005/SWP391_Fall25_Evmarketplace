@@ -46,7 +46,8 @@ public class SecurityConfig {
                             "/api/accounts/request-otp",
                             "/api/accounts/verify-otp",
                             "/api/accounts/register",
-                            "/api/accounts/reset-password"
+                            "/api/accounts/reset-password",
+                            "/api/accounts/image/{fileName:.+}/avatar"
                     ).permitAll();
 
                     auth.requestMatchers(
@@ -54,10 +55,6 @@ public class SecurityConfig {
                             "/v3/api-docs/**",
                             "/swagger-ui.html"
                     ).permitAll();
-
-
-
-
 
 
 

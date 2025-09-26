@@ -109,7 +109,7 @@ public class AccountController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @GetMapping("/{fileName:.+}/avatar")
+    @GetMapping("/image/{fileName:.+}/avatar")
     public ResponseEntity<Resource> viewAvatar(
             @PathVariable String fileName) {
         return profileService.viewAvatar(fileName);
