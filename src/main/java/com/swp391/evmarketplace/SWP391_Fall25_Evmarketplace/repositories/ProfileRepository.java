@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
     Optional<Profile> findById(Long id);
+
+    Optional<Profile> findByAvatarUrl(String fileName);
 }

@@ -1,11 +1,11 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception;
 
-import lombok.Data;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.Map;
 
-@Data
+@Getter
 public class CustomBusinessException extends RuntimeException {
     private final int status;
     private final Map<String, List<String>> fieldErrors;

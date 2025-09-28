@@ -5,8 +5,6 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.handlers.Cu
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,6 +37,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> {
                     //Public Access
+
+
                     auth.requestMatchers(
                             "/api/auth/login-with-phone-number",
                             "/api/auth/google",
@@ -47,10 +47,33 @@ public class SecurityConfig {
                             "/api/accounts/verify-otp",
                             "/api/accounts/register",
                             "/api/accounts/reset-password",
+
                             "/api/listing/all",
                             "/api/listing/**"
+
+                            "/api/accounts/image/{fileName:.+}/avatar"
                     ).permitAll();
-                    auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll();
+                  
+                    auth.requestMatchers(
+                            "/swagger-ui/**",
+                            "/v3/api-docs/**",
+                            "/swagger-ui.html"
+
+                    ).permitAll();
+
+
+
+                    //auth
+                    auth.requestMatchers("/api/accounts/change-password",
+                            "/api/accounts/update-profile",
+                            "/api/accounts/update-avatar"
+                            ).authenticated();
+
+                    //admin
+                    auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
+
+
+
                     auth.anyRequest().authenticated();
                 })
                 .exceptionHandling(exception -> exception
