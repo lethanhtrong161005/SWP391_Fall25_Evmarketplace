@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.brand.BrandResponseDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,6 +35,13 @@ public class Brand {
     public void removeCategoryBrand(CategoryBrand cb){
         categoryBrands.remove(cb);
         cb.setBrand(null);
+    }
+
+    public BrandResponseDTO toDTO(Brand b){
+        BrandResponseDTO dto = new BrandResponseDTO();
+        dto.setId(b.getId());
+        dto.setName(b.getName());
+        return dto;
     }
 
 }

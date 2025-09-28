@@ -1,7 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.handlers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;

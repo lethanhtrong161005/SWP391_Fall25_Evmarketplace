@@ -6,10 +6,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.Register
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RequestOtpDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.VerifyOtpDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.profile.UpdateProfileRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.AccountReponseDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.OtpResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.LoginResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.OtpResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.profile.ProfileResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OtpType;
@@ -23,6 +23,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +45,8 @@ public class AccountController {
     private ProfileRepository profileRepository;
     @Autowired
     private FileService fileService;
+    @Value("${server.url}")
+    private String serverUrl;
 
 
     @GetMapping("/current")
@@ -52,6 +55,10 @@ public class AccountController {
         Account ac = authUtil.getCurrentAccount();
         if (ac != null) {
             AccountReponseDTO accountReponseDTO = accountMapper.toAccountReponseDTO(ac);
+            String avatarUrl = serverUrl + "/api/files/images/" + accountReponseDTO.getProfile().getAvatarUrl();
+            if(accountReponseDTO.getProfile().getAvatarUrl() != null){
+                accountReponseDTO.getProfile().setAvatarUrl(avatarUrl);
+            }
             response.setData(accountReponseDTO);
             response.setMessage("Get Account Success");
             response.setSuccess(true);
@@ -107,12 +114,6 @@ public class AccountController {
     public ResponseEntity<BaseResponse<String>> updateAvatar( @RequestParam("file") MultipartFile file) {
         BaseResponse<String> response = profileService.updateAvatar(file);
         return ResponseEntity.status(response.getStatus()).body(response);
-    }
-
-    @GetMapping("/image/{fileName:.+}/avatar")
-    public ResponseEntity<Resource> viewAvatar(
-            @PathVariable String fileName) {
-        return profileService.viewAvatar(fileName);
     }
 
     @PostMapping("/reset-password")

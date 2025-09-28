@@ -1,4 +1,4 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.payment;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
