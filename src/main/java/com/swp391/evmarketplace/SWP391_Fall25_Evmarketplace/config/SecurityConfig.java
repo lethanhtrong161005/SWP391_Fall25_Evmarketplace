@@ -47,13 +47,18 @@ public class SecurityConfig {
                             "/api/accounts/verify-otp",
                             "/api/accounts/register",
                             "/api/accounts/reset-password",
+
+                            "/api/listing/all",
+                            "/api/listing/**"
+
                             "/api/accounts/image/{fileName:.+}/avatar"
                     ).permitAll();
-
+                  
                     auth.requestMatchers(
                             "/swagger-ui/**",
                             "/v3/api-docs/**",
                             "/swagger-ui.html"
+
                     ).permitAll();
 
 
@@ -66,11 +71,6 @@ public class SecurityConfig {
 
                     //admin
                     auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
-
-
-
-
-
 
 
 
