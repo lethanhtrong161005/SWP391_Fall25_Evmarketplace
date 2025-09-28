@@ -5,6 +5,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.handlers.Cu
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -48,11 +49,16 @@ public class SecurityConfig {
                             "/api/accounts/register",
                             "/api/accounts/reset-password",
 
-                            "/api/listing/all",
                             "/api/listing/**",
 
-                            "/api/accounts/image/{fileName:.+}/avatar"
+                            "/api/category/**",
+
+                            "/api/brand/**",
+
+                            "/api/accounts/avatar"
                     ).permitAll();
+
+                    auth.requestMatchers(HttpMethod.GET, "/api/files/**").permitAll();
                   
                     auth.requestMatchers(
                             "/swagger-ui/**",

@@ -1,4 +1,4 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;

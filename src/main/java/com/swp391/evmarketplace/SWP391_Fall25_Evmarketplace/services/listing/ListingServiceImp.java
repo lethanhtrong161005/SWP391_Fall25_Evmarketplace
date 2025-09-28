@@ -1,26 +1,27 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.ListingDetailResponseDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.ListingReponseDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ListingMedia;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.MediaType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ListingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ListingServiceImp implements ListingService {
 
     @Autowired
     private ListingRepository listingRepository;
+    @Value("${server.url}")
+    private String serverUrl;
+
 
     @Override
    public BaseResponse<List<ListingReponseDTO>> getAllListings(int pageSize, int pageNumber) {
@@ -57,10 +58,19 @@ public class ListingServiceImp implements ListingService {
                     dto.setCity(listing.getCity());
                     dto.setAddress(listing.getAddress());
                     dto.setPromotedUntil(listing.getPromotedUntil());
-                    dto.setThumbnail(
-                            listing.getMediaList() != null && !listing.getMediaList().isEmpty()
-                            ? listing.getMediaList().get(0).getMediaUrl() : null
-                    );
+                    String thumbnail = "";
+                    if( listing.getMediaList() != null && !listing.getMediaList().isEmpty()){
+                        for(ListingMedia l : listing.getMediaList()){
+                            if(l.getMediaType() == MediaType.IMAGE){
+                                thumbnail = l.getMediaUrl();
+                                break;
+                            }
+                        }
+                    }
+                    thumbnail = serverUrl + "/api/files/images/" + thumbnail;
+                    if(!thumbnail.isEmpty()){
+                        dto.setThumbnail(thumbnail);
+                    }
                     dto.setBranchId(
                             listing.getBranch() != null ? listing.getBranch().getId() : null
                     );

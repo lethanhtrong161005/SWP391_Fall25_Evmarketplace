@@ -35,13 +35,13 @@ public class Model {
     @Min(1900) @Max(2100)
     private Integer year;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "brand_id", nullable = false,
                 foreignKey = @ForeignKey(name = "fk_model_brand")
     )
     private Brand brand;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false,
                 foreignKey = @ForeignKey(name =  "fk_model_category")
     )
