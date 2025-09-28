@@ -46,7 +46,9 @@ public class SecurityConfig {
                             "/api/accounts/request-otp",
                             "/api/accounts/verify-otp",
                             "/api/accounts/register",
-                            "/api/accounts/reset-password"
+                            "/api/accounts/reset-password",
+                            "/api/listing/all",
+                            "/api/listing/**"
                     ).permitAll();
                     auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll();
                     auth.anyRequest().authenticated();
