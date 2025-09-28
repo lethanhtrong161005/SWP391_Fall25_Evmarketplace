@@ -4,6 +4,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.GoogleUserInfoDT
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ResetPasswordRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.UpdateEmailRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.CreateStaffAccountRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
@@ -14,6 +15,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.PhoneOtp;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
@@ -22,7 +24,6 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.SpeedSMSAPI;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -236,6 +237,30 @@ public class AccountServiceImp implements AccountService {
     }
 
     @Override
+    public BaseResponse<Void> updateEmail(UpdateEmailRequestDTO requestDTO) {
+        Account account = authUtil.getCurrentAccount();
+        if (account == null) {
+            throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
+        }
+        if (!account.isPhoneVerified()) {
+            throw new CustomBusinessException(ErrorCode.PHONE_NOT_VERIFIED.name());
+        }
+
+        //chưa verifiy email
+
+        account.setEmail(requestDTO.getNewEmail());
+        accountRepository.save(account);
+
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setMessage(ErrorCode.UPDATED_EMAIL.name());
+        response.setStatus(200);
+        response.setSuccess(true);
+
+        return response;
+    }
+
+
+    @Override
     public List<Account> getAllAccounts() {
         List<Account> accounts = accountRepository.findAll();
         if (accounts.isEmpty()) {
@@ -368,7 +393,7 @@ public class AccountServiceImp implements AccountService {
         Account account = accountRepository.findByPhoneNumber(phoneOtp.getPhoneNumber())
                 .orElseThrow(() -> new CustomBusinessException("Token invalid"));
 
-        if(passwordEncoder.matches(request.getNewPassword(), account.getPassword())){
+        if (passwordEncoder.matches(request.getNewPassword(), account.getPassword())) {
             throw new CustomBusinessException("Password has been used recently");
         }
 
@@ -409,13 +434,13 @@ public class AccountServiceImp implements AccountService {
         String content = "Your OTP is: " + otp;
         boolean isSendOtp = false;
         String result = "";
-        try{
+        try {
             result = speedSMSAPI.sendSMS(
                     phoneNumber,
                     content
             );
             isSendOtp = true;
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CustomBusinessException("SMS failed");
         }
 
