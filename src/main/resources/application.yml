@@ -54,6 +54,18 @@ fileUpload:
 
 
 
+#VNPAY
+vnpay:
+  tmn-code: ${VNPAY_TMN_CODE}             # dán TMN thật của bạn
+  hash-secret: ${VNPAY_HASH_SECRET}       # dán Secret đúng cặp TMN
+  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8089/api/payment/vnpay/return
+  ipn-url: http://localhost:8089/api/payment/vnpay/ipn
+  version: 2.1.0
+  command: pay
+
+
+
 
 
 ---

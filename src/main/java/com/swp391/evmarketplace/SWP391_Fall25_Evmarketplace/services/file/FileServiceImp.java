@@ -3,11 +3,14 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.storage.LocalStorageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 
@@ -18,29 +21,15 @@ public class FileServiceImp implements FileService {
     @Autowired
     private LocalStorageService storage;
 
+    @Value("${fileUpload.rootPath}")
+    private String rootPath;
+
     private static final String BUCKET_LISTINGS = "listings";
     private static final String BUCKET_AVATARS  = "avatars";
 
-    /* ===== LISTING MEDIA ===== */
-    @Override
-    public String saveListingFile(Long listingId, MultipartFile file) {
-        return storage.save(BUCKET_LISTINGS, String.valueOf(listingId), file, false);
-    }
+    private Path baseListings() { return Paths.get(rootPath, "listings"); }
 
-    @Override
-    public Resource loadListingFile(Long listingId, String filename) {
-        return storage.load(BUCKET_LISTINGS, String.valueOf(listingId), filename);
-    }
 
-    @Override
-    public List<String> listListingFiles(Long listingId) {
-        return storage.list(BUCKET_LISTINGS, String.valueOf(listingId));
-    }
-
-    @Override
-    public boolean deleteListingFile(Long listingId, String filename) {
-        return storage.delete(BUCKET_LISTINGS, String.valueOf(listingId), filename);
-    }
 
     /* ===== AVATAR (single) ===== */
     @Override

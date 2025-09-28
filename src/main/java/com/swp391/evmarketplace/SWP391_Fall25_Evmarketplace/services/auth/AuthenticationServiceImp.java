@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +43,8 @@ public class AuthenticationServiceImp implements AuthenticationService {
     private JwtUtil jwtUtil;
     @Autowired
     private AccountService accountService;
+    @Autowired
+    private RestTemplate restTemplate;
 
 //    Google
     @Value("${google.authUri}")
@@ -90,11 +93,16 @@ public class AuthenticationServiceImp implements AuthenticationService {
         baseResponse.setSuccess(true);
         baseResponse.setStatus(200);
         baseResponse.setMessage("Google Auth Url generated");
-        String url = String.format(
-                "%s?client_id=%s&redirect_uri=%s&response_type=code&scope=openid%%20email%%20profile&access_type=offline&prompt=consent",
-                googleAuthUri,
-                googleClientId,
-                googleRedirectUri);
+        String url = UriComponentsBuilder.fromHttpUrl(googleAuthUri) // v2: https://accounts.google.com/o/oauth2/v2/auth
+                .queryParam("client_id", googleClientId)
+                .queryParam("redirect_uri", googleRedirectUri) // sẽ được encode đúng
+                .queryParam("response_type", "code")
+                .queryParam("scope", "openid email profile")    // để nguyên khoảng trắng ở đây
+                .queryParam("access_type", "offline")
+                .queryParam("prompt", "consent")
+                .build()                                       // ❗ không dùng build(true)
+                .encode(StandardCharsets.UTF_8)                // ❗ bắt buộc encode
+                .toUriString();
         baseResponse.setData(url);
         return baseResponse;
     }
@@ -141,7 +149,6 @@ public class AuthenticationServiceImp implements AuthenticationService {
         formData.add("redirect_uri", googleRedirectUri);
         formData.add("grant_type", "authorization_code");
 
-        RestTemplate restTemplate = new RestTemplate();
         return restTemplate.postForObject(googleTokenUri, new HttpEntity<>(formData, headers), Map.class);
     }
 
@@ -149,7 +156,6 @@ public class AuthenticationServiceImp implements AuthenticationService {
     private GoogleUserInfoDTO getAccountInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
-        RestTemplate restTemplate = new RestTemplate();
 
         return restTemplate.exchange(
                 googleUserInfoUri,
