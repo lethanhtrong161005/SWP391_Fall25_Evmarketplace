@@ -19,9 +19,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Autowired
-    private JwtAuthenticationFilter  jwtAuthenticationFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
     @Autowired
-    private CustomSecurityHandlers  customSecurityHandlers;
+    private CustomSecurityHandlers customSecurityHandlers;
 
 
     @Bean
@@ -49,11 +49,11 @@ public class SecurityConfig {
                             "/api/accounts/reset-password",
 
                             "/api/listing/all",
-                            "/api/listing/**"
+                            "/api/listing/**",
 
                             "/api/accounts/image/{fileName:.+}/avatar"
                     ).permitAll();
-                  
+
                     auth.requestMatchers(
                             "/swagger-ui/**",
                             "/v3/api-docs/**",
@@ -62,16 +62,17 @@ public class SecurityConfig {
                     ).permitAll();
 
 
-
                     //auth
                     auth.requestMatchers("/api/accounts/change-password",
                             "/api/accounts/update-profile",
                             "/api/accounts/update-avatar"
-                            ).authenticated();
+                    ).authenticated();
+
+                    //staff
+                    auth.requestMatchers("api/staff/**").hasRole("STAFF");
 
                     //admin
                     auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
-
 
 
                     auth.anyRequest().authenticated();

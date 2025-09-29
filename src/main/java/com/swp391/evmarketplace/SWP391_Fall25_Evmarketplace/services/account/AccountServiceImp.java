@@ -1,15 +1,16 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.GoogleUserInfoDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ResetPasswordRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.ChangePasswordRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.RegisterAccountRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.ResetPasswordRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.UpdateEmailRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.CreateStaffAccountRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.OtpResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.StaffAccountResponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.*;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.StaffAccountResponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.LoginResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.OtpResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.PhoneOtp;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
@@ -17,6 +18,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.mapper.AccountMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
@@ -24,15 +26,13 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.SpeedSMSAPI;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class AccountServiceImp implements AccountService {
@@ -50,6 +50,8 @@ public class AccountServiceImp implements AccountService {
     private AuthUtil authUtil;
     @Autowired
     private ProfileRepository profileRepository;
+    @Autowired
+    private AccountMapper accountMapper;
 
     @Override
     public BaseResponse<String> sendOtpRegister(String phoneNumber) {
@@ -259,27 +261,87 @@ public class AccountServiceImp implements AccountService {
         return response;
     }
 
-
-    @Override
-    public List<Account> getAllAccounts() {
-        List<Account> accounts = accountRepository.findAll();
-        if (accounts.isEmpty()) {
-            throw new CustomBusinessException("ACCOUNT_EMPTY");
-        }
-        return accounts;
+    public Pageable buildPageable(int page, int size, String sort, String dir) {
+        Sort s = (sort == null || sort.isBlank())
+                ? Sort.by(Sort.Direction.DESC, "createdAt") //mặc định show acc mới tạo gần nhất
+                : Sort.by("desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC, sort);
+        return PageRequest.of(Math.max(page, 0), Math.max(size, 1), s); // số trang 0 âm, ít nhất 1 phần tử trong mỗi trang
     }
 
     @Override
-    public List<Account> searchAccountByName(String keyword) {
-        if (keyword == null || keyword.isEmpty())
-            throw new CustomBusinessException("KEYWORD_NOT_FOUND");
-
-        List<Account> accounts = accountRepository.findByProfileFullNameContainingIgnoreCase(keyword);
+    public BaseResponse<Map<String, Object>> getAll(int page, int size, String sort, String dir) {
+        Pageable pageable = buildPageable(page, size, sort, dir);
+        Page<Account> accounts = accountRepository.findAllAccountBy(pageable);
         if (accounts.isEmpty()) {
-            throw new CustomBusinessException("NOT_FOUND_ANY_ACCOUNT");
+            throw new CustomBusinessException(ErrorCode.ACCOUNT_LIST_EMPTY.name());
+        }
+        List<AccountReponseDTO> items = accounts.getContent()
+                .stream().map(accountMapper::toAccountReponseDTO)
+                .toList();
+
+        Map<String, Object> payload = Map.of(
+                "items", items,
+                "page", page,
+                "size", size,
+                "hasNext", accounts.hasNext()
+        );
+
+        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setData(payload);
+        response.setStatus(200);
+        response.setMessage("OK");
+
+
+        return response;
+    }
+
+    @Override
+    public BaseResponse<Map<String, Object>> search(String keyword, int page, int size, String sort, String dir) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new CustomBusinessException(ErrorCode.KEYWORD_NOT_FOUND.name());
+        }
+        Pageable pageable = buildPageable(page, size, sort, dir);
+        Page<Account> accounts = accountRepository.findByProfileFullNameContainingIgnoreCase(keyword, pageable);
+        if (accounts.isEmpty()) {
+            throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
         }
 
-        return accounts;
+        List<AccountReponseDTO> items = accounts.getContent().stream().map(accountMapper::toAccountReponseDTO).toList();
+
+        Map<String, Object> payload = Map.of(
+                "items", items,
+                "page", page,
+                "size", size,
+                "hasNext", accounts.hasNext(),
+                "keyword", keyword
+        );
+
+        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setData(payload);
+        response.setStatus(200);
+        response.setMessage("OK");
+
+        return response;
+    }
+
+    @Override
+    public BaseResponse<AccountReponseDTO> getAccountById(Long id) {
+        Optional<Account> optAccount = accountRepository.findById(id);
+        if (optAccount.isEmpty()) {
+            throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
+        }
+        Account account = optAccount.get();
+        AccountReponseDTO accountReponseDTO = accountMapper.toAccountReponseDTO(account);
+
+        BaseResponse<AccountReponseDTO> response = new BaseResponse<>();
+        response.setMessage("OK");
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setData(accountReponseDTO);
+
+        return response;
     }
 
     @Override

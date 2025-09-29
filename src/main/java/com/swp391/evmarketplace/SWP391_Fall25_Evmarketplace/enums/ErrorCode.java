@@ -23,7 +23,10 @@ public enum ErrorCode {
     AVATAR_NOT_FOUND,
 
     // Nhóm SEARCH
-    KEYWORD_NOT_FOUND;
+    KEYWORD_NOT_FOUND,
+
+    //listing
+    LISTING_NOT_FOUND;
 
 }
 

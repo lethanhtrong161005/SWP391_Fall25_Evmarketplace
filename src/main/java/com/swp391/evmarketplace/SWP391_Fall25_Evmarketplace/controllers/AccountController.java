@@ -1,15 +1,15 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.*;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.ChangePasswordRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RegisterAccountRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.RequestOtpDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.VerifyOtpDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.ChangePasswordRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.RegisterAccountRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.RequestOtpDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.ResetPasswordRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.VerifyOtpDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.profile.UpdateProfileRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.AccountReponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.LoginResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.OtpResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.LoginResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.OtpResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.profile.ProfileResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OtpType;

@@ -1,6 +1,10 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -16,6 +20,9 @@ public interface AccountRepository extends JpaRepository<Account,Long> {
     boolean existsByPhoneNumber(String phoneNumber);
     boolean existsByEmail(String email);
 
-    @Query("SELECT a FROM Account a JOIN a.profile p WHERE LOWER(p.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<Account> findByProfileFullNameContainingIgnoreCase(String keyword);
+    @EntityGraph(attributePaths = {"profile"})
+    Page<Account> findAllAccountBy(Pageable pageable);
+
+    @EntityGraph(attributePaths = "profile")
+    Page<Account> findByProfileFullNameContainingIgnoreCase(String keyword, Pageable pageable);
 }
