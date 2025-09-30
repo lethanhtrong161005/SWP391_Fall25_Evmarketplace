@@ -4,14 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Status;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.BatchSize;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,42 +14,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(
-        name = "listing",
-        indexes = {
-                @Index(name = "idx_listing_search",  columnList = "brand,model,year,price"),
-                @Index(name = "idx_listing_flags",   columnList = "verified,visibility,status"),
-                @Index(name = "idx_listing_geo",     columnList = "province,city"),
-                @Index(name = "idx_listing_vehicle", columnList = "product_vehicle_id"),
-                @Index(name = "idx_listing_battery", columnList = "product_battery_id")
-        }
-)
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
+@Table(name = "listing")
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 public class Listing {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(
+            name = "category_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_listing_category")
+    )
+    private Category category;
+
     @Column(length = 255)
     private String title;
 
+
     @ManyToOne
-    @JoinColumn(
-            name = "product_vehicle_id",
-            foreignKey = @ForeignKey(name = "fk_listing_vehicle")
-    )
+    @JoinColumn(name = "product_vehicle_id",
+            foreignKey = @ForeignKey(name = "fk_listing_vehicle"))
     private ProductVehicle productVehicle;
 
     @ManyToOne
-    @JoinColumn(
-            name = "product_battery_id",
-            foreignKey = @ForeignKey(name = "fk_listing_battery")
-    )
+    @JoinColumn(name = "product_battery_id",
+            foreignKey = @ForeignKey(name = "fk_listing_battery"))
     private ProductBattery productBattery;
+
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "seller_id", nullable = false,
@@ -66,11 +56,18 @@ public class Listing {
             foreignKey = @ForeignKey(name = "fk_listing_branch"))
     private Branch branch;
 
+
     @Column(name = "brand", length = 100, nullable = false)
     private String brand;
 
+    @Column(name = "brand_id")
+    private Long brandId;
+
     @Column(name = "model", length = 100, nullable = false)
     private String model;
+
+    @Column(name = "model_id")
+    private Long modelId;
 
     @Column(name = "year", columnDefinition = "smallint unsigned")
     private Integer year;
@@ -91,7 +88,7 @@ public class Listing {
     @Column(name = "description", columnDefinition = "text")
     private String description;
 
-    // Giá & nhãn
+
     @Column(name = "price", precision = 12, scale = 2, nullable = false)
     private BigDecimal price;
 
@@ -107,19 +104,22 @@ public class Listing {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
-    private Status status = Status.ACTIVE;
+    private Status status = Status.PENDING;
 
-    // Địa lý
+
     @Column(name = "province", length = 100)
     private String province;
 
-    @Column(name = "city", length = 100)
-    private String city;
+    @Column(name = "district", length = 100)
+    private String district;
 
-    @Column(name = "address")
+    @Column(name = "ward", length = 100)
+    private String ward;
+
+    @Column(name = "address", length = 300)
     private String address;
 
-    // Ký gửi / Promote / Hết hạn
+
     @Column(name = "is_consigned", nullable = false)
     private Boolean consigned = Boolean.FALSE;
 
@@ -129,7 +129,7 @@ public class Listing {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
-    // Audit
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -138,7 +138,9 @@ public class Listing {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "listing", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(mappedBy = "listing", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ListingMedia> mediaList = new ArrayList<>();
 

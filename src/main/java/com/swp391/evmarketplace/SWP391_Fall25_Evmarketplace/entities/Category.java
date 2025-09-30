@@ -12,8 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name ="category",
-        uniqueConstraints = @UniqueConstraint(name="uk_category_name", columnNames = "name"))
+@Table(name ="category")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Category {
 
@@ -31,6 +30,10 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<CategoryBrand> categoryBrands = new ArrayList<>();
+
+    @OneToMany(mappedBy = "category")
+    @JsonIgnore
+    private List<Listing> listings = new ArrayList<>();
 
 
     public void addCategoryBrand(CategoryBrand cb){

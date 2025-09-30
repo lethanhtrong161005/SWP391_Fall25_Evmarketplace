@@ -32,7 +32,8 @@ public class ListingReponseDTO {
     private String status;
 
     private String province;
-    private String city;
+    private String district;
+    private String ward;
     private String address;
 
     private LocalDateTime promotedUntil;
