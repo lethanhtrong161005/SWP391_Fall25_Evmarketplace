@@ -18,6 +18,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.mapper.AccountMapper
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account.AccountService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.profile.ProfileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -44,6 +47,8 @@ public class AccountController {
     private ProfileRepository profileRepository;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private ListingService listingService;
 
 
     @GetMapping("/current")
@@ -90,7 +95,6 @@ public class AccountController {
     }
 
 
-
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         BaseResponse<Void> response = accountService.changePassword(request);
@@ -104,7 +108,7 @@ public class AccountController {
     }
 
     @PutMapping(value = "/update-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<BaseResponse<String>> updateAvatar( @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<BaseResponse<String>> updateAvatar(@RequestParam("file") MultipartFile file) {
         BaseResponse<String> response = profileService.updateAvatar(file);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
@@ -118,7 +122,21 @@ public class AccountController {
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         BaseResponse<Void> response = accountService.resetPassword(request);
-        return  ResponseEntity.status(response.getStatus()).body(response);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    //list
+    @GetMapping("/listing")
+    public ResponseEntity<BaseResponse<Map<String, Object>>> getSellerList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "desc") String dir
+    ) {
+        Account account = authUtil.getCurrentAccount();
+        BaseResponse<Map<String, Object>> response = listingService.getSellerList(account.getId(), page, size, sort, dir);
+
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
 }

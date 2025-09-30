@@ -4,6 +4,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.SearchListingResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,7 +49,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                 and (:#{#req.mileageMax}  is null or l.mileageKm <= :#{#req.mileageMax})
                 and (:#{#req.sohMin}      is null or l.sohPercent >= :#{#req.sohMin})
                 and (:#{#req.sohMax}      is null or l.sohPercent <= :#{#req.sohMax})
-              order by l.createdAt desc
             """)
     Slice<SearchListingResponseDTO> searchCards(@Param("req") SearchListingRequestDTO req,
                                                 Pageable pageable);
@@ -72,4 +72,33 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                 join a.profile p
             """)
     Slice<ListingListProjection> getAllList(Pageable pageable);
+
+    @Query(
+            value = """
+                      select
+                        l.id as id,
+                        l.title as title,
+                        l.brand as brand,
+                        l.model as model,
+                        l.year as year,
+                        l.price as price,
+                        l.province as province,
+                        l.batteryCapacityKwh as batteryCapacityKwh,
+                        l.sohPercent as sohPercent,
+                        l.createdAt as createdAt,
+                        l.status as status
+                      from Listing l
+                      join l.seller a
+                      where a.id = :sellerId
+                    """,
+            countQuery = """
+                      select count(l)
+                      from Listing l
+                      join l.seller a
+                      where a.id = :sellerId
+                    """
+    )
+    Page<ListingListProjection> findBySeller(@Param("sellerId") Long sellerId, Pageable pageable);
+
+
 }

@@ -283,7 +283,10 @@ public class AccountServiceImp implements AccountService {
                 "items", items,
                 "page", page,
                 "size", size,
-                "hasNext", accounts.hasNext()
+                "totalPages", accounts.getTotalPages(),
+                "totalElements", accounts.getTotalElements(),
+                "hasNext", accounts.hasNext(),
+                "hasPrevious", accounts.hasPrevious()
         );
 
         BaseResponse<Map<String, Object>> response = new BaseResponse<>();
@@ -313,8 +316,11 @@ public class AccountServiceImp implements AccountService {
                 "items", items,
                 "page", page,
                 "size", size,
+                "keyword", keyword,
+                "totalPages", accounts.getTotalPages(),
+                "totalElements", accounts.getTotalElements(),
                 "hasNext", accounts.hasNext(),
-                "keyword", keyword
+                "hasPrevious", accounts.hasPrevious()
         );
 
         BaseResponse<Map<String, Object>> response = new BaseResponse<>();
