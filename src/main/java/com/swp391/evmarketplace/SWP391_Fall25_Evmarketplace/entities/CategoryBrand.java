@@ -7,15 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "category_brand",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_category_brand",
-                columnNames = {"category_id","brand_id"}
-        ),
-        indexes = {
-                @Index(name="idx_cb_category", columnList="category_id"),
-                @Index(name="idx_cb_brand", columnList="brand_id")
-        })
+@Table(name = "category_brand")
 @Getter @Setter @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryBrand {
