@@ -5,6 +5,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.handlers.Cu
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,13 +48,11 @@ public class SecurityConfig {
                             "/api/accounts/verify-otp",
                             "/api/accounts/register",
                             "/api/accounts/reset-password",
-
                             "/api/listing/all",
                             "/api/listing/**",
-
-                            "/api/accounts/image/{fileName:.+}/avatar"
+                            "/api/accounts/avatar"
                     ).permitAll();
-
+                    auth.requestMatchers(HttpMethod.GET, "/api/files/**", "/api/category/**", "/api/brand/**").permitAll();
                     auth.requestMatchers(
                             "/swagger-ui/**",
                             "/v3/api-docs/**",
@@ -74,7 +73,19 @@ public class SecurityConfig {
 
                     //admin
                     auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
+                    auth.requestMatchers(HttpMethod.POST,
+                                    "/api/category/add",
+                                    "/api/brand/add")
+                            .hasAnyRole("ADMIN","STAFF");
 
+                    auth.requestMatchers(HttpMethod.DELETE,
+                                    "/api/category/delete/**",
+                                    "/api/brand/delete/**")
+                            .hasAnyRole("ADMIN","STAFF");
+
+                    auth.requestMatchers(HttpMethod.PUT,
+                                    "/api/category/update/**")
+                            .hasAnyRole("ADMIN","STAFF");
 
                     auth.anyRequest().authenticated();
                 })

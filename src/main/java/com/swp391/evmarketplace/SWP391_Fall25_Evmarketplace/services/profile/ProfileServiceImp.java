@@ -1,7 +1,8 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.profile;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.profile.UpdateProfileRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StoredFile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.profile.ProfileResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
@@ -10,8 +11,8 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusi
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -29,19 +30,19 @@ import java.util.Optional;
 public class ProfileServiceImp implements ProfileService {
 
     @Autowired
-    ProfileRepository profileRepository;
+    private ProfileRepository profileRepository;
 
     @Autowired
-    PhoneOtpRepository phoneOtpRepository;
+    private PhoneOtpRepository phoneOtpRepository;
 
     @Autowired
-    AccountRepository accountRepository;
+    private AccountRepository accountRepository;
 
     @Autowired
-    AuthUtil authUtil;
+    private AuthUtil authUtil;
 
     @Autowired
-    FileService fileService;
+    private FileService fileService;
 
     @Value("${server.url}")
     private String serverUrl;
@@ -107,69 +108,25 @@ public class ProfileServiceImp implements ProfileService {
             throw new CustomBusinessException("ACCOUNT_PHONE_NOT_VERIFIED");
         }
 
+       StoredFile saved = new StoredFile();
+       try{
+           fileService.deleteImage(profile.getAvatarUrl());
+           saved = fileService.storeImage(file);
+       }catch (Exception e){
+           throw new CustomBusinessException("STORE_IMAGE_FAILED");
+       }
 
-        String fileName = fileService.saveOrReplaceAvatar(account.getId(), file);
-        String v;
-        try {
-            v = md5Hex(file.getBytes());
-        } catch (IOException e) {
-            v = String.valueOf(System.currentTimeMillis());
-        }
-
-        profile.setAvatarUrl(fileName);
+        profile.setAvatarUrl(saved.getStoredName());
         profileRepository.save(profile);
-
-        String avatarUrl = serverUrl + "/api/accounts/image/" + fileName + "/avatar?v=" + v;
 
         BaseResponse<String> response = new BaseResponse<>();
         response.setSuccess(true);
         response.setStatus(200);
         response.setMessage("AVATAR_UPDATED");
-        response.setData(fileName);
+        response.setData(saved.getStoredName());
         return response;
     }
 
-
-    private static String md5Hex(byte[] bytes) {
-        try {
-            var md = java.security.MessageDigest.getInstance("MD5");
-            var dig = md.digest(bytes);
-            var sb = new StringBuilder();
-            for (byte b : dig) sb.append(String.format("%02x", b));
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            return Long.toHexString(System.currentTimeMillis());
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public ResponseEntity<Resource> viewAvatar(String fileName) {
-        // Tìm profile có avatarUrl khớp với fileName
-        Optional<Profile> optProfile = profileRepository.findByAvatarUrl(fileName);
-        if(optProfile == null || optProfile.isEmpty()) throw new CustomBusinessException(ErrorCode.AVATAR_NOT_FOUND.toString());
-
-        Profile profile = optProfile.get();
-
-        Resource res = fileService.loadAvatar(profile.getAccount().getId());
-        if (res == null || !res.exists() || !res.isReadable()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
-        // Đoán content-type
-        String contentType;
-        try {
-            contentType = Files.probeContentType(res.getFile().toPath());
-        } catch (IOException e) {
-            contentType = "application/octet-stream";
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\"" + res.getFilename() + "\"")
-                .cacheControl(CacheControl.noCache().cachePublic()) // đảm bảo FE thấy ảnh mới nếu v đổi
-                .body(res);
-    }
 
 
 }

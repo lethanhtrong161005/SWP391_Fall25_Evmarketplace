@@ -1,5 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.BrandStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ModelStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -35,13 +37,17 @@ public class Model {
     @Min(1900) @Max(2100)
     private Integer year;
 
-    @ManyToOne(optional = false)
+    @Column(name = "status" , nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ModelStatus status = ModelStatus.ACTIVE;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "brand_id", nullable = false,
                 foreignKey = @ForeignKey(name = "fk_model_brand")
     )
     private Brand brand;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false,
                 foreignKey = @ForeignKey(name =  "fk_model_category")
     )

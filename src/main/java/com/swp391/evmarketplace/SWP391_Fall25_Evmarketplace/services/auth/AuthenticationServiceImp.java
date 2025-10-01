@@ -1,9 +1,9 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.auth;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.GoogleUserInfoDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.GoogleUserInfoDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.GoogleCallbackRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.LoginRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.LoginRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.LoginResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
@@ -41,8 +41,10 @@ public class AuthenticationServiceImp implements AuthenticationService {
     private JwtUtil jwtUtil;
     @Autowired
     private AccountService accountService;
-    @Autowired
-    private RestTemplate restTemplate;
+
+
+    private RestTemplate restTemplate = new RestTemplate();
+
 
 //    Google
     @Value("${google.authUri}")

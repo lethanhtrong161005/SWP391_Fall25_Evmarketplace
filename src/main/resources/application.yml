@@ -48,11 +48,10 @@ smsSpeed:
   type: ${SMS_TYPE}
 
 
-fileUpload:
-  rootPath: ${UPLOAD_IMAGES_PATH:uploads}
-
-
-
+file-upload:
+  root-path:
+    images: ${UPLOAD_IMAGES_PATH:upload/images}
+    video: ${UPLOAD_VIDEO_PATH:upload/video}
 
 #VNPAY
 vnpay:
