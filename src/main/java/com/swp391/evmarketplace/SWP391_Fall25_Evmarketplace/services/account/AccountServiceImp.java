@@ -10,7 +10,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.Lo
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.OtpResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StaffAccountResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.PhoneOtp;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Otp;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
@@ -68,7 +68,7 @@ public class AccountServiceImp implements AccountService {
 
     @Override
     public BaseResponse<OtpResponse> verifyOtp(String phoneNumber, String otp) {
-        PhoneOtp phoneOtp = phoneOtpRepository.findByPhoneNumber(phoneNumber)
+        Otp phoneOtp = phoneOtpRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new CustomBusinessException("OTP not found for this phone number"));
 
         LocalDateTime now = LocalDateTime.now();
@@ -110,16 +110,16 @@ public class AccountServiceImp implements AccountService {
     @Transactional
     @Override
     public BaseResponse<LoginResponse> registerAccount(RegisterAccountRequest request) {
-        PhoneOtp phoneOtp = phoneOtpRepository.findByTempToken(request.getTempToken());
-        if (phoneOtp == null) {
+        Otp otp = phoneOtpRepository.findByTempToken(request.getTempToken());
+        if (otp == null) {
             throw new CustomBusinessException("Token invalid");
         }
 
-        if (phoneOtp.getTokenExpiredAt().isBefore(LocalDateTime.now())) {
+        if (otp.getTokenExpiredAt().isBefore(LocalDateTime.now())) {
             throw new CustomBusinessException("Token has expired");
         }
 
-        String phoneNumber = phoneOtp.getPhoneNumber();
+        String phoneNumber = otp.getPhoneNumber();
         if (accountRepository.existsByPhoneNumber(phoneNumber)) {
             throw new CustomBusinessException("Phone number already exists");
         }
@@ -137,11 +137,11 @@ public class AccountServiceImp implements AccountService {
         profile.setAccount(account);
 
 
-        phoneOtpRepository.save(phoneOtp);
+        phoneOtpRepository.save(otp);
 
         Account savedAccount = accountRepository.save(account);
 
-        phoneOtpRepository.delete(phoneOtp);
+        phoneOtpRepository.delete(otp);
 
         String accessToken = jwtUtil.generateToken(savedAccount, savedAccount.getProfile());
         String refreshToken = jwtUtil.generateRefreshToken(savedAccount);
@@ -356,15 +356,15 @@ public class AccountServiceImp implements AccountService {
     @Override
     @Transactional
     public BaseResponse<Void> resetPassword(ResetPasswordRequest request) {
-        PhoneOtp phoneOtp = phoneOtpRepository.findByTempToken(request.getToken());
-        if (phoneOtp == null) {
+        Otp otp = phoneOtpRepository.findByTempToken(request.getToken());
+        if (otp == null) {
             throw new CustomBusinessException("Token invalid");
         }
-        if (phoneOtp.getTokenExpiredAt().isBefore(LocalDateTime.now())) {
+        if (otp.getTokenExpiredAt().isBefore(LocalDateTime.now())) {
             throw new CustomBusinessException("Token has expired");
         }
 
-        Account account = accountRepository.findByPhoneNumber(phoneOtp.getPhoneNumber())
+        Account account = accountRepository.findByPhoneNumber(otp.getPhoneNumber())
                 .orElseThrow(() -> new CustomBusinessException("Token invalid"));
 
         if(passwordEncoder.matches(request.getNewPassword(), account.getPassword())){
@@ -374,7 +374,7 @@ public class AccountServiceImp implements AccountService {
         account.setPassword(passwordEncoder.encode(request.getNewPassword()));
         accountRepository.save(account);
 
-        phoneOtpRepository.delete(phoneOtp);
+        phoneOtpRepository.delete(otp);
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setSuccess(true);
@@ -393,8 +393,8 @@ public class AccountServiceImp implements AccountService {
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(1);
 
 
-        PhoneOtp phoneOtp = phoneOtpRepository.findByPhoneNumber(phoneNumber)
-                .orElse(new PhoneOtp());
+        Otp phoneOtp = phoneOtpRepository.findByPhoneNumber(phoneNumber)
+                .orElse(new Otp());
 
         phoneOtp.setPhoneNumber(phoneNumber);
         phoneOtp.setOtp(otp);

@@ -1,5 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.category;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.category.CreateCategoryDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.category.UpdateCategoryRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.brand.BrandResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.brand.BrandWithModelsDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.category.CategoryBrandWithModelsDTO;
@@ -7,8 +9,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.categor
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.category.CategoryTreeDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.model.ModelDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Category;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.CategoryBrand;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Model;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.CategoryBrandRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.CategoryRepository;
@@ -197,4 +201,59 @@ public class CategoryServiceImp implements CategoryService {
 
         return new ArrayList<>(catMap.values());
     }
+
+    @Override
+    @Transactional(readOnly = false, rollbackFor = Exception.class)
+    public BaseResponse<Void> addCategory(CreateCategoryDTO request) {
+        try{
+            BaseResponse<Void> response = new BaseResponse<>();
+            Category category = new Category();
+            category.setName(request.getName());
+            category.setDescription(request.getDescription());
+            categoryRepository.save(category);
+            response.setMessage("Category Added");
+            response.setSuccess(true);
+            response.setStatus(200);
+            return response;
+        }catch (Exception e){
+            throw new CustomBusinessException("Failed to add Category");
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = false, rollbackFor = Exception.class)
+    public BaseResponse<?> deleteCategory(Long categoryId) {
+        try{
+            Category category = categoryRepository.findById(categoryId).get();
+            category.setStatus(CategoryStatus.HIDDEN);
+            categoryRepository.save(category);
+            BaseResponse<Void> response = new BaseResponse<>();
+            response.setMessage("Category Soft Deleted");
+            response.setSuccess(true);
+            response.setStatus(200);
+            return response;
+        }catch (Exception e){
+            throw new CustomBusinessException("Failed to delete Category");
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = false, rollbackFor = Exception.class)
+    public BaseResponse<?> updateCategory(Long categoryId, UpdateCategoryRequest request) {
+        try{
+            Category category = categoryRepository.findById(categoryId).get();
+            if(request.getName() != null && !request.getName().isEmpty()) category.setName(request.getName());
+            if(request.getDescription() != null && !request.getDescription().isEmpty()) category.setDescription(request.getDescription());
+            if (request.getStatus() != null) category.setStatus(request.getStatus());
+            categoryRepository.save(category);
+            BaseResponse<Void> response = new BaseResponse<>();
+            response.setMessage("Category Updated");
+            response.setSuccess(true);
+            response.setStatus(200);
+            return response;
+        } catch (Exception e) {
+            throw new CustomBusinessException("Failed to update Category");
+        }
+    }
+
 }

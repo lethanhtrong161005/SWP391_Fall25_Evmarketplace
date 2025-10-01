@@ -51,14 +51,12 @@ public class SecurityConfig {
 
                             "/api/listing/**",
 
-                            "/api/category/**",
 
-                            "/api/brand/**",
 
                             "/api/accounts/avatar"
                     ).permitAll();
 
-                    auth.requestMatchers(HttpMethod.GET, "/api/files/**").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/api/files/**", "/api/category/**", "/api/brand/**").permitAll();
                   
                     auth.requestMatchers(
                             "/swagger-ui/**",
@@ -77,8 +75,19 @@ public class SecurityConfig {
 
                     //admin
                     auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
+                    auth.requestMatchers(HttpMethod.POST,
+                                    "/api/category/add",
+                                    "/api/brand/add")
+                            .hasAnyRole("ADMIN","STAFF");
 
+                    auth.requestMatchers(HttpMethod.DELETE,
+                                    "/api/category/delete/**",
+                                    "/api/brand/delete/**")
+                            .hasAnyRole("ADMIN","STAFF");
 
+                    auth.requestMatchers(HttpMethod.PUT,
+                                    "/api/category/update/**")
+                            .hasAnyRole("ADMIN","STAFF");
 
                     auth.anyRequest().authenticated();
                 })

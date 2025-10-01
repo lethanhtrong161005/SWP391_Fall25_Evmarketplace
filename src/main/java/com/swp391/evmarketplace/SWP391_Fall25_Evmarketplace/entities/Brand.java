@@ -2,6 +2,8 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.brand.BrandResponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.BrandStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,6 +25,10 @@ public class Brand {
 
     @Column(nullable=false, unique=true, length=255)
     private String name;
+
+    @Column(name = "status" , nullable = false)
+    @Enumerated(EnumType.STRING)
+    private BrandStatus status = BrandStatus.ACTIVE;
 
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

@@ -1,13 +1,11 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.scheduler;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.PhoneOtp;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Component
 public class OtpCleanupScheduler {
