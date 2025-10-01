@@ -9,21 +9,16 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.OtpRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 @Service
@@ -33,7 +28,7 @@ public class ProfileServiceImp implements ProfileService {
     private ProfileRepository profileRepository;
 
     @Autowired
-    private PhoneOtpRepository phoneOtpRepository;
+    private OtpRepository otpRepository;
 
     @Autowired
     private AccountRepository accountRepository;

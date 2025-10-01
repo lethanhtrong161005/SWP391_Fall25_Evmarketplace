@@ -7,25 +7,23 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "phone_otp",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "phone_number")
-        }
-)
+@Table(name = "otp")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PhoneOtp {
+public class Otp {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "phone_number", nullable = false, length = 20)
+    @Column(name = "phone_number", length = 20)
     private String phoneNumber;
+
+    @Column(name = "email", length = 50)
+    private String email;
 
     @Column(length = 6)
     private String otp;
