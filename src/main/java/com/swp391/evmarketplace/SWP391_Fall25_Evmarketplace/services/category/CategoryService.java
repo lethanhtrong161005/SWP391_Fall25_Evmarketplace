@@ -1,5 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.category;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.category.CreateCategoryDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.category.UpdateCategoryRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.category.CategoryTreeDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.category.CategoryBrandWithModelsDTO;
@@ -20,4 +22,9 @@ public interface CategoryService {
 
     BaseResponse<List<CategoryTreeDTO>> getCategoryBrandModel();
     BaseResponse<CategoryTreeDTO> getCategoryBrandModelById(Long categoryId);
+
+    BaseResponse<Void> addCategory(CreateCategoryDTO request);
+    BaseResponse<?> deleteCategory(Long categoryId);
+
+    BaseResponse<?> updateCategory(Long categoryId, UpdateCategoryRequest request);
 }

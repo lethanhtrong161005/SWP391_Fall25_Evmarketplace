@@ -7,7 +7,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "otp")
+@Table(
+        name = "otp"
+)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -46,4 +48,5 @@ public class Otp {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
 }

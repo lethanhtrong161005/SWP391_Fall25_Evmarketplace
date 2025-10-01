@@ -6,4 +6,5 @@ public interface CategoryBrandFlat {
     String getCategoryDescription();
     Long getBrandId();
     String getBrandName();
+
 }

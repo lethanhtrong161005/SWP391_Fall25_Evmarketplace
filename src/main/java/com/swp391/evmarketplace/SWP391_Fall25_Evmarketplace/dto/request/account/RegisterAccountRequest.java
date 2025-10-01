@@ -1,4 +1,4 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

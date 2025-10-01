@@ -20,9 +20,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Autowired
-    private JwtAuthenticationFilter  jwtAuthenticationFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
     @Autowired
-    private CustomSecurityHandlers  customSecurityHandlers;
+    private CustomSecurityHandlers customSecurityHandlers;
 
 
     @Bean
@@ -48,18 +48,11 @@ public class SecurityConfig {
                             "/api/accounts/verify-otp",
                             "/api/accounts/register",
                             "/api/accounts/reset-password",
-
+                            "/api/listing/all",
                             "/api/listing/**",
-
-                            "/api/category/**",
-
-                            "/api/brand/**",
-
                             "/api/accounts/avatar"
                     ).permitAll();
-
-                    auth.requestMatchers(HttpMethod.GET, "/api/files/**").permitAll();
-                  
+                    auth.requestMatchers(HttpMethod.GET, "/api/files/**", "/api/category/**", "/api/brand/**").permitAll();
                     auth.requestMatchers(
                             "/swagger-ui/**",
                             "/v3/api-docs/**",
@@ -68,17 +61,31 @@ public class SecurityConfig {
                     ).permitAll();
 
 
-
                     //auth
                     auth.requestMatchers("/api/accounts/change-password",
                             "/api/accounts/update-profile",
-                            "/api/accounts/update-avatar"
-                            ).authenticated();
+                            "/api/accounts/update-avatar",
+                            "/api/accounts/listing"
+                    ).authenticated();
+
+                    //staff
+                    auth.requestMatchers("api/staff/**").hasRole("STAFF");
 
                     //admin
                     auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
+                    auth.requestMatchers(HttpMethod.POST,
+                                    "/api/category/add",
+                                    "/api/brand/add")
+                            .hasAnyRole("ADMIN","STAFF");
 
+                    auth.requestMatchers(HttpMethod.DELETE,
+                                    "/api/category/delete/**",
+                                    "/api/brand/delete/**")
+                            .hasAnyRole("ADMIN","STAFF");
 
+                    auth.requestMatchers(HttpMethod.PUT,
+                                    "/api/category/update/**")
+                            .hasAnyRole("ADMIN","STAFF");
 
                     auth.anyRequest().authenticated();
                 })

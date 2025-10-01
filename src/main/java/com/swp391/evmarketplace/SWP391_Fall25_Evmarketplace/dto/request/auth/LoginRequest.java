@@ -1,4 +1,4 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.validation.ValidPhone;
 import jakarta.validation.constraints.NotBlank;
