@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class SearchListingResponseDTO {
     private Long id;
-    private String title, brand, model, province, city;
+    private String title, brand, model, province;
     private Integer year, mileageKm;
     private BigDecimal batteryCapacityKwh, sohPercent, price;
     private LocalDateTime createdAt;

@@ -12,7 +12,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +29,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
               select new com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.SearchListingResponseDTO(
                 l.id,
                 l.title, l.brand, l.model,
-                l.province, l.city,
+                l.province,
                 l.year, l.mileageKm,
                 l.batteryCapacityKwh, l.sohPercent, l.price,
                 l.createdAt
