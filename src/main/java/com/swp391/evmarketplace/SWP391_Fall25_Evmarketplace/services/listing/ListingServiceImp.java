@@ -1,6 +1,11 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
+
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.SearchListingResponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.*;
@@ -17,9 +22,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+
 
 @Service
 public class ListingServiceImp implements ListingService {
@@ -44,7 +52,7 @@ public class ListingServiceImp implements ListingService {
 
 
     @Override
-   public BaseResponse<List<ListingReponseDTO>> getAllListings(int pageSize, int pageNumber) {
+    public BaseResponse<List<ListingReponseDTO>> getAllListings(int pageSize, int pageNumber) {
         Pageable page = PageRequest.of(pageNumber, pageSize);
         List<ListingReponseDTO> listings = listingRepository.findAll(page)
                 .stream().map(listing -> {
@@ -79,6 +87,7 @@ public class ListingServiceImp implements ListingService {
                     dto.setWard(listing.getWard());
                     dto.setAddress(listing.getAddress());
                     dto.setPromotedUntil(listing.getPromotedUntil());
+
                     String thumbnail = "";
                     if( listing.getMediaList() != null && !listing.getMediaList().isEmpty()){
                         for(ListingMedia l : listing.getMediaList()){
@@ -92,6 +101,7 @@ public class ListingServiceImp implements ListingService {
                     if(!thumbnail.isEmpty()){
                         dto.setThumbnail(thumbnail);
                     }
+
                     dto.setBranchId(
                             listing.getBranch() != null ? listing.getBranch().getId() : null
                     );
@@ -102,7 +112,7 @@ public class ListingServiceImp implements ListingService {
                     return dto;
                 }).toList();
         BaseResponse<List<ListingReponseDTO>> response = new BaseResponse<>();
-        if(listings.isEmpty()) {
+        if (listings.isEmpty()) {
             throw new CustomBusinessException("No listings found");
         }
         response.setData(listings);
@@ -111,6 +121,7 @@ public class ListingServiceImp implements ListingService {
         response.setMessage("Get all listings");
         return response;
     }
+
 
     @Transactional
     @Override
@@ -199,6 +210,93 @@ public class ListingServiceImp implements ListingService {
         res.setMessage("Listing created");
         return res;
     }
+
+
+
+    private Pageable buildPageable(int page, int size, String sort, String dir) {
+        Sort s = (sort == null || sort.isBlank())
+                ? Sort.by(Sort.Direction.DESC, "createdAt") //mặc định show acc mới tạo gần nhất
+                : Sort.by("desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC, sort);
+        return PageRequest.of(Math.max(page, 0), Math.max(size, 1), s); // số trang 0 âm, ít nhất 1 phần tử trong mỗi trang
+    }
+
+    @Override
+    public BaseResponse<Map<String, Object>> searchCard(SearchListingRequestDTO requestDTO) {
+        Pageable pageable = buildPageable(requestDTO.getPage(), requestDTO.getSize(), requestDTO.getSort(), requestDTO.getDir());
+
+        Slice<SearchListingResponseDTO> lists = listingRepository.searchCards(requestDTO, pageable);
+
+        if (lists.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
+
+        Map<String, Object> payload = Map.of(
+                "items", lists.getContent(),
+                "page", requestDTO.getPage(),
+                "size", requestDTO.getSize(),
+                "hasNext", lists.hasNext()
+        );
+
+        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
+        response.setData(payload);
+        response.setStatus(200);
+        response.setSuccess(true);
+        response.setMessage("OK");
+
+        return response;
+    }
+
+    @Override
+    public BaseResponse<Map<String, Object>> getAllListForManage(int page, int size, String sort, String dir) {
+        Pageable pageable = buildPageable(page, size, sort, dir);
+
+        Slice<ListingListProjection> slice = listingRepository.getAllList(pageable);
+
+        if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
+
+        Map<String, Object> payload = Map.of(
+                "items", slice.getContent(),
+                "page", page,
+                "size", size,
+                "hasNext", slice.hasNext()
+        );
+
+        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
+        response.setData(payload);
+        response.setStatus(200);
+        response.setSuccess(true);
+        response.setMessage("OK");
+
+        return response;
+    }
+
+    @Override
+    public BaseResponse<Map<String, Object>> getSellerList(Long id, int page, int size, String sort, String dir) {
+        Pageable pageable = buildPageable(page, size, sort, dir);
+
+        if (id == null) throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
+
+        Page<ListingListProjection> lists = listingRepository.findBySeller(id, pageable);
+        if (lists.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
+
+        Map<String, Object> payload = Map.of(
+                "items", lists.getContent(),
+                "page", page,
+                "size", size,
+                "totalPages", lists.getTotalPages(),
+                "totalElements", lists.getTotalElements(),
+                "hasNext", lists.hasNext(),
+                "hasPrevious", lists.hasPrevious()
+        );
+
+        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
+        response.setData(payload);
+        response.setStatus(200);
+        response.setSuccess(true);
+        response.setMessage("OK");
+
+        return response;
+    }
+
+
 
 
 }

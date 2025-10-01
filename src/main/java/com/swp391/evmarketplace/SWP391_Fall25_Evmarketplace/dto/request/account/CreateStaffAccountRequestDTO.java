@@ -20,10 +20,5 @@ public class CreateStaffAccountRequestDTO {
     )
     private String password;
 
-    @NotBlank(message = "FULL_NAME_REQUIRED")
-    @Pattern(
-            regexp = "^[\\p{L}][\\p{L}\\s\\-']{1,49}$",
-            message = "FULL_NAME_INVALID"
-    )
     private String fullName;
 }

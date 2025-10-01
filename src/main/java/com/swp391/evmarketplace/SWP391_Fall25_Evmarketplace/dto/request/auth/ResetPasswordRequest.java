@@ -1,13 +1,13 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
-public class ChangePasswordRequest {
-    @NotBlank(message = "Old password is required")
-    private String oldPassword;
+public class ResetPasswordRequest {
+    @NotBlank(message = "Token is required")
+    private String token;
 
     @NotBlank(message = "New password is required")
     @Pattern(
