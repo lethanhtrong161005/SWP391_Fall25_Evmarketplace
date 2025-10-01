@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
-public interface PhoneOtpRepository extends JpaRepository<Otp, Long> {
+public interface OtpRepository extends JpaRepository<Otp, Long> {
     Optional<Otp> findByPhoneNumber(String phoneNumber);
 
     Otp findByTempToken(String tempToken);

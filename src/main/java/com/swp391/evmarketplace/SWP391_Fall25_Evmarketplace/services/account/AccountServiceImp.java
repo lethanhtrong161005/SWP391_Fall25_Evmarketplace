@@ -21,7 +21,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.mapper.AccountMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.PhoneOtpRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.OtpRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
@@ -40,7 +40,7 @@ public class AccountServiceImp implements AccountService {
     @Autowired
     private AccountRepository accountRepository;
     @Autowired
-    private PhoneOtpRepository phoneOtpRepository;
+    private OtpRepository otpRepository;
     @Autowired
     private SpeedSMSAPI speedSMSAPI;
     @Autowired
@@ -73,7 +73,9 @@ public class AccountServiceImp implements AccountService {
 
     @Override
     public BaseResponse<OtpResponse> verifyOtp(String phoneNumber, String otp) {
-        Otp phoneOtp = phoneOtpRepository.findByPhoneNumber(phoneNumber)
+
+        Otp phoneOtp = otpRepository.findByPhoneNumber(phoneNumber)
+
                 .orElseThrow(() -> new CustomBusinessException("OTP not found for this phone number"));
 
         LocalDateTime now = LocalDateTime.now();
@@ -98,7 +100,7 @@ public class AccountServiceImp implements AccountService {
 
         phoneOtp.setOtp(null);
 
-        phoneOtpRepository.save(phoneOtp);
+        otpRepository.save(phoneOtp);
 
         OtpResponse otpResponse = new OtpResponse();
         otpResponse.setTempToken(tempToken);
@@ -115,7 +117,9 @@ public class AccountServiceImp implements AccountService {
     @Transactional
     @Override
     public BaseResponse<LoginResponse> registerAccount(RegisterAccountRequest request) {
-        Otp otp = phoneOtpRepository.findByTempToken(request.getTempToken());
+
+        Otp otp = otpRepository.findByTempToken(request.getTempToken());
+
         if (otp == null) {
             throw new CustomBusinessException("Token invalid");
         }
@@ -142,11 +146,13 @@ public class AccountServiceImp implements AccountService {
         profile.setAccount(account);
 
 
-        phoneOtpRepository.save(otp);
+
+        otpRepository.save(otp);
 
         Account savedAccount = accountRepository.save(account);
 
-        phoneOtpRepository.delete(otp);
+        otpRepository.delete(otp);
+
 
         String accessToken = jwtUtil.generateToken(savedAccount, savedAccount.getProfile());
         String refreshToken = jwtUtil.generateRefreshToken(savedAccount);
@@ -451,7 +457,9 @@ public class AccountServiceImp implements AccountService {
     @Override
     @Transactional
     public BaseResponse<Void> resetPassword(ResetPasswordRequest request) {
-        Otp otp = phoneOtpRepository.findByTempToken(request.getToken());
+
+        Otp otp = otpRepository.findByTempToken(request.getToken());
+
         if (otp == null) {
             throw new CustomBusinessException("Token invalid");
         }
@@ -469,7 +477,8 @@ public class AccountServiceImp implements AccountService {
         account.setPassword(passwordEncoder.encode(request.getNewPassword()));
         accountRepository.save(account);
 
-        phoneOtpRepository.delete(otp);
+        otpRepository.delete(otp);
+
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setSuccess(true);
@@ -488,7 +497,9 @@ public class AccountServiceImp implements AccountService {
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(1);
 
 
-        Otp phoneOtp = phoneOtpRepository.findByPhoneNumber(phoneNumber)
+
+        Otp phoneOtp = otpRepository.findByPhoneNumber(phoneNumber)
+
                 .orElse(new Otp());
 
         phoneOtp.setPhoneNumber(phoneNumber);
@@ -498,7 +509,7 @@ public class AccountServiceImp implements AccountService {
         phoneOtp.setTempToken(null);
         phoneOtp.setTokenExpiredAt(null);
 
-        phoneOtpRepository.save(phoneOtp);
+        otpRepository.save(phoneOtp);
 
         String content = "Your OTP is: " + otp;
         boolean isSendOtp = false;
