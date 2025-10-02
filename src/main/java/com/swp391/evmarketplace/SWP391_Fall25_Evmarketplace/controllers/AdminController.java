@@ -44,21 +44,21 @@ public class AdminController {
     }
 
     @GetMapping("/accounts/{id}")
-    public ResponseEntity<BaseResponse<AccountReponseDTO>> getAccountById(@PathVariable Long id){
+    public ResponseEntity<BaseResponse<AccountReponseDTO>> getAccountById(@PathVariable Long id) {
         BaseResponse<AccountReponseDTO> reponseDTO = accountService.getAccountById(id);
         return ResponseEntity.status(reponseDTO.getStatus()).body(reponseDTO);
     }
 
     @PatchMapping("/accounts/{id}/block")
-    public ResponseEntity<Void> blockAccount(@PathVariable Long id) {
-        accountService.blockAccount(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<BaseResponse<Void>> blockAccount(@PathVariable Long id) {
+        BaseResponse<Void> response = accountService.blockAccount(id);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PatchMapping("/accounts/{id}/unblock")
-    public ResponseEntity<Void> unblockAccount(@PathVariable Long id) {
-        accountService.unblockAccount(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<BaseResponse<Void>> unblockAccount(@PathVariable Long id) {
+        BaseResponse<Void> response = accountService.unblockAccount(id);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PostMapping("/accounts/register")
