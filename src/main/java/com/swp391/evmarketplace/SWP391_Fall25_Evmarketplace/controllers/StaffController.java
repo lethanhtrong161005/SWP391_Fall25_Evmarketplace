@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("")
+@RequestMapping("/api/staff")
 @Tag(name = "staff", description = "APIs that staff manage")
 public class StaffController {
 

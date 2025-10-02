@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -616,9 +617,10 @@ public class AccountServiceImp implements AccountService {
             throw new CustomBusinessException("PHONE_NUMBER_EXIST");
         }
 
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         Account account = new Account();
         account.setPhoneNumber(requestDTO.getPhoneNumber());
-        account.setPassword(requestDTO.getPassword());
+        account.setPassword(encoder.encode(requestDTO.getPassword()));
 
         Profile profile = new Profile();
         profile.setFullName(requestDTO.getFullName());
