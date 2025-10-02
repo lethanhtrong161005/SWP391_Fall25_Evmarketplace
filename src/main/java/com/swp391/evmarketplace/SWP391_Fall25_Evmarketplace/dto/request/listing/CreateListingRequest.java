@@ -69,11 +69,5 @@ public class CreateListingRequest {
     @NotNull
     private Visibility visibility;        // NORMAL | BOOSTED
 
-    // --------- Media ---------
-    @Size(max = 8, message = "Max 8 image")
-    private List<MultipartFile> images;
-
-    @Size(max = 2, message = "Max 2 video")
-    private List<MultipartFile> videos;
 
 }

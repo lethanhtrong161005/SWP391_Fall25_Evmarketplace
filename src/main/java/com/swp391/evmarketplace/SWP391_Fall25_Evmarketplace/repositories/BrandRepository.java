@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BrandRepository extends JpaRepository<Brand, String> {
@@ -22,5 +23,10 @@ public interface BrandRepository extends JpaRepository<Brand, String> {
         ORDER BY b.name
     """)
     List<Brand> findByCategoryId(Long categoryId);
+
+    Optional<Brand> findById(Long id);
+
+    boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 
 }

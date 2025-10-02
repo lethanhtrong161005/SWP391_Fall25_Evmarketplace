@@ -7,6 +7,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.Map;
 public interface ListingService {
    BaseResponse<List<ListingReponseDTO>> getAllListings(int pageSize, int pageNumber);
 
-   BaseResponse<Void> createListing(CreateListingRequest req);
+   BaseResponse<Void> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
 
    //cho phép sort theo thời gian tạo
    BaseResponse<Map<String, Object>> searchCard(SearchListingRequestDTO requestDTO);

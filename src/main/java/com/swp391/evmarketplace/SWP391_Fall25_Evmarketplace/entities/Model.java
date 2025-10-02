@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.model.ModelDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.BrandStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ModelStatus;
 import jakarta.persistence.*;
@@ -60,4 +61,18 @@ public class Model {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public ModelDTO toDTO(Model model) {
+        ModelDTO modelDTO = new ModelDTO();
+        modelDTO.setId(model.getId());
+        modelDTO.setName(model.getName());
+        modelDTO.setYear(model.getYear());
+        modelDTO.setStatus(modelDTO.getStatus());
+        modelDTO.setBrandId(model.getBrand().getId());
+        modelDTO.setCategoryId(model.getCategory().getId());
+        modelDTO.setCategoryName(model.getCategory().getName());
+        modelDTO.setBrandName(model.getBrand().getName());
+        return modelDTO;
+    }
+
 }

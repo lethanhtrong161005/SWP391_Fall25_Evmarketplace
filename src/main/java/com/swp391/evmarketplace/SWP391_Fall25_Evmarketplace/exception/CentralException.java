@@ -7,6 +7,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -87,5 +88,15 @@ public class CentralException {
         // Tránh lộ chi tiết nội bộ; log stacktrace ở layer logging thay vì đưa ra client
         return build(HttpStatus.INTERNAL_SERVER_ERROR.value(), false, "Internal Server Error", null, null);
     }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<BaseResponse<Void>> handleBadJson(HttpMessageNotReadableException ex) {
+        BaseResponse<Void> res = new BaseResponse<>();
+        res.setSuccess(false);
+        res.setStatus(400);
+        res.setMessage("Bad JSON: " + ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.badRequest().body(res);
+    }
+
 
 }

@@ -52,7 +52,14 @@ public class SecurityConfig {
                             "/api/listing/**",
                             "/api/accounts/avatar"
                     ).permitAll();
-                    auth.requestMatchers(HttpMethod.GET, "/api/files/**", "/api/category/**", "/api/brand/**").permitAll();
+                    auth.requestMatchers(HttpMethod.GET,
+                            "/api/files/**",
+                            "/api/category/**",
+                            "/api/brand/**",
+                            "/api/model/**",
+                            "/api/product/vehicle/**",
+                            "/api/product/battery/**"
+                    ).permitAll();
                     auth.requestMatchers(
                             "/swagger-ui/**",
                             "/v3/api-docs/**",
@@ -75,16 +82,24 @@ public class SecurityConfig {
                     auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
                     auth.requestMatchers(HttpMethod.POST,
                                     "/api/category/add",
-                                    "/api/brand/add")
+                                    "/api/brand/add",
+                                    "/api/model/add",
+                                    "/api/product/vehicle/add",
+                                    "/api/product/battery/add")
                             .hasAnyRole("ADMIN","STAFF");
 
                     auth.requestMatchers(HttpMethod.DELETE,
                                     "/api/category/delete/**",
-                                    "/api/brand/delete/**")
+                                    "/api/brand/delete/**",
+                                    "/api/model/delete/**")
                             .hasAnyRole("ADMIN","STAFF");
 
                     auth.requestMatchers(HttpMethod.PUT,
-                                    "/api/category/update/**")
+                                    "/api/category/update/**",
+                                    "/api/brand/update/**",
+                                    "/api/model/update/**",
+                                    "/api/product/vehicle/update/**",
+                                    "/api/product/battery/update/**")
                             .hasAnyRole("ADMIN","STAFF");
 
                     auth.anyRequest().authenticated();
