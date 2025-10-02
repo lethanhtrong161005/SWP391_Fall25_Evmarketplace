@@ -11,4 +11,7 @@ public class UpdateEmailRequestDTO {
     @Email(message = "INVALID_EMAIL")
     @NotBlank(message = "EMAIL_NOT_BE_BLANK")
     private String newEmail;
+
+    @NotBlank(message = "Token is required")
+    private String tempToken;
 }

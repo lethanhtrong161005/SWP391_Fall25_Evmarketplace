@@ -4,6 +4,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.UpdateEmailRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.ChangePasswordRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.ResetPasswordRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.VerifyEmailOtpRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.GoogleUserInfoDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.CreateStaffAccountRequestDTO;
@@ -25,6 +26,9 @@ public interface AccountService {
     BaseResponse<Void> changePassword(ChangePasswordRequest request);
     BaseResponse<Void> updateEmail(UpdateEmailRequestDTO requestDTO);
 
+    BaseResponse<String> sendOtpEmail(String email);
+    BaseResponse<OtpResponse> verifyEmailOtp(VerifyEmailOtpRequestDTO verifyEmailOtp);
+
     //admin
     BaseResponse<Map<String, Object>> getAll(int page, int size, String sort, String dir);
     BaseResponse<Map<String, Object>> search(String keyword, int page, int size, String sort, String dir);
@@ -33,4 +37,6 @@ public interface AccountService {
     BaseResponse<Void> unblockAccount(Long accountId);
     BaseResponse<StaffAccountResponseDTO> createStaffAccount(CreateStaffAccountRequestDTO requestDTO);
     BaseResponse<Void> resetPassword(ResetPasswordRequest request);
+
+
 }

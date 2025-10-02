@@ -19,6 +19,22 @@ spring:
       max-file-size: 500MB
       max-request-size: 510MB
 
+  # Email configuration
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          timeout: 20000
+          connectiontimeout: 20000
+          writetimeout: 20000
+
 server:
   port: ${PORT:8089}
   url: ${OPENAPI_SERVER_LOCAL}

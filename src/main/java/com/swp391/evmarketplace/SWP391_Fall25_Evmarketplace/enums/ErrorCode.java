@@ -26,7 +26,25 @@ public enum ErrorCode {
     KEYWORD_NOT_FOUND,
 
     //listing
-    LISTING_NOT_FOUND;
+    LISTING_NOT_FOUND,
+
+    //nhóm email
+    EMAIL_ALREADY_EXISTS,
+    EMAIL_FAIL,
+    EMAIL_SENT,
+    SEND_OTP_SUCCESSFULLY,
+    SEND_OTP_FAILED,
+
+    //OTP
+    OTP_NOT_FOUND,
+    INVALID_OTP,
+    OTP_HAS_EXPIRED,
+    OTP_ALREADY_USED,
+    VERIFY_OTP_SUCCESSFULLY,
+
+    //Token
+    INVALID_TOKEN,
+    TOKEN_HAS_EXPIRED;
 
 }
 

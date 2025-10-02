@@ -16,4 +16,5 @@ public interface OtpRepository extends JpaRepository<Otp, Long> {
     void deleteByExpiredAtBeforeAndIsUsedFalse(LocalDateTime now);
     void deleteByTokenExpiredAtBefore(LocalDateTime now);
 
+    Optional<Otp> findByEmail(String email);
 }
