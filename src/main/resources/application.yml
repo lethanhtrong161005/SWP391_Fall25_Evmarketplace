@@ -18,6 +18,8 @@ spring:
     multipart:
       max-file-size: 500MB
       max-request-size: 510MB
+      enabled: true
+      file-size-threshold: 2MB
 
 server:
   port: ${PORT:8089}
@@ -46,6 +48,13 @@ smsSpeed:
   token: ${SMS_ACCESS_TOKEN}
   sender: ${SMS_SENDER}
   type: ${SMS_TYPE}
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace
+    org.springframework.web: info
+    org.springframework.transaction: debug
 
 
 file-upload:

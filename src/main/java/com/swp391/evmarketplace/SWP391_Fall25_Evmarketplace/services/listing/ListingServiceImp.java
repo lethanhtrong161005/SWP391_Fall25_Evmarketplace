@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,6 +43,8 @@ public class ListingServiceImp implements ListingService {
     private ProductBatteryRepository  productBatteryRepository;
     @Autowired
     private ProductVehicleRepository productVehicleRepository;
+    @Autowired
+    private ModelRepository modelRepository;
     @Autowired
     private FileService fileService;
     @Autowired
@@ -125,90 +128,133 @@ public class ListingServiceImp implements ListingService {
 
     @Transactional
     @Override
-    public BaseResponse<Void> createListing(CreateListingRequest req) {
-        // 1) Validate & lookup
-        var category = categoryRepository.findById(req.getCategoryId())
-                .orElseThrow(() -> new CustomBusinessException("Category not found"));
+    public BaseResponse<Void> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos) {
+       try{
+           // 1) Category
+           var category = categoryRepository.findById(req.getCategoryId())
+                   .orElseThrow(() -> new CustomBusinessException("Category not found"));
 
-        // (Tuỳ chọn) kiểm tra itemType ↔ categoryCode
-        if (req.getItemType() == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
-            throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
+           // 2) Nếu có modelId → dùng model làm “nguồn chân lý” để nhận diện loại và kiểm tính hợp lệ
+           Model model = null;
+           if (req.getModelId() != null) {
+               model = modelRepository.findById(req.getModelId())
+                       .orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
+
+               // Model phải thuộc đúng category người dùng chọn
+               if (!model.getCategory().getId().equals(req.getCategoryId())) {
+                   throw new CustomBusinessException("Model does not belong to selected category");
+               }
+               // Nếu có brandId thì check model.brand
+               if (req.getBrandId() != null && !model.getBrand().getId().equals(req.getBrandId())) {
+                   throw new CustomBusinessException("Model does not belong to selected brand");
+               }
+           }
+
+           // 3) Resolve loại (VEHICLE/BATTERY)
+           ItemType type = resolveItemType(req, model);
+
+           // Cross-check căn bản (tránh gửi nhầm code)
+           if (type == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
+               throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
+           }
+           if (type == ItemType.VEHICLE && "BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
+               throw new CustomBusinessException("categoryCode must not be BATTERY for itemType=VEHICLE");
+           }
+
+           // 4) Build listing snapshot
+           var listing = new Listing();
+           listing.setCategory(category);
+           listing.setTitle(req.getTitle());
+           listing.setSeller(authUtil.getCurrentAccount());
+
+           listing.setBrand(req.getBrand());
+           listing.setBrandId(req.getBrandId());
+           listing.setModel(req.getModel());
+           listing.setModelId(req.getModelId());
+           listing.setYear(req.getYear());
+           listing.setBatteryCapacityKwh(req.getBatteryCapacityKwh());
+           listing.setSohPercent(req.getSohPercent());
+           listing.setMileageKm(req.getMileageKm());
+           listing.setColor(req.getColor());
+           listing.setDescription(req.getDescription());
+           listing.setPrice(req.getPrice());
+           listing.setVisibility(req.getVisibility());
+           listing.setVerified(false);
+           listing.setStatus(Status.PENDING);
+           listing.setProvince(req.getProvince());
+           listing.setDistrict(req.getDistrict());
+           listing.setWard(req.getWard());
+           listing.setAddress(req.getAddress());
+           listing.setConsigned(false);
+
+           // 5) Tự link catalog nếu có brandId + modelId
+           if (req.getBrandId() != null && req.getModelId() != null) {
+               if (type == ItemType.VEHICLE) {
+                   productVehicleRepository
+                           .findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId())
+                           .ifPresent(listing::setProductVehicle);
+                   // đảm bảo loại kia null
+                   listing.setProductBattery(null);
+               } else { // BATTERY
+                   productBatteryRepository
+                           .findFirstByCategory_IdAndBrand_IdAndModel_Id(req.getCategoryId(), req.getBrandId(), req.getModelId())
+                           .ifPresent(listing::setProductBattery);
+                   listing.setProductVehicle(null);
+               }
+           }
+
+           listingRepository.save(listing);
+
+           // 6) Media
+           try {
+               if (images != null) {
+                   for (var img : images) {
+                       if (img == null || img.isEmpty()) continue;
+                       var stored = fileService.storeImage(img);
+                       var media = new ListingMedia();
+                       media.setListing(listing);
+                       media.setMediaUrl(stored.getStoredName());
+                       media.setMediaType(MediaType.IMAGE);
+                       listing.addMedia(media);
+                   }
+               }
+               if (videos != null) {
+                   for (var v : videos) {
+                       if (v == null || v.isEmpty()) continue;
+                       var stored = fileService.storeVideo(v);
+                       var media = new ListingMedia();
+                       media.setListing(listing);
+                       media.setMediaUrl(stored.getStoredName());
+                       media.setMediaType(MediaType.VIDEO);
+                       listing.addMedia(media);
+                   }
+               }
+           } catch (IOException ioe) {
+               throw new CustomBusinessException("Upload media failed: " + ioe.getMessage());
+           }
+
+           listingRepository.save(listing);
+
+           var res = new BaseResponse<Void>();
+           res.setSuccess(true);
+           res.setStatus(201);
+           res.setMessage("Listing created");
+           return res;
+       } catch (Exception e) {
+           throw new CustomBusinessException(e.getMessage());
+       }
+    }
+
+    private ItemType resolveItemType(CreateListingRequest req, Model modelIfAny) {
+        // Ưu tiên theo model.category nếu có modelId
+        if (modelIfAny != null) {
+            String cat = modelIfAny.getCategory().getName();
+            return "BATTERY".equalsIgnoreCase(cat) ? ItemType.BATTERY : ItemType.VEHICLE;
         }
-
-        // 2) Build Listing snapshot
-        var listing = new Listing();
-        listing.setCategory(category);
-        listing.setTitle(req.getTitle());
-        listing.setSeller(authUtil.getCurrentAccount());
-
-        listing.setBrand(req.getBrand());
-        listing.setBrandId(req.getBrandId());
-        listing.setModel(req.getModel());
-        listing.setModelId(req.getModelId());
-        listing.setYear(req.getYear());
-        listing.setBatteryCapacityKwh(req.getBatteryCapacityKwh());
-        listing.setSohPercent(req.getSohPercent());
-        listing.setMileageKm(req.getMileageKm());
-        listing.setColor(req.getColor());
-        listing.setDescription(req.getDescription());
-        listing.setPrice(req.getPrice());
-        listing.setVisibility(req.getVisibility());
-        listing.setVerified(false);
-        listing.setStatus(Status.PENDING);
-        listing.setProvince(req.getProvince());
-        listing.setDistrict(req.getDistrict());
-        listing.setWard(req.getWard());
-        listing.setAddress(req.getAddress());
-        listing.setConsigned(false);
-
-        if (req.getItemType() == ItemType.VEHICLE && req.getBrandId() != null && req.getModelId() != null) {
-            productVehicleRepository
-                    .findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId())
-                    .ifPresent(listing::setProductVehicle);
-        } else if (req.getItemType() == ItemType.BATTERY && req.getBrandId() != null && req.getModelId() != null) {
-            productBatteryRepository
-                    .findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId())
-                    .ifPresent(listing::setProductBattery);
-        }
-
-        listingRepository.save(listing);
-
-
-        try {
-            if (req.getImages() != null) {
-                for (var img : req.getImages()) {
-                    if (img == null || img.isEmpty()) continue;
-                    var stored = fileService.storeImage(img);
-                    var media = new ListingMedia();
-                    media.setListing(listing);
-                    media.setMediaUrl(stored.getStoredName());
-                    media.setMediaType(MediaType.IMAGE);
-                    listing.addMedia(media);
-                }
-            }
-            if (req.getVideos() != null) {
-                for (var v : req.getVideos()) {
-                    if (v == null || v.isEmpty()) continue;
-                    var stored = fileService.storeVideo(v);
-                    var media = new ListingMedia();
-                    media.setListing(listing);
-                    media.setMediaUrl(stored.getStoredName());
-                    media.setMediaType(MediaType.VIDEO);
-                    listing.addMedia(media);
-                }
-            }
-        } catch (IOException ioe) {
-            throw new CustomBusinessException("Upload media failed: " + ioe.getMessage());
-        }
-
-
-        listingRepository.save(listing);
-
-        var res = new BaseResponse<Void>();
-        res.setSuccess(true);
-        res.setStatus(201);
-        res.setMessage("Listing created");
-        return res;
+        // Rồi tới itemType client gửi
+        if (req.getItemType() != null) return req.getItemType();
+        // Sau cùng suy từ categoryCode
+        return "BATTERY".equalsIgnoreCase(req.getCategoryCode()) ? ItemType.BATTERY : ItemType.VEHICLE;
     }
 
 

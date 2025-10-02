@@ -55,6 +55,7 @@ public class Category {
         dto.setId(category.getId());
         dto.setName(category.getName());
         dto.setDescription(category.getDescription());
+        dto.setStatus(category.getStatus().name());
         return dto;
     }
 

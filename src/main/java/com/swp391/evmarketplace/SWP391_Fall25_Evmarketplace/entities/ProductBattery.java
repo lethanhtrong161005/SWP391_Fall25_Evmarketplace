@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ProductBattery {
 
     @Id
@@ -56,7 +58,12 @@ public class ProductBattery {
     @Column(name = "dimension", length = 100)
     private String dimension;
 
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status" , nullable = false)
+    private ProductStatus status = ProductStatus.ACTIVE;
+
     @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private LocalDateTime createdAt;
 }

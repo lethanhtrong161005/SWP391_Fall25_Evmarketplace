@@ -28,7 +28,7 @@ public class Brand {
 
     @Column(name = "status" , nullable = false)
     @Enumerated(EnumType.STRING)
-    private BrandStatus status = BrandStatus.ACTIVE;
+    private BrandStatus status;
 
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
@@ -47,7 +47,9 @@ public class Brand {
         BrandResponseDTO dto = new BrandResponseDTO();
         dto.setId(b.getId());
         dto.setName(b.getName());
+        dto.setStatus(b.getStatus().name());
         return dto;
     }
+
 
 }
