@@ -1,15 +1,13 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "category_brand")
 @Getter @Setter @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class CategoryBrand {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

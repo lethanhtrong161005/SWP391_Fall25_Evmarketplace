@@ -49,5 +49,10 @@ public interface CategoryBrandRepository extends JpaRepository<CategoryBrand,Lon
     """)
     List<CategoryBrandFlat> findFlatByCategoryId(Long categoryId);
 
+    boolean existsByCategory_IdAndBrand_Id(Long categoryId, Long brandId);
+    List<CategoryBrand> findByBrand_Id(Long brandId);
 
+    // Cẩn thận: khi danh sách rỗng hãy xoá hết bằng deleteByBrand_Id
+    void deleteByBrand_Id(Long brandId);
+    void deleteByBrand_IdAndCategory_IdNotIn(Long brandId, List<Long> keepCategoryIds);
 }

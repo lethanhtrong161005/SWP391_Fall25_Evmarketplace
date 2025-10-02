@@ -33,4 +33,13 @@ public interface ModelRepository extends JpaRepository<Model, Long> {
               order by m.brand.name asc, m.name asc
             """)
     List<ModelFlat> findAllFlatByCategoryId(Long categoryId);
+
+    boolean existsByNameIgnoreCaseAndBrandIdAndCategoryIdAndYear(
+            String name, Long brandId, Long categoryId, Integer year
+    );
+
+    boolean existsByNameIgnoreCase(
+            String name
+    );
+
 }
