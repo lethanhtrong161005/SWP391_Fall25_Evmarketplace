@@ -5,12 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
-
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +24,13 @@ public class ListingController {
     private ObjectMapper objectMapper;
 
     @GetMapping("/all")
-    public ResponseEntity<?> getListings(int pageSize, int pageNumber) {
-        BaseResponse<List<ListingReponseDTO>> response = listingService.getAllListings(pageSize, pageNumber);
+    public ResponseEntity<BaseResponse<Map<String, Object>>> getListings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "desc") String dir
+    ) {
+        BaseResponse<Map<String, Object>> response = listingService.getAllListingsPublic(page, size, sort, dir);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
@@ -49,8 +50,6 @@ public class ListingController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
-
-
 
     @GetMapping("/search")
     public ResponseEntity<BaseResponse<Map<String, Object>>> searchCards(@ModelAttribute SearchListingRequestDTO requestDTO) {

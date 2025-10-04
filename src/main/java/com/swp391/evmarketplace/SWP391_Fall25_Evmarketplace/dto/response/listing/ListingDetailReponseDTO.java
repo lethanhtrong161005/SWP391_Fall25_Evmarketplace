@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-public class ListingReponseDTO {
+public class ListingDetailReponseDTO {
 
     private Long id;
     private String title;

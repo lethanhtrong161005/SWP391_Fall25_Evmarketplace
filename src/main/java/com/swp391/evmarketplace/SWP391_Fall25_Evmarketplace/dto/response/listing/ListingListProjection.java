@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 public interface ListingListProjection {
     Long getId();
-    String getTitle();          // bỏ nếu DB chưa có cột title
+    String getTitle();
     String getBrand();
     String getModel();
     Integer getYear();
@@ -14,6 +14,9 @@ public interface ListingListProjection {
     String getProvince();
     BigDecimal getBatteryCapacityKwh();
     BigDecimal getSohPercent();
+    String getMileageKm();
     LocalDateTime getCreatedAt();
     String getStatus();
+    String getVisibility();
+    String getIsConsigned();
 }

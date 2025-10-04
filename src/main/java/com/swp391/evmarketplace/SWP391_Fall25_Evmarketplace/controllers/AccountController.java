@@ -1,10 +1,8 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.ChangePasswordRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.UpdateEmailRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.RegisterAccountRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.RequestOtpDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.ResetPasswordRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.VerifyOtpDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.profile.UpdateProfileRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
@@ -25,7 +23,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,7 +51,6 @@ public class AccountController {
     private ListingService listingService;
 
 
-
     @GetMapping("/current")
     public ResponseEntity<?> getAccountDetails() {
         BaseResponse<AccountReponseDTO> response = new BaseResponse<>();
@@ -62,7 +58,7 @@ public class AccountController {
         if (ac != null) {
             AccountReponseDTO accountReponseDTO = accountMapper.toAccountReponseDTO(ac);
             String avatarUrl = serverUrl + "/api/files/images/" + accountReponseDTO.getProfile().getAvatarUrl();
-            if(accountReponseDTO.getProfile().getAvatarUrl() != null){
+            if (accountReponseDTO.getProfile().getAvatarUrl() != null) {
                 accountReponseDTO.getProfile().setAvatarUrl(avatarUrl);
             }
             response.setData(accountReponseDTO);
@@ -118,6 +114,25 @@ public class AccountController {
     @PutMapping(value = "/update-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BaseResponse<String>> updateAvatar(@RequestParam("file") MultipartFile file) {
         BaseResponse<String> response = profileService.updateAvatar(file);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    //update email
+    @PostMapping("/email/request-otp")
+    public ResponseEntity<BaseResponse<String>> requestEmailOtp(@Valid @RequestBody EmailOtpRequestDTO dto) {
+        BaseResponse<String> response = accountService.sendOtpEmail(dto.getEmail());
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PostMapping("/email/verify-otp")
+    public ResponseEntity<?> verifyEmailOtp(@Valid @RequestBody VerifyEmailOtpRequestDTO dto) {
+        BaseResponse<OtpResponse> response = accountService.verifyEmailOtp(dto);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PutMapping("/update-email")
+    public ResponseEntity<?> updateEmail(UpdateEmailRequestDTO requestDTO) {
+        BaseResponse<Void> response = accountService.updateEmail(requestDTO);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
