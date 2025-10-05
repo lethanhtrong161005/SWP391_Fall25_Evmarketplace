@@ -49,13 +49,13 @@ public class AdminController {
         return ResponseEntity.status(reponseDTO.getStatus()).body(reponseDTO);
     }
 
-    @PatchMapping("/accounts/{id}/block")
+    @PutMapping("/accounts/{id}/block")
     public ResponseEntity<BaseResponse<Void>> blockAccount(@PathVariable Long id) {
         BaseResponse<Void> response = accountService.blockAccount(id);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PatchMapping("/accounts/{id}/unblock")
+    @PutMapping("/accounts/{id}/unblock")
     public ResponseEntity<BaseResponse<Void>> unblockAccount(@PathVariable Long id) {
         BaseResponse<Void> response = accountService.unblockAccount(id);
         return ResponseEntity.status(response.getStatus()).body(response);
