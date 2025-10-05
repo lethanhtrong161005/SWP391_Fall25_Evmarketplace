@@ -24,7 +24,6 @@ public class FileController {
     @Autowired
     private FileService fileService;
 
-
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StoredFile> uploadImage(@RequestPart("file") MultipartFile file) throws IOException {
         StoredFile saved = fileService.storeImage(file);

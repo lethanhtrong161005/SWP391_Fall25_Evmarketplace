@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.CategoryBrand;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.CategoryBrandFlat;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.CategoryBrandModelFlat;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,17 +24,52 @@ public interface CategoryBrandRepository extends JpaRepository<CategoryBrand,Lon
     """)
     List<CategoryBrand> findByCategoryIdFetch(@Param("categoryId") Long categoryId);
 
-    @Query("""
-           select
-             cb.category.id   as categoryId,
-             cb.category.name as categoryName,
-             cb.category.description as categoryDescription,
-             cb.brand.id      as brandId,
-             cb.brand.name    as brandName
-           from CategoryBrand cb
-           order by cb.category.id, cb.brand.id
-           """)
-    List<CategoryBrandFlat> findAllFlat();
+    @Query(value = """
+        SELECT
+        c.id   AS categoryId,
+        c.name AS categoryName,
+        c.description AS categoryDescription,
+        c.status AS categoryStatus,
+        b.id   AS brandId,
+        b.name AS brandName,
+        b.status AS brandStatus,
+        m.id   AS modelId,
+        m.name AS modelName,
+        m.year AS modelYear,
+        m.status AS modelStatus
+      FROM category_brand cb
+        JOIN category c ON c.id = cb.category_id
+        JOIN brand    b ON b.id = cb.brand_id
+        LEFT JOIN model m
+          ON m.category_id = cb.category_id
+         AND m.brand_id    = cb.brand_id
+      ORDER BY c.id ASC, b.name ASC, m.name ASC
+  """, nativeQuery = true)
+    List<CategoryBrandModelFlat> findAllCategoryBrandModelFlat();
+
+    @Query(value = """
+      SELECT
+        c.id   AS categoryId,
+        c.name AS categoryName,
+        c.description AS categoryDescription,
+        c.status AS categoryStatus,
+        b.id   AS brandId,
+        b.name AS brandName,
+        b.status AS brandStatus,
+        m.id   AS modelId,
+        m.name AS modelName,
+        m.year AS modelYear,
+        m.status AS modelStatus
+      FROM category_brand cb
+        JOIN category c ON c.id = cb.category_id AND c.status = 'ACTIVE'
+        JOIN brand    b ON b.id = cb.brand_id     AND b.status = 'ACTIVE'
+        LEFT JOIN model m
+          ON m.category_id = cb.category_id
+         AND m.brand_id    = cb.brand_id
+         AND m.status = 'ACTIVE'
+      ORDER BY c.id ASC, b.name ASC, m.name ASC
+  """, nativeQuery = true)
+    List<CategoryBrandModelFlat> findAllCategoryBrandModelFlatActiveOnly();
 
 
     // CategoryBrandRepository

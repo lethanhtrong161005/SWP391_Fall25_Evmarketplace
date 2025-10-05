@@ -16,11 +16,11 @@ public interface CategoryService {
     BaseResponse<List<CategoryResponseDTO>> getByNameIn(List<String> names);
 
     List<CategoryBrand> getAllBrandWithCategoryId(Long id);
+    List<CategoryTreeDTO> getAllCategoryTrees(boolean activeOnly);
 
 
     BaseResponse<List<CategoryBrandWithModelsDTO>> getCategoryBrandsWithModels(Long categoryId);
 
-    BaseResponse<List<CategoryTreeDTO>> getCategoryBrandModel();
     BaseResponse<CategoryTreeDTO> getCategoryBrandModelById(Long categoryId);
 
     BaseResponse<Void> addCategory(CreateCategoryDTO request);

@@ -27,9 +27,11 @@ public class CategoryController {
     }
 
     @GetMapping("/all/detail")
-    public ResponseEntity<?> getAllDetail(){
-        BaseResponse<List<CategoryTreeDTO>> response = categoryService.getCategoryBrandModel();
-        return ResponseEntity.status(response.getStatus()).body(response);
+    public ResponseEntity<?> getAllTrees(
+            @RequestParam(name = "activeOnly", defaultValue = "false") boolean activeOnly
+    ) {
+        var data = categoryService.getAllCategoryTrees(activeOnly);
+        return ResponseEntity.status(200).body(data);
     }
 
     @GetMapping("/filter")
@@ -62,7 +64,5 @@ public class CategoryController {
         var res = categoryService.updateCategory(id, request);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-
-
 
 }
