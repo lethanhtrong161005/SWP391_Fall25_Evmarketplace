@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.EnumSet;
@@ -189,11 +190,25 @@ public class ListingServiceImp implements ListingService {
 
     @Override
     public BaseResponse<Map<String, Object>> searchCard(SearchListingRequestDTO requestDTO) {
+        // Normalize text filters: treat whitespace-only as null and trim values
+        if (requestDTO.getBrand() != null) {
+            String b = requestDTO.getBrand().trim();
+            requestDTO.setBrand(b.isEmpty() ? null : b);
+        }
+        if (requestDTO.getModelKeyword() != null) {
+            String mk = requestDTO.getModelKeyword().trim();
+            requestDTO.setModelKeyword(mk.isEmpty() ? null : mk);
+        }
+        // Ensure sort/dir fallback when blank
+        if (!StringUtils.hasText(requestDTO.getSort())) {
+            requestDTO.setSort("createdAt");
+        }
+        if (!StringUtils.hasText(requestDTO.getDir())) {
+            requestDTO.setDir("desc");
+        }
         Pageable pageable = buildPageable(requestDTO.getPage(), requestDTO.getSize(), requestDTO.getSort(), requestDTO.getDir());
 
         Slice<ListingListProjection> lists = listingRepository.searchCards(requestDTO, EnumSet.of(Status.ACTIVE), pageable);
-
-        if (lists.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
         Map<String, Object> payload = Map.of(
                 "items", lists.getContent(),
