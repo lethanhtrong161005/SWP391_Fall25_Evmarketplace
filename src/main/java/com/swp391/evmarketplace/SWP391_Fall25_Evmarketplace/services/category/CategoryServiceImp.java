@@ -37,6 +37,55 @@ public class CategoryServiceImp implements CategoryService {
     @Autowired
     private ModelRepository modelRepository;
 
+
+    public List<CategoryTreeDTO> getAllCategoryTrees(boolean activeOnly) {
+        var rows = activeOnly
+                ? categoryBrandRepository.findAllCategoryBrandModelFlatActiveOnly()
+                : categoryBrandRepository.findAllCategoryBrandModelFlat();
+
+        var catMap     = new LinkedHashMap<Long, CategoryTreeDTO>();
+        var brandKeyMp = new LinkedHashMap<String, BrandWithModelsDTO>();
+        var seenModel  = new HashSet<String>(); // cat#brand#model
+
+        for (var r : rows) {
+            var cat = catMap.computeIfAbsent(r.getCategoryId(), id -> {
+                var dto = new CategoryTreeDTO();
+                dto.setId(r.getCategoryId());
+                dto.setName(r.getCategoryName());
+                dto.setDescription(r.getCategoryDescription());
+                dto.setStatus(r.getCategoryStatus()); // ⬅️ thêm status
+                dto.setBrands(new java.util.ArrayList<>());
+                return dto;
+            });
+
+            var bKey = r.getCategoryId() + "#" + r.getBrandId();
+            var brand = brandKeyMp.computeIfAbsent(bKey, k -> {
+                var b = new BrandWithModelsDTO();
+                b.setId(r.getBrandId());
+                b.setName(r.getBrandName());
+                b.setStatus(r.getBrandStatus()); // ⬅️ thêm status
+                b.setModels(new java.util.ArrayList<>());
+                cat.getBrands().add(b);
+                return b;
+            });
+
+            if (r.getModelId() != null) {
+                var mKey = bKey + "#" + r.getModelId();
+                if (seenModel.add(mKey)) {
+                    brand.getModels().add(
+                            ModelDTO.builder()
+                                    .id(r.getModelId())
+                                    .name(r.getModelName())
+                                    .year(r.getModelYear())
+                                    .status(r.getModelStatus())
+                                    .build()
+                    );
+                }
+            }
+        }
+        return new ArrayList<>(catMap.values());
+    }
+
     @Override
     public BaseResponse<List<CategoryResponseDTO>> getAll() {
        List<CategoryResponseDTO> categoryResponseDTOList = categoryRepository.findAll().stream().map(item -> {
@@ -122,20 +171,6 @@ public class CategoryServiceImp implements CategoryService {
         return response;
     }
 
-
-    @Override
-    public BaseResponse<List<CategoryTreeDTO>> getCategoryBrandModel() {
-        List<CategoryBrandFlat> pairs  = categoryBrandRepository.findAllFlat();
-        List<ModelFlat>        models = modelRepository.findAllFlat();
-
-        List<CategoryTreeDTO> data = buildTree(pairs, models);
-        BaseResponse<List<CategoryTreeDTO>> response = new BaseResponse<>();
-        response.setMessage("Category List");
-        response.setSuccess(true);
-        response.setStatus(200);
-        response.setData(data);
-        return response;
-    }
 
     @Override
     public BaseResponse<CategoryTreeDTO> getCategoryBrandModelById(Long categoryId) {

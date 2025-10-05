@@ -38,7 +38,7 @@ spring:
           writetimeout: 20000
 
 server:
-  port: ${PORT:8089}
+  port: ${PORT:8888}
   url: ${OPENAPI_SERVER_LOCAL}
 
 jwt:
