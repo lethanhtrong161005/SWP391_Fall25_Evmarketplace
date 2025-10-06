@@ -86,6 +86,7 @@ public class CentralException {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse<Void>> handleGenericException(Exception ex) {
         // Tránh lộ chi tiết nội bộ; log stacktrace ở layer logging thay vì đưa ra client
+        ex.printStackTrace();
         return build(HttpStatus.INTERNAL_SERVER_ERROR.value(), false, "Internal Server Error", null, null);
     }
 
