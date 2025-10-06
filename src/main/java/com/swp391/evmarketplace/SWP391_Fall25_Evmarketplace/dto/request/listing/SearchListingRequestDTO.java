@@ -24,10 +24,4 @@ public class SearchListingRequestDTO {
 
     private BigDecimal sohMin;      // soh_percent
     private BigDecimal sohMax;
-
-    // paging & sort
-    private Integer page = 0;
-    private Integer size = 12;
-    private String sort = "createdAt";
-    private String dir = "desc";
 }

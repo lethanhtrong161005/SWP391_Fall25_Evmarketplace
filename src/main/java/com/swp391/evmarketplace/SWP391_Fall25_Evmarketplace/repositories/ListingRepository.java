@@ -1,9 +1,9 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Status;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -13,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -35,13 +34,13 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.sohPercent as sohPercent,
                     l.mileageKm as mileageKm,
                     l.createdAt as createdAt,
-                    l.status as status,
+                    l.listingStatus as listingStatus,
                     l.visibility as visibility,
                     l.consigned as consigned
                 from Listing l
                 join l.seller a
                 join a.profile p
-              where l.status in :statuses
+              where l.listingStatus in :listingStatuses
                 and (:#{#req.brand} is null or lower(l.brand) = lower(:#{#req.brand}))
                 and (:#{#req.modelKeyword} is null or lower(l.model) like lower(concat('%', :#{#req.modelKeyword}, '%')))
                 and (:#{#req.yearFrom} is null or l.year >= :#{#req.yearFrom})
@@ -57,7 +56,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             """)
     Slice<ListingListProjection> searchCards(
             @Param("req") SearchListingRequestDTO req,
-            @Param("statuses") Collection<Status> statuses,
+            @Param("listingStatuses") Collection<ListingStatus> listingStatuses,
             Pageable pageable);
 
     @Query("""
@@ -74,16 +73,16 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.sohPercent as sohPercent,
                     l.mileageKm as mileageKm,
                     l.createdAt as createdAt,
-                    l.status as status,
+                    l.listingStatus as listingStatus,
                     l.visibility as visibility,
                     l.consigned as consigned
                 from Listing l
                 join l.seller a
                 join a.profile p
-            where l.status in :statuses
+            where l.listingStatus in :listingStatuses
             """)
     Slice<ListingListProjection> getAllList(
-            @Param("statuses") Collection<Status> statuses,
+            @Param("listingStatuses") Collection<ListingStatus> listingStatuses,
             Pageable pageable);
 
     @Query(
@@ -100,7 +99,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                         l.sohPercent as sohPercent,
                         l.mileageKm as mileageKm,
                         l.createdAt as createdAt,
-                        l.status as status,
+                        l.listingStatus as listingStatus,
                         l.visibility as visibility,
                         l.consigned as consigned
                       from Listing l

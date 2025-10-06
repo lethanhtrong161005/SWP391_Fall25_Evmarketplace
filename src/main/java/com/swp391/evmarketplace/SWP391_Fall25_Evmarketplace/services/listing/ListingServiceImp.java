@@ -3,7 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.*;
@@ -103,7 +103,7 @@ public class ListingServiceImp implements ListingService {
            listing.setPrice(req.getPrice());
            listing.setVisibility(req.getVisibility());
            listing.setVerified(false);
-           listing.setStatus(Status.PENDING);
+           listing.setListingStatus(ListingStatus.PENDING);
            listing.setProvince(req.getProvince());
            listing.setDistrict(req.getDistrict());
            listing.setWard(req.getWard());
@@ -168,6 +168,16 @@ public class ListingServiceImp implements ListingService {
        }
     }
 
+    @Override
+    public BaseResponse<Map<String, Object>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
+        return doSearch(requestDTO, EnumSet.of(ListingStatus.ACTIVE), page, size, sort, dir);
+    }
+
+    @Override
+    public BaseResponse<Map<String, Object>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
+        return doSearch(requestDTO, EnumSet.allOf(ListingStatus.class), page, size, sort, dir);
+    }
+
     private ItemType resolveItemType(CreateListingRequest req, Model modelIfAny) {
         // Ưu tiên theo model.category nếu có modelId
         if (modelIfAny != null) {
@@ -188,8 +198,7 @@ public class ListingServiceImp implements ListingService {
         return PageRequest.of(Math.max(page, 0), Math.max(size, 1), s); // số trang 0 âm, ít nhất 1 phần tử trong mỗi trang
     }
 
-    @Override
-    public BaseResponse<Map<String, Object>> searchCard(SearchListingRequestDTO requestDTO) {
+    public BaseResponse<Map<String, Object>> doSearch(SearchListingRequestDTO requestDTO, EnumSet<ListingStatus> statusSet, int page, int size, String sort, String dir) {
         // Normalize text filters: treat whitespace-only as null and trim values
         if (requestDTO.getBrand() != null) {
             String b = requestDTO.getBrand().trim();
@@ -199,21 +208,15 @@ public class ListingServiceImp implements ListingService {
             String mk = requestDTO.getModelKeyword().trim();
             requestDTO.setModelKeyword(mk.isEmpty() ? null : mk);
         }
-        // Ensure sort/dir fallback when blank
-        if (!StringUtils.hasText(requestDTO.getSort())) {
-            requestDTO.setSort("createdAt");
-        }
-        if (!StringUtils.hasText(requestDTO.getDir())) {
-            requestDTO.setDir("desc");
-        }
-        Pageable pageable = buildPageable(requestDTO.getPage(), requestDTO.getSize(), requestDTO.getSort(), requestDTO.getDir());
 
-        Slice<ListingListProjection> lists = listingRepository.searchCards(requestDTO, EnumSet.of(Status.ACTIVE), pageable);
+        Pageable pageable = buildPageable(page, size, sort, dir);
+
+        Slice<ListingListProjection> lists = listingRepository.searchCards(requestDTO, statusSet, pageable);
 
         Map<String, Object> payload = Map.of(
                 "items", lists.getContent(),
-                "page", requestDTO.getPage(),
-                "size", requestDTO.getSize(),
+                "page", page,
+                "size", size,
                 "hasNext", lists.hasNext()
         );
 
@@ -231,7 +234,7 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<Map<String, Object>> getAllListingsPublic(int page, int size, String sort, String dir) {
         Pageable pageable = buildPageable(page, size, sort, dir);
 
-        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.of(Status.ACTIVE), pageable);
+        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.of(ListingStatus.ACTIVE), pageable);
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
@@ -255,7 +258,7 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<Map<String, Object>> getAllListForManage(int page, int size, String sort, String dir) {
         Pageable pageable = buildPageable(page, size, sort, dir);
 
-        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.allOf(Status.class), pageable);
+        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.allOf(ListingStatus.class), pageable);
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 

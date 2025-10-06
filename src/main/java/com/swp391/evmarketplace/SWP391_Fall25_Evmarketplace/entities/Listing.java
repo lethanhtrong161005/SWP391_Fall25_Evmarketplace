@@ -1,7 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Status;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility;
 import jakarta.persistence.*;
 import lombok.*;
@@ -104,8 +104,7 @@ public class Listing {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
-    private Status status = Status.PENDING;
-
+    private ListingStatus listingStatus = ListingStatus.PENDING;
 
     @Column(name = "province", length = 100)
     private String province;

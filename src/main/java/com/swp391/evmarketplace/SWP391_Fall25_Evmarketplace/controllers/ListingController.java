@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -34,12 +35,12 @@ public class ListingController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PostMapping(value="/post", consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/post", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> postListing(
             @RequestPart("payload") String payloadJson,
-            @RequestPart(value="images", required=false) List<MultipartFile> images,
-            @RequestPart(value="videos", required=false) List<MultipartFile> videos
-    ){
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "videos", required = false) List<MultipartFile> videos
+    ) {
         try {
             // parse JSON → DTO
             CreateListingRequest payload = new ObjectMapper().readValue(payloadJson, CreateListingRequest.class);
@@ -52,11 +53,16 @@ public class ListingController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> searchCards(@ModelAttribute SearchListingRequestDTO requestDTO) {
-        BaseResponse<Map<String, Object>> response = listingService.searchCard(requestDTO);
+    public ResponseEntity<BaseResponse<Map<String, Object>>> searchCards(
+            @ModelAttribute SearchListingRequestDTO requestDTO,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "desc") String dir
+    ) {
+        BaseResponse<Map<String, Object>> response = listingService.searchForPublic(requestDTO, page, size, sort, dir);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
-
 
 
 }
