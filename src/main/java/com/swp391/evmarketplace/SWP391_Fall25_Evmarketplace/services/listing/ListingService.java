@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface ListingService {
- BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
+  BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
   BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(Status status, String q, Integer page, Integer size);
   Map<Status, Long> getMyCounts(Long sellerId);
    //cho phép sort theo thời gian tạo

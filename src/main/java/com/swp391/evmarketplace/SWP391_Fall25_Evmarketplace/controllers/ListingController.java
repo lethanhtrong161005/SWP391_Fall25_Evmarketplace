@@ -10,6 +10,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Status;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +24,6 @@ import java.util.Map;
 public class ListingController {
     @Autowired
     private ListingService listingService;
-    @Autowired
-    private ObjectMapper objectMapper;
     @Autowired
     private AuthUtil authUtil;
 
@@ -84,6 +83,4 @@ public class ListingController {
         res.setData(data);
         return res;
     }
-
-
 }
