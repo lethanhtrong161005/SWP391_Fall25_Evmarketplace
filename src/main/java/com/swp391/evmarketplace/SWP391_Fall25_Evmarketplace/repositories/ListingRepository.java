@@ -34,13 +34,13 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.sohPercent as sohPercent,
                     l.mileageKm as mileageKm,
                     l.createdAt as createdAt,
-                    l.listingStatus as listingStatus,
+                    l.status as status,
                     l.visibility as visibility,
                     l.consigned as consigned
                 from Listing l
                 join l.seller a
                 join a.profile p
-              where l.listingStatus in :listingStatuses
+              where l.status in :listingStatuses
                 and (:#{#req.brand} is null or lower(l.brand) = lower(:#{#req.brand}))
                 and (:#{#req.modelKeyword} is null or lower(l.model) like lower(concat('%', :#{#req.modelKeyword}, '%')))
                 and (:#{#req.yearFrom} is null or l.year >= :#{#req.yearFrom})
@@ -73,13 +73,13 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.sohPercent as sohPercent,
                     l.mileageKm as mileageKm,
                     l.createdAt as createdAt,
-                    l.listingStatus as listingStatus,
+                    l.status as status,
                     l.visibility as visibility,
                     l.consigned as consigned
                 from Listing l
                 join l.seller a
                 join a.profile p
-            where l.listingStatus in :listingStatuses
+            where l.status in :listingStatuses
             """)
     Slice<ListingListProjection> getAllList(
             @Param("listingStatuses") Collection<ListingStatus> listingStatuses,
@@ -99,7 +99,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                         l.sohPercent as sohPercent,
                         l.mileageKm as mileageKm,
                         l.createdAt as createdAt,
-                        l.listingStatus as listingStatus,
+                        l.status as status,
                         l.visibility as visibility,
                         l.consigned as consigned
                       from Listing l

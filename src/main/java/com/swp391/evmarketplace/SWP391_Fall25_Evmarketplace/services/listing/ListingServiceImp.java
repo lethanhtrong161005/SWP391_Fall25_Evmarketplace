@@ -103,7 +103,7 @@ public class ListingServiceImp implements ListingService {
            listing.setPrice(req.getPrice());
            listing.setVisibility(req.getVisibility());
            listing.setVerified(false);
-           listing.setListingStatus(ListingStatus.PENDING);
+           listing.setStatus(ListingStatus.PENDING);
            listing.setProvince(req.getProvince());
            listing.setDistrict(req.getDistrict());
            listing.setWard(req.getWard());

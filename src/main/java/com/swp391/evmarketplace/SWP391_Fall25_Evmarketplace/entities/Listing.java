@@ -104,7 +104,7 @@ public class Listing {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
-    private ListingStatus listingStatus = ListingStatus.PENDING;
+    private ListingStatus status = ListingStatus.PENDING;
 
     @Column(name = "province", length = 100)
     private String province;

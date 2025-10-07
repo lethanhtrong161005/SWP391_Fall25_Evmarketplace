@@ -4,5 +4,6 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignm
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 
 public interface ConsignmentService {
-    public BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO);
+    BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO);
+
 }
