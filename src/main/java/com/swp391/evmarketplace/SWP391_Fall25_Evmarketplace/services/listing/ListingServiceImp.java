@@ -3,6 +3,9 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.CreateListingResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
@@ -21,6 +24,7 @@ import org.springframework.data.domain.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -50,32 +54,27 @@ public class ListingServiceImp implements ListingService {
 
     @Transactional
     @Override
-    public BaseResponse<Void> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos) {
+    public BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos) {
        try{
            // 1) Category
            var category = categoryRepository.findById(req.getCategoryId())
                    .orElseThrow(() -> new CustomBusinessException("Category not found"));
 
-           // 2) Nếu có modelId → dùng model làm “nguồn chân lý” để nhận diện loại và kiểm tính hợp lệ
            Model model = null;
            if (req.getModelId() != null) {
                model = modelRepository.findById(req.getModelId())
                        .orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
 
-               // Model phải thuộc đúng category người dùng chọn
                if (!model.getCategory().getId().equals(req.getCategoryId())) {
                    throw new CustomBusinessException("Model does not belong to selected category");
                }
-               // Nếu có brandId thì check model.brand
                if (req.getBrandId() != null && !model.getBrand().getId().equals(req.getBrandId())) {
                    throw new CustomBusinessException("Model does not belong to selected brand");
                }
            }
 
-           // 3) Resolve loại (VEHICLE/BATTERY)
            ItemType type = resolveItemType(req, model);
 
-           // Cross-check căn bản (tránh gửi nhầm code)
            if (type == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
                throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
            }
@@ -83,7 +82,6 @@ public class ListingServiceImp implements ListingService {
                throw new CustomBusinessException("categoryCode must not be BATTERY for itemType=VEHICLE");
            }
 
-           // 4) Build listing snapshot
            var listing = new Listing();
            listing.setCategory(category);
            listing.setTitle(req.getTitle());
@@ -102,7 +100,7 @@ public class ListingServiceImp implements ListingService {
            listing.setPrice(req.getPrice());
            listing.setVisibility(req.getVisibility());
            listing.setVerified(false);
-           listing.setStatus(Status.PENDING);
+           listing.setStatus(req.getStatus());
            listing.setProvince(req.getProvince());
            listing.setDistrict(req.getDistrict());
            listing.setWard(req.getWard());
@@ -157,9 +155,13 @@ public class ListingServiceImp implements ListingService {
 
            listingRepository.save(listing);
 
-           var res = new BaseResponse<Void>();
+           var res = new BaseResponse<CreateListingResponse>();
+           CreateListingResponse resp = new CreateListingResponse();
+           resp.setListingId(listing.getId());
+           resp.setPersistedStatus(listing.getStatus().name());
            res.setSuccess(true);
            res.setStatus(201);
+           res.setData(resp);
            res.setMessage("Listing created");
            return res;
        } catch (Exception e) {
@@ -288,5 +290,65 @@ public class ListingServiceImp implements ListingService {
         return response;
     }
 
+    @Override
+    public BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(Status status, String q, Integer page, Integer size) {
+        final int p = (page == null || page < 0) ? 0 : page;
+        final int s = (size == null || size <= 0 || size > 100) ? 10 : size;
 
+        Long sellerId = authUtil.getCurrentAccount().getId();
+
+        Pageable pageable = PageRequest.of(p, s, Sort.by(Sort.Direction.DESC, "updatedAt").and(Sort.by(Sort.Direction.DESC, "id")));
+
+        Page<ListingListProjection> pg = listingRepository.findMine(sellerId, status, isBlank(q) ? null : q.trim(), pageable);
+
+        List<ListingListItemDTO> items = pg.getContent().stream().map(prj ->
+                ListingListItemDTO.builder()
+                        .id(prj.getId())
+                        .year(prj.getYear())
+                        .status(prj.getStatus())
+                        .visibility(prj.getVisibility())
+                        .title(prj.getTitle())
+                        .batteryCapacityKwh(prj.getBatteryCapacityKwh())
+                        .createdAt(prj.getCreatedAt())
+                        .province(prj.getProvince())
+                        .mileageKm(prj.getMileageKm() == null ? null : String.valueOf(prj.getMileageKm()))
+                        .sohPercent(prj.getSohPercent())
+                        .model(prj.getModel())
+                        .brand(prj.getBrand())
+                        .price(prj.getPrice())
+                        .isConsigned(prj.getIsConsigned())
+                        .sellerName(prj.getSellerName())
+                        .build()
+        ).toList();
+
+        PageResponse<ListingListItemDTO> body = PageResponse.<ListingListItemDTO>builder()
+                .totalElements(pg.getTotalElements())
+                .totalPages(pg.getTotalPages())
+                .hasNext(pg.hasNext())
+                .hasPrevious(pg.hasPrevious())
+                .page(pg.getNumber())
+                .size(pg.getSize())
+                .items(items)
+                .build();
+        BaseResponse<PageResponse<ListingListItemDTO>> response = new BaseResponse<>();
+        response.setData(body);
+        response.setStatus(200);
+        response.setSuccess(true);
+        response.setMessage("OK");
+        return response;
+    }
+
+    public Map<Status, Long> getMyCounts(Long sellerId) {
+        Map<Status, Long> result = new EnumMap<>(Status.class);
+        for (Status s : Status.values()) result.put(s, 0L); // fill 0
+
+        var rows = listingRepository.countBySellerGroupedStatus(sellerId);
+        for (var r : rows) result.put(r.getStatus(), r.getTotal());
+
+        return result;
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
 }

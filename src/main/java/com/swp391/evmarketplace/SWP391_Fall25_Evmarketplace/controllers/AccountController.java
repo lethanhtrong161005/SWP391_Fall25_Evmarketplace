@@ -59,7 +59,9 @@ public class AccountController {
             AccountReponseDTO accountReponseDTO = accountMapper.toAccountReponseDTO(ac);
             String avatarUrl = serverUrl + "/api/files/images/" + accountReponseDTO.getProfile().getAvatarUrl();
             if (accountReponseDTO.getProfile().getAvatarUrl() != null) {
-                accountReponseDTO.getProfile().setAvatarUrl(avatarUrl);
+                if(ac.getGoogleId() == null) {
+                    accountReponseDTO.getProfile().setAvatarUrl(avatarUrl);
+                }
             }
             response.setData(accountReponseDTO);
             response.setMessage("Get Account Success");

@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingStatusCount;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Status;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ import java.util.Optional;
 @Repository
 public interface ListingRepository extends JpaRepository<Listing, Long> {
     Optional<Listing> findById(long id);
+
 
     //SpEL :#{#req.field} cho phép bạn tham chiếu trực tiếp vào field của DTO.
     @Query("""
@@ -118,5 +120,62 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             @Param("sellerId") Long sellerId,
             Pageable pageable);
 
+    @Query(
+            value = """
+                select
+                  l.id as id,
+                  l.title as title,
+                  l.brand as brand,
+                  l.model as model,
+                  l.year as year,
+                  l.price as price,
+                  l.province as province,
+                  l.batteryCapacityKwh as batteryCapacityKwh,
+                  l.sohPercent as sohPercent,
+                  l.mileageKm as mileageKm,
+                  l.createdAt as createdAt,
+                  l.status as status,
+                  l.visibility as visibility,
+                  l.consigned as isConsigned,
+                  p.fullName as sellerName
+                from Listing l
+                join l.seller s
+                left join s.profile p
+                where s.id = :sellerId
+                  and (:status is null or l.status = :status)
+                  and (
+                       :q is null
+                       or lower(l.title) like lower(concat('%', :q, '%'))
+                       or lower(l.brand) like lower(concat('%', :q, '%'))
+                       or lower(l.model) like lower(concat('%', :q, '%'))
+                  )
+                """,
+            countQuery = """
+                select count(l)
+                from Listing l
+                join l.seller s
+                where s.id = :sellerId
+                  and (:status is null or l.status = :status)
+                  and (
+                       :q is null
+                       or lower(l.title) like lower(concat('%', :q, '%'))
+                       or lower(l.brand) like lower(concat('%', :q, '%'))
+                       or lower(l.model) like lower(concat('%', :q, '%'))
+                  )
+                """
+    )
+    Page<ListingListProjection> findMine(
+            @Param("sellerId") Long sellerId,
+            @Param("status") Status status,
+            @Param("q") String q,
+            Pageable pageable
+    );
 
+    @Query("""
+       select l.status as status, count(l) as total
+       from Listing l
+       where l.seller.id = :sellerId
+       group by l.status
+       """)
+    List<ListingStatusCount> countBySellerGroupedStatus(@Param("sellerId") Long sellerId);
 }

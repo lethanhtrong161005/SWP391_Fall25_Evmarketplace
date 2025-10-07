@@ -129,6 +129,12 @@ public class Listing {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
+    @Column(name = "rejected_reason", length = 255)
+    private String rejectedReason;
+
+    @UpdateTimestamp
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
