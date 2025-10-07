@@ -1,7 +1,10 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -62,6 +65,11 @@ public class CreateListingRequest {
     @NotBlank private String district;
     @NotBlank private String ward;
     @NotBlank private String address;
+
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private ListingStatus status;
 
     @NotBlank
     private String postType;              // FREE | PAID

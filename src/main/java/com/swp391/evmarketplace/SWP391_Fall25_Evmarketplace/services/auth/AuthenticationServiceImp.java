@@ -42,9 +42,7 @@ public class AuthenticationServiceImp implements AuthenticationService {
     @Autowired
     private AccountService accountService;
 
-
     private RestTemplate restTemplate = new RestTemplate();
-
 
 //    Google
     @Value("${google.authUri}")
