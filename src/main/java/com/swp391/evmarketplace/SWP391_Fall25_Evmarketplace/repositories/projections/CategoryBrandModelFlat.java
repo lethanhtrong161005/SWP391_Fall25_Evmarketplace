@@ -10,8 +10,8 @@ public interface CategoryBrandModelFlat {
     String getBrandName();
     String getBrandStatus();
 
-    Long    getModelId();      // có thể null
-    String  getModelName();    // có thể null
-    Integer getModelYear();    // có thể null
+    Long    getModelId();
+    String  getModelName();
+    Integer getModelYear();
     String  getModelStatus();
 }

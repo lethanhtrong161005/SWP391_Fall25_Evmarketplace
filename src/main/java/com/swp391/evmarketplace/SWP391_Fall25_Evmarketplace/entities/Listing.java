@@ -104,7 +104,7 @@ public class Listing {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
-    private ListingStatus listingStatus = ListingStatus.PENDING;
+    private ListingStatus status = ListingStatus.PENDING;
 
     @Column(name = "province", length = 100)
     private String province;
@@ -128,6 +128,12 @@ public class Listing {
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
+    @Column(name = "rejected_reason", length = 255)
+    private String rejectedReason;
+
+    @UpdateTimestamp
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

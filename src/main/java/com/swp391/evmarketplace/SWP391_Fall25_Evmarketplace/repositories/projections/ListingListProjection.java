@@ -18,5 +18,5 @@ public interface ListingListProjection {
     LocalDateTime getCreatedAt();
     String getListingStatus();
     String getVisibility();
-    String getIsConsigned();
+    boolean getIsConsigned();
 }
