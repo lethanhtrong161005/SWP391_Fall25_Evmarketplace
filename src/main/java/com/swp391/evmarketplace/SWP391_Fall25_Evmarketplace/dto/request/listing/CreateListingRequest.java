@@ -1,7 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Status;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -69,7 +69,7 @@ public class CreateListingRequest {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private ListingStatus status;
 
     @NotBlank
     private String postType;              // FREE | PAID

@@ -1,16 +1,13 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListItemDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Status;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +21,7 @@ import java.util.Map;
 public class ListingController {
     @Autowired
     private ListingService listingService;
+
     @Autowired
     private AuthUtil authUtil;
 
@@ -55,14 +53,20 @@ public class ListingController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> searchCards(@ModelAttribute SearchListingRequestDTO requestDTO) {
-        BaseResponse<Map<String, Object>> response = listingService.searchCard(requestDTO);
+    public ResponseEntity<BaseResponse<Map<String, Object>>> searchCards(
+            @ModelAttribute SearchListingRequestDTO requestDTO,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "desc") String dir
+    ) {
+        BaseResponse<Map<String, Object>> response = listingService.searchForPublic(requestDTO, page, size, sort, dir);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @GetMapping("/mine")
     public ResponseEntity<?> getMine(
-            @RequestParam(required = false) Status status,
+            @RequestParam(required = false) ListingStatus status,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size
@@ -72,11 +76,11 @@ public class ListingController {
     }
 
     @GetMapping("/mine/counts")
-    public BaseResponse<Map<Status, Long>> getMyCounts() {
+    public BaseResponse<Map<ListingStatus, Long>> getMyCounts() {
         Long sellerId = authUtil.getCurrentAccount().getId();
         var data = listingService.getMyCounts(sellerId);
 
-        var res = new BaseResponse<Map<Status, Long>>();
+        var res = new BaseResponse<Map<ListingStatus, Long>>();
         res.setSuccess(true);
         res.setStatus(200);
         res.setMessage("OK");

@@ -6,7 +6,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.CreateListingResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListItemDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.*;
@@ -60,21 +60,26 @@ public class ListingServiceImp implements ListingService {
            var category = categoryRepository.findById(req.getCategoryId())
                    .orElseThrow(() -> new CustomBusinessException("Category not found"));
 
+           // 2) Nếu có modelId → dùng model làm “nguồn chân lý” để nhận diện loại và kiểm tính hợp lệ
            Model model = null;
            if (req.getModelId() != null) {
                model = modelRepository.findById(req.getModelId())
                        .orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
 
+               // Model phải thuộc đúng category người dùng chọn
                if (!model.getCategory().getId().equals(req.getCategoryId())) {
                    throw new CustomBusinessException("Model does not belong to selected category");
                }
+               // Nếu có brandId thì check model.brand
                if (req.getBrandId() != null && !model.getBrand().getId().equals(req.getBrandId())) {
                    throw new CustomBusinessException("Model does not belong to selected brand");
                }
            }
 
+           // 3) Resolve loại (VEHICLE/BATTERY)
            ItemType type = resolveItemType(req, model);
 
+           // Cross-check căn bản (tránh gửi nhầm code)
            if (type == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
                throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
            }
@@ -82,6 +87,7 @@ public class ListingServiceImp implements ListingService {
                throw new CustomBusinessException("categoryCode must not be BATTERY for itemType=VEHICLE");
            }
 
+           // 4) Build listing snapshot
            var listing = new Listing();
            listing.setCategory(category);
            listing.setTitle(req.getTitle());
@@ -169,6 +175,16 @@ public class ListingServiceImp implements ListingService {
        }
     }
 
+    @Override
+    public BaseResponse<Map<String, Object>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
+        return doSearch(requestDTO, EnumSet.of(ListingStatus.ACTIVE), page, size, sort, dir);
+    }
+
+    @Override
+    public BaseResponse<Map<String, Object>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
+        return doSearch(requestDTO, EnumSet.allOf(ListingStatus.class), page, size, sort, dir);
+    }
+
     private ItemType resolveItemType(CreateListingRequest req, Model modelIfAny) {
         // Ưu tiên theo model.category nếu có modelId
         if (modelIfAny != null) {
@@ -189,18 +205,25 @@ public class ListingServiceImp implements ListingService {
         return PageRequest.of(Math.max(page, 0), Math.max(size, 1), s); // số trang 0 âm, ít nhất 1 phần tử trong mỗi trang
     }
 
-    @Override
-    public BaseResponse<Map<String, Object>> searchCard(SearchListingRequestDTO requestDTO) {
-        Pageable pageable = buildPageable(requestDTO.getPage(), requestDTO.getSize(), requestDTO.getSort(), requestDTO.getDir());
+    public BaseResponse<Map<String, Object>> doSearch(SearchListingRequestDTO requestDTO, EnumSet<ListingStatus> statusSet, int page, int size, String sort, String dir) {
+        // Normalize text filters: treat whitespace-only as null and trim values
+        if (requestDTO.getBrand() != null) {
+            String b = requestDTO.getBrand().trim();
+            requestDTO.setBrand(b.isEmpty() ? null : b);
+        }
+        if (requestDTO.getModelKeyword() != null) {
+            String mk = requestDTO.getModelKeyword().trim();
+            requestDTO.setModelKeyword(mk.isEmpty() ? null : mk);
+        }
 
-        Slice<ListingListProjection> lists = listingRepository.searchCards(requestDTO, EnumSet.of(Status.ACTIVE), pageable);
+        Pageable pageable = buildPageable(page, size, sort, dir);
 
-        if (lists.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
+        Slice<ListingListProjection> lists = listingRepository.searchCards(requestDTO, statusSet, pageable);
 
         Map<String, Object> payload = Map.of(
                 "items", lists.getContent(),
-                "page", requestDTO.getPage(),
-                "size", requestDTO.getSize(),
+                "page", page,
+                "size", size,
                 "hasNext", lists.hasNext()
         );
 
@@ -218,7 +241,7 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<Map<String, Object>> getAllListingsPublic(int page, int size, String sort, String dir) {
         Pageable pageable = buildPageable(page, size, sort, dir);
 
-        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.of(Status.ACTIVE), pageable);
+        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.of(ListingStatus.ACTIVE), pageable);
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
@@ -242,7 +265,7 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<Map<String, Object>> getAllListForManage(int page, int size, String sort, String dir) {
         Pageable pageable = buildPageable(page, size, sort, dir);
 
-        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.allOf(Status.class), pageable);
+        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.allOf(ListingStatus.class), pageable);
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
@@ -291,7 +314,7 @@ public class ListingServiceImp implements ListingService {
     }
 
     @Override
-    public BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(Status status, String q, Integer page, Integer size) {
+    public BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(ListingStatus status, String q, Integer page, Integer size) {
         final int p = (page == null || page < 0) ? 0 : page;
         final int s = (size == null || size <= 0 || size > 100) ? 10 : size;
 
@@ -305,7 +328,7 @@ public class ListingServiceImp implements ListingService {
                 ListingListItemDTO.builder()
                         .id(prj.getId())
                         .year(prj.getYear())
-                        .status(prj.getStatus())
+                        .status(prj.getListingStatus())
                         .visibility(prj.getVisibility())
                         .title(prj.getTitle())
                         .batteryCapacityKwh(prj.getBatteryCapacityKwh())
@@ -338,9 +361,9 @@ public class ListingServiceImp implements ListingService {
         return response;
     }
 
-    public Map<Status, Long> getMyCounts(Long sellerId) {
-        Map<Status, Long> result = new EnumMap<>(Status.class);
-        for (Status s : Status.values()) result.put(s, 0L); // fill 0
+    public Map<ListingStatus, Long> getMyCounts(Long sellerId) {
+        Map<ListingStatus, Long> result = new EnumMap<>(ListingStatus.class);
+        for (ListingStatus s : ListingStatus.values()) result.put(s, 0L); // fill 0
 
         var rows = listingRepository.countBySellerGroupedStatus(sellerId);
         for (var r : rows) result.put(r.getStatus(), r.getTotal());

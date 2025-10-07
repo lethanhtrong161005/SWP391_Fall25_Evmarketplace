@@ -1,4 +1,4 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,7 +16,7 @@ public interface ListingListProjection {
     BigDecimal getSohPercent();
     String getMileageKm();
     LocalDateTime getCreatedAt();
-    String getStatus();
+    String getListingStatus();
     String getVisibility();
     boolean getIsConsigned();
 }

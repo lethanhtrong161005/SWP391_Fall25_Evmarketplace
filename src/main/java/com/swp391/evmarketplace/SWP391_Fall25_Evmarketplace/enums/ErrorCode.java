@@ -44,7 +44,21 @@ public enum ErrorCode {
 
     //Token
     INVALID_TOKEN,
-    TOKEN_HAS_EXPIRED;
+    TOKEN_HAS_EXPIRED,
+
+    //branch
+    BRANCH_NOT_FOUND,
+
+    //Consignment
+
+    //model
+    MODEL_NOT_FOUND,
+    MODEL_NOT_BELONG_TO_CATEGORY,
+    MODEL_NOT_BELONG_TO_BRAND,
+
+    //category
+    CATEGORY_NOT_FOUND;
+
 
 }
 

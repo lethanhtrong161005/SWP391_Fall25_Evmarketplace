@@ -62,7 +62,7 @@ public class AdminController {
     }
 
     @PostMapping("/accounts/register")
-    public ResponseEntity<BaseResponse<StaffAccountResponseDTO>> createStaffAccount(CreateStaffAccountRequestDTO requestDTO) {
+    public ResponseEntity<BaseResponse<StaffAccountResponseDTO>> createStaffAccount(@RequestBody CreateStaffAccountRequestDTO requestDTO) {
         BaseResponse<StaffAccountResponseDTO> responseDTO = accountService.createStaffAccount(requestDTO);
         return ResponseEntity.status(responseDTO.getStatus()).body(responseDTO);
     }

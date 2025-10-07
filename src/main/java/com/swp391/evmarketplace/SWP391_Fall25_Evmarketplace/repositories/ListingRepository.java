@@ -1,10 +1,10 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingStatusCount;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -59,7 +59,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             """)
     Slice<ListingListProjection> searchCards(
             @Param("req") SearchListingRequestDTO req,
-            @Param("statuses") Collection<Status> statuses,
+            @Param("statuses") Collection<ListingStatus> statuses,
             Pageable pageable);
 
     @Query("""
@@ -85,7 +85,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             where l.status in :statuses
             """)
     Slice<ListingListProjection> getAllList(
-            @Param("statuses") Collection<Status> statuses,
+            @Param("statuses") Collection<ListingStatus> statuses,
             Pageable pageable);
 
     @Query(
@@ -166,7 +166,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     )
     Page<ListingListProjection> findMine(
             @Param("sellerId") Long sellerId,
-            @Param("status") Status status,
+            @Param("status") ListingStatus status,
             @Param("q") String q,
             Pageable pageable
     );
