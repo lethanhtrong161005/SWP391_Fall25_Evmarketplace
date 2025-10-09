@@ -72,7 +72,8 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/accounts/change-password",
                             "/api/accounts/update-profile",
                             "/api/accounts/update-avatar",
-                            "/api/accounts/listing"
+                            "/api/accounts/listing",
+                            "/api/consignments/**"
                     ).authenticated();
 
                     //staff

@@ -12,8 +12,11 @@ public enum ErrorCode {
     ACCOUNT_BLOCKED,
     ACCOUNT_UNBLOCKED,
     ACCOUNT_CANNOT_BLOCK_DELETED,
+
+    //phone
     PHONE_NOT_VERIFIED,
     PHONE_ALREADY_EXISTS,
+    PHONE_REQUIRED,
 
     //update
     UPDATED_EMAIL,
@@ -48,8 +51,16 @@ public enum ErrorCode {
 
     //branch
     BRANCH_NOT_FOUND,
+    BRANCH_INACTIVE,
 
     //Consignment
+    CONSIGNMENT_LIST_NOT_FOUND,
+
+    //intended
+    INTENDED_FOR_REQUIRED,
+
+    //brand
+    BRAND_NOT_IN_CATEGORY,
 
     //model
     MODEL_NOT_FOUND,

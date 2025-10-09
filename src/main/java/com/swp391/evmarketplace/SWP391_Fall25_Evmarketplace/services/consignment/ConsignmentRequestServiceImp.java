@@ -2,19 +2,25 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignmen
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.CreateConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.*;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProject;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
-public class ConsignmentImp implements ConsignmentService {
+public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
 
     @Autowired
     private AccountRepository accountRepository;
@@ -28,14 +34,13 @@ public class ConsignmentImp implements ConsignmentService {
     private ConsignmentRequestRepository consignmentRequestRepository;
     @Autowired
     private CategoryBrandRepository categoryBrandRepository;
+    @Autowired
+    private BrandRepository brandRepository;
 
 
+    @Transactional
     @Override
-    public BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO) {
-        //acc
-        Optional<Account> optAcc = accountRepository.findByPhoneNumber(requestDTO.getPhoneNumber());
-        if (optAcc.isEmpty()) throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
-        Account account = optAcc.get();
+    public BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO, Account account) {
         //cate
         Category category = categoryRepository.findById(requestDTO.getCategoryId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CATEGORY_NOT_FOUND.name()));
@@ -43,17 +48,21 @@ public class ConsignmentImp implements ConsignmentService {
         Branch branch = branchRepository.findById(requestDTO.getPreferredBranchId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRANCH_NOT_FOUND.name()));
 
+        if (branch.getStatus() != BranchStatus.ACTIVE)
+            throw new CustomBusinessException(ErrorCode.BRANCH_INACTIVE.name());
+
         String brandName = requestDTO.getBrand();
         String modelName = requestDTO.getModel();
-        int year = requestDTO.getYear();
+        Integer year = requestDTO.getYear();
 
-        //type, intended for
+        // type, intended for
         ItemType type = "BATTERY".equalsIgnoreCase(category.getName()) ? ItemType.BATTERY : ItemType.VEHICLE;
-        CategoryCode intendedFor = requestDTO.getIntendedFor();
-
-        if(type.equals(ItemType.BATTERY)){
-            intendedFor = null;
+        // intendedFor chỉ áp dụng cho BATTERY, còn lại để null
+        CategoryCode intendedFor = (type == ItemType.BATTERY) ? requestDTO.getIntendedFor() : null;
+        if (type == ItemType.BATTERY && requestDTO.getIntendedFor() == null) {
+            throw new CustomBusinessException(ErrorCode.INTENDED_FOR_REQUIRED.name());
         }
+
 
         //model, category, brand
         Model model = null;
@@ -73,13 +82,16 @@ public class ConsignmentImp implements ConsignmentService {
                 }
             }
 
+
             brandName = model.getBrand().getName();
             modelName = model.getName();
         } else if (requestDTO.getBrandId() != null) {
             boolean ok = categoryBrandRepository.existsByCategory_IdAndBrand_Id(requestDTO.getCategoryId(), requestDTO.getBrandId());
-
-
             if (!ok) throw new CustomBusinessException(ErrorCode.MODEL_NOT_BELONG_TO_BRAND.name());
+            // Lấy tên brand chuẩn từ DB khi người dùng chọn brandId
+            brandName = brandRepository.findById(requestDTO.getBrandId())
+                    .map(Brand::getName)
+                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRAND_NOT_IN_CATEGORY.name()));
         }
 
         ConsignmentRequest consignmentRequest = new ConsignmentRequest();
@@ -97,7 +109,7 @@ public class ConsignmentImp implements ConsignmentService {
         consignmentRequest.setAppointmentTime(requestDTO.getAppointmentTime());
         consignmentRequest.setOwnerExpectedPrice(requestDTO.getOwnerExpectedPrice());
         consignmentRequest.setNote(requestDTO.getNote());
-        consignmentRequest.setStatus(requestDTO.getStatus());
+        consignmentRequest.setStatus(ConsignmentRequestStatus.SUBMITTED);
 
         consignmentRequestRepository.save(consignmentRequest);
 
@@ -106,5 +118,52 @@ public class ConsignmentImp implements ConsignmentService {
         res.setStatus(201);
         res.setMessage("Consignment request created");
         return res;
+    }
+
+    @Override
+    public BaseResponse<PageResponse<ConsignmentRequestProject>> getAll(int page, int size, String dir, String sort) {
+        Pageable pageable = PageableUtils.buildPageable(page, size, sort, dir);
+        Page<ConsignmentRequestProject> lists = consignmentRequestRepository.getAll(pageable);
+
+        PageResponse<ConsignmentRequestProject> pageResponse = new PageResponse<>();
+        pageResponse.setTotalElements(lists.getTotalElements());
+        pageResponse.setTotalPages(lists.getTotalPages());
+        pageResponse.setHasNext(lists.hasNext());
+        pageResponse.setHasPrevious(lists.hasPrevious());
+        pageResponse.setPage(lists.getNumber());
+        pageResponse.setSize(lists.getSize());
+        pageResponse.setItems(lists.getContent());
+
+        BaseResponse<PageResponse<ConsignmentRequestProject>> response = new BaseResponse<>();
+        response.setData(pageResponse);
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage(lists.isEmpty() ? "Empty list consignment request" : "Ok");
+
+        return response;
+    }
+
+    @Override
+    public BaseResponse<PageResponse<ConsignmentRequestProject>> getListById(Long id, int page, int size, String dir, String sort) {
+
+        Pageable pageable = PageableUtils.buildPageable(page, size, sort, dir);
+        Page<ConsignmentRequestProject> lists = consignmentRequestRepository.getAllByID(id, pageable);
+
+        PageResponse<ConsignmentRequestProject> pageResponse = new PageResponse<>();
+        pageResponse.setTotalElements(lists.getTotalElements());
+        pageResponse.setTotalPages(lists.getTotalPages());
+        pageResponse.setHasNext(lists.hasNext());
+        pageResponse.setHasPrevious(lists.hasPrevious());
+        pageResponse.setPage(lists.getNumber());
+        pageResponse.setSize(lists.getSize());
+        pageResponse.setItems(lists.getContent());
+
+        BaseResponse<PageResponse<ConsignmentRequestProject>> response = new BaseResponse<>();
+        response.setData(pageResponse);
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage(lists.isEmpty() ? ("Empty list consignment request by id: " + id) : "Ok");
+
+        return response;
     }
 }

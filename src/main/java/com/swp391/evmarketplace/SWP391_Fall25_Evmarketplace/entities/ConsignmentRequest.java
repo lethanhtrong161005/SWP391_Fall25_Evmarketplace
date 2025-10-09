@@ -1,7 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentRequestStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -85,7 +85,7 @@ public class ConsignmentRequest {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private ConsignmentStatus status;
+    private ConsignmentRequestStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
