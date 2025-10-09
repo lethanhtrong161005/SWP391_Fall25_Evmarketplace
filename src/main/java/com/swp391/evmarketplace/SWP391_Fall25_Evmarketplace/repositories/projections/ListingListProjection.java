@@ -16,7 +16,6 @@ public interface ListingListProjection {
     BigDecimal getSohPercent();
     String getMileageKm();
     LocalDateTime getCreatedAt();
-//    String getListingStatus();
     String getStatus();
     String getVisibility();
     Boolean getIsConsigned();

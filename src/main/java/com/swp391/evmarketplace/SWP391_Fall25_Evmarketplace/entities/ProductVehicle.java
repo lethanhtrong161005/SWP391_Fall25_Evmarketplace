@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.vehicle.VehicleListReponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AcConnectorType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.DcConnectorType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ModelStatus;
@@ -119,5 +120,26 @@ public class ProductVehicle {
         if (detail != null) detail.setProduct(this);
         this.ebikeDetail = detail;
     }
+
+    public VehicleListReponse toDto(ProductVehicle productVehicle) {
+        VehicleListReponse dto = new VehicleListReponse();
+        dto.setId(productVehicle.getId());
+        dto.setCategory(productVehicle.getCategory().getName());
+        dto.setBrand(productVehicle.getBrand().getName());
+        dto.setModel(productVehicle.getModel().getName());
+        dto.setReleaseYear(productVehicle.getReleaseYear());
+
+        dto.setStatus(productVehicle.getStatus().toString());
+
+        dto.setBatteryCapacityKwh(productVehicle.getBatteryCapacityKwh());
+        dto.setRangeKm(productVehicle.getRangeKm());
+        dto.setMotorPowerKw(productVehicle.getMotorPowerKw());
+        dto.setAcChargingKw(productVehicle.getAcChargingKw());
+        dto.setDcChargingKw(productVehicle.getDcChargingKw());
+        dto.setAcConnector(productVehicle.getAcConnector());
+        dto.setDcConnector(productVehicle.getDcConnector());
+        return dto;
+    }
+
 
 }

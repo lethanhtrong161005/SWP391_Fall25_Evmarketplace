@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.battery.BatteryListResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -66,4 +67,24 @@ public class ProductBattery {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
     private LocalDateTime createdAt;
+
+    public BatteryListResponse toDto(ProductBattery productBattery) {
+        BatteryListResponse dto = new BatteryListResponse();
+        dto.setId(productBattery.getId());
+
+        dto.setStatus(productBattery.getStatus().name());
+
+        dto.setCategory(productBattery.getCategory().getName());
+        dto.setBrand(productBattery.getBrand().getName());
+        dto.setModel(productBattery.getModel().getName());
+
+        dto.setChemistry(productBattery.getChemistry());
+        dto.setCapacityKwh(productBattery.getCapacityKwh());
+        dto.setVoltage(productBattery.getVoltage());
+        dto.setWeightKg(productBattery.getWeightKg());
+        dto.setDimension(productBattery.getDimension());
+        dto.setCreatedAt(productBattery.getCreatedAt());
+
+        return dto;
+    }
 }
