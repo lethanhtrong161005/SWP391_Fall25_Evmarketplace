@@ -25,6 +25,7 @@ public class UpdateVehicleRequest {
     private BigDecimal  acChargingKw;
     private BigDecimal  dcChargingKw;  // null nghĩa là set null (nếu gửi vào)
 
+    private ProductStatus status;
     private AcConnectorType acConnector;
     private DcConnectorType dcConnector;
 

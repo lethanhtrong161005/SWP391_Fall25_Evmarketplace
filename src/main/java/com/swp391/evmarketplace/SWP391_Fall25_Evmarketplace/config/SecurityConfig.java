@@ -74,7 +74,8 @@ public class SecurityConfig {
                             "/api/accounts/update-profile",
                             "/api/accounts/update-avatar",
                             "/api/accounts/listing",
-                            "/api/config/boosted"
+                            "/api/config/boosted",
+                            "/api/consignments/**"
                     ).authenticated();
 
                     //staff

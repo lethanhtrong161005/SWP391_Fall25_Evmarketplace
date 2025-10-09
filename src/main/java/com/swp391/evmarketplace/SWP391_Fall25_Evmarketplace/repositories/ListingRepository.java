@@ -44,8 +44,12 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                 join l.seller a
                 join a.profile p
               where l.status in :statuses
-                and (:#{#req.brand} is null or lower(l.brand) = lower(:#{#req.brand}))
-                and (:#{#req.modelKeyword} is null or lower(l.model) like lower(concat('%', :#{#req.modelKeyword}, '%')))
+                and (
+                          :#{#req.key} is null
+                          or lower(l.brand) like lower(concat('%', :#{#req.key}, '%'))
+                          or lower(l.model) like lower(concat('%', :#{#req.key}, '%'))
+                          or lower(l.title) like lower(concat('%', :#{#req.key}, '%'))
+                        )
                 and (:#{#req.yearFrom} is null or l.year >= :#{#req.yearFrom})
                 and (:#{#req.yearTo}   is null or l.year <= :#{#req.yearTo})
                 and (:#{#req.capacityMin} is null or l.batteryCapacityKwh >= :#{#req.capacityMin})
