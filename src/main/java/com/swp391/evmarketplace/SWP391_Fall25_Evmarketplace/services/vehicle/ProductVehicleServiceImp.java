@@ -264,7 +264,7 @@ public class ProductVehicleServiceImp implements ProductVehicleService {
         }
         if (req.getAcConnector() != null) pv.setAcConnector(req.getAcConnector());
         if (req.getDcConnector() != null) pv.setDcConnector(req.getDcConnector());
-
+        if (req.getStatus() != null) pv.setStatus(req.getStatus());
         // 4) Apply detail theo category (không cho đổi category trong update)
         String code = pv.getCategory().getName(); // hoặc getCode()
         switch (code) {
