@@ -4,9 +4,12 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.config.VNPayProperties;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.battery.BatteryListResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.branch.BranchDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.CreateListingResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListItemDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.*;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.vehicle.VehicleListReponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
@@ -16,6 +19,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.vnpay.VNPayService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,10 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Service
@@ -50,6 +51,8 @@ public class ListingServiceImp implements ListingService {
     @Autowired
     private ModelRepository modelRepository;
     @Autowired
+    private BrandRepository brandRepository;
+    @Autowired
     private FileService fileService;
     @Autowired
     private AuthUtil authUtil;
@@ -59,8 +62,11 @@ public class ListingServiceImp implements ListingService {
     private SalePaymentRepository salePaymentRepository;
     @Autowired
     private VNPayService  vNPayService;
+    @Autowired
+    private ListingMediaRepository mediaRepository;
     @Value("${server.url}")
     private String serverUrl;
+
 
 
     @Transactional
@@ -444,6 +450,90 @@ public class ListingServiceImp implements ListingService {
         res.setMessage(paymentUrl != null ? "Get PaymentUrl Success" : "Get PaymentUrl Failed");
         return res;
     }
+
+
+    //Lấy chi tiết bài đăng theo người bán
+    @Override
+    public BaseResponse<ListingDetailResponseDto> getListingDetailBySeller(Long listingId, Long sellerId) {
+        Listing listing = listingRepository.findById(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        if(listing.getSeller().getId() != sellerId){
+            throw new CustomBusinessException("Listing must be APPROVED to promote");
+        }
+        BaseResponse<ListingDetailResponseDto> res = new BaseResponse<>();
+        ListingDetailResponseDto detail = convertToDto(listing);
+        if(detail != null){
+            res.setData(detail);
+            res.setSuccess(true);
+            res.setMessage("Get Listing Detail Success");
+            res.setStatus(200);
+        }
+        return res;
+    }
+
+    //Lấy chi tiết bài đăng
+    @Override
+    public BaseResponse<ListingDetailResponseDto> getListingDetailById(Long listingId) {
+        Listing listing = listingRepository.findById(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        BaseResponse<ListingDetailResponseDto> res = new BaseResponse<>();
+        ListingDetailResponseDto detail = convertToDto(listing);
+        if(detail != null){
+            res.setData(detail);
+            res.setSuccess(true);
+            res.setMessage("Get Listing Detail Success");
+            res.setStatus(200);
+        }
+        return res;
+    }
+
+    private ListingDetailResponseDto convertToDto(Listing listing) {
+        ListingDetailResponseDto dto = new ListingDetailResponseDto();
+
+        //Lấy Listing
+        ListingDto listingDto = listing.toDto(listing, brandRepository, categoryRepository, modelRepository);
+        dto.setListing(listingDto);
+
+        //Lấy sellerId
+        AccountReponseDTO accountDto = new AccountReponseDTO();
+        accountDto.setId(listing.getSeller().getId());
+        accountDto.setEmail(listing.getSeller().getEmail());
+        accountDto.setProfile(listing.getSeller().getProfile());
+        accountDto.setPhoneNumber(listing.getSeller().getPhoneNumber());
+        dto.setSellerId(accountDto);
+
+        //Lấy cơ sở giữ dùng cho kí gửi
+        if(listing.getBranch() != null){
+            BranchDto branchDto = listing.getBranch().toDto(listing.getBranch());
+            dto.setBranch(branchDto);
+        }
+
+        //Lấy ProductVehicle nếu có
+        if(listing.getProductVehicle() != null){
+            VehicleListReponse vehicleDto = listing.getProductVehicle().toDto(listing.getProductVehicle());
+            dto.setProductVehicle(vehicleDto);
+        }
+
+        //Lấy ProductBattery
+        if(listing.getProductBattery() != null){
+            BatteryListResponse batteryDto = listing.getProductBattery().toDto(listing.getProductBattery());
+            dto.setProductBattery(batteryDto);
+        }
+
+        //Lấy các media của listing
+        List<ListingMedia> mediaList = listingMediaRepository.findAllByListingId(listing.getId());
+        if(mediaList.size() > 0){
+            List<ListingMediaDto> dtos = new ArrayList<>();
+            for(ListingMedia media : mediaList){
+                ListingMediaDto listingMediaDto = media.toDto(media);
+                listingMediaDto.setMediaUrl(MedialUtils.converMediaNametoMedialUrl(media.getMediaUrl(), media.getMediaType().name(), serverUrl));
+                dtos.add(listingMediaDto);
+            }
+            dto.setMedia(dtos);
+        }
+
+        return dto;
+    }
+
+
 
 
 }

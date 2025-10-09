@@ -1,8 +1,13 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.BrandRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.CategoryRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ModelRepository;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -157,6 +162,64 @@ public class Listing {
     public void addMedia(ListingMedia media) {
         media.setListing(this);
         mediaList.add(media);
+    }
+
+    public ListingDto toDto(Listing listing, BrandRepository brandRepository, CategoryRepository categoryRepository, ModelRepository modelRepository) {
+        ListingDto listingDto = new ListingDto();
+
+        listingDto.setId(listing.getId());
+
+        listingDto.setCategoryId(listing.getCategory().getId());
+        listingDto.setCategoryName(listing.getCategory().getName());
+
+        if(listing.getBrandId() != null){
+            listingDto.setBrandId(listing.getBrandId());
+            Brand b = brandRepository.findById(listing.getBrandId()).orElseThrow(() -> new CustomBusinessException("Brand not found"));
+            listingDto.setBrand(b.getName());
+        }else{
+            listingDto.setBrand(listing.getBrand());
+        }
+
+        if(listing.getModelId() != null){
+            listingDto.setModelId(listing.getModelId());
+            Model m = modelRepository.findById(listing.getModelId()).orElse(null);
+            listingDto.setModel(m.getName());
+        }else{
+            listingDto.setModel(listing.getModel());
+        }
+
+        listingDto.setSellerId(listing.getSeller().getId());
+
+        listingDto.setTitle(listing.getTitle());
+        listingDto.setDescription(listing.getDescription());
+        listingDto.setPrice(listing.getPrice());
+
+        listingDto.setStatus(listing.getStatus());
+        listingDto.setYear(listing.getYear());
+        listingDto.setAiSuggestedPrice(listing.getAiSuggestedPrice());
+        listingDto.setMileageKm(listing.getMileageKm());
+        listingDto.setBatteryCapacityKwh(listing.getBatteryCapacityKwh());
+        listingDto.setSohPercent(listing.getSohPercent());
+        listingDto.setColor(listing.getColor());
+        listingDto.setIsConsigned(listing.getConsigned());
+
+        listingDto.setProvince(listing.getProvince());
+        listingDto.setDistrict(listing.getDistrict());
+        listingDto.setWard(listing.getWard());
+        listingDto.setAddress(listing.getAddress());
+
+        listingDto.setCreatedAt(listing.getCreatedAt());
+        listingDto.setUpdatedAt(listing.getUpdatedAt());
+        listingDto.setExpiresAt(listing.getExpiresAt());
+        listingDto.setPromotedUntil(listing.getPromotedUntil());
+        listingDto.setStatus(listing.getStatus());
+        listingDto.setVisibility(listing.getVisibility());
+
+        if(listing.getBrandId() != null){
+            listingDto.setBrandId(listing.getBrandId());
+        }
+
+        return listingDto;
     }
 
 }

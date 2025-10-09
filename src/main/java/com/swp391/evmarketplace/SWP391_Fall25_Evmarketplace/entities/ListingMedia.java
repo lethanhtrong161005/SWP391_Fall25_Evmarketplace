@@ -1,13 +1,13 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingMediaDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.MediaType;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 
@@ -38,4 +38,16 @@ public class ListingMedia {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+
+    public ListingMediaDto toDto(ListingMedia listingMedia) {
+        ListingMediaDto dto = new ListingMediaDto();
+        dto.setId(listingMedia.getId());
+        dto.setMediaType(listingMedia.getMediaType());
+        dto.setMediaUrl(listingMedia.getMediaUrl());
+        return dto;
+    }
+
+
+
 }

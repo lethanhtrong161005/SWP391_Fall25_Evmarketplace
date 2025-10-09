@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import io.jsonwebtoken.ExpiredJwtException;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.nio.file.NoSuchFileException;
@@ -97,6 +99,12 @@ public class CentralException {
         res.setStatus(400);
         res.setMessage("Bad JSON: " + ex.getMostSpecificCause().getMessage());
         return ResponseEntity.badRequest().body(res);
+    }
+
+    @ExceptionHandler({ClientAbortException.class,
+            AsyncRequestNotUsableException.class})
+    public ResponseEntity<Void> handleClientAbort() {
+        return ResponseEntity.ok().build();
     }
 
 

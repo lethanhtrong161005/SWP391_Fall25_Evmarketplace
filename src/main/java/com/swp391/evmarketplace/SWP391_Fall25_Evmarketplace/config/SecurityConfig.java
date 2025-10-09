@@ -58,7 +58,8 @@ public class SecurityConfig {
                             "/api/brand/**",
                             "/api/model/**",
                             "/api/product/vehicle/**",
-                            "/api/product/battery/**"
+                            "/api/product/battery/**",
+                            "/api/listing/**"
                     ).permitAll();
                     auth.requestMatchers(
                             "/swagger-ui/**",
