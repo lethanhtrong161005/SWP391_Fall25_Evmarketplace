@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.CreateConsignmentRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.UpdateSetScheduleRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
@@ -37,6 +38,12 @@ public class ConsignmentController {
     ){
         Long id = authUtil.getCurrentAccount().getId();
         BaseResponse<PageResponse<ConsignmentRequestProject>> response = consignmentRequestService.getListById( id, page, size, dir, sort);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @PutMapping("/set-schedule")
+    public ResponseEntity<?> setSchedule(@Valid @RequestBody UpdateSetScheduleRequestDTO dto){
+        BaseResponse<Void> response = consignmentRequestService.setRequestSchedule(dto);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 }

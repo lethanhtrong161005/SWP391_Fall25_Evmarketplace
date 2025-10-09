@@ -1,4 +1,4 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.validation.ValidPhone;
 import lombok.Data;

@@ -1,8 +1,7 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.validation.ValidPhone;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

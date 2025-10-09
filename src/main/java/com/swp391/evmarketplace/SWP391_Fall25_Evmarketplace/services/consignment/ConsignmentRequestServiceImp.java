@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.CreateConsignmentRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.UpdateSetScheduleRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.*;
@@ -11,9 +12,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.project
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -138,7 +137,7 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         response.setData(pageResponse);
         response.setSuccess(true);
         response.setStatus(200);
-        response.setMessage(lists.isEmpty() ? "Empty list consignment request" : "Ok");
+        response.setMessage(lists.isEmpty() ? ErrorCode.CONSIGNMENT_REQUEST_LIST_NOT_FOUND.name() : "Ok");
 
         return response;
     }
@@ -162,8 +161,25 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         response.setData(pageResponse);
         response.setSuccess(true);
         response.setStatus(200);
-        response.setMessage(lists.isEmpty() ? ("Empty list consignment request by id: " + id) : "Ok");
+        response.setMessage(lists.isEmpty()
+                ? (ErrorCode.CONSIGNMENT_REQUEST_LIST_NOT_FOUND.name() + ": " + id) : "Ok");
 
+        return response;
+    }
+
+    @Override
+    public BaseResponse<Void> setRequestSchedule(UpdateSetScheduleRequestDTO dto) {
+
+        Optional<ConsignmentRequest> request = consignmentRequestRepository.findById(dto.getId());
+        if (request.isEmpty()) throw new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name());
+        ConsignmentRequest consignmentRequest = request.get();
+        consignmentRequest.setAppointmentTime(dto.getAppointmentTime());
+        consignmentRequestRepository.save(consignmentRequest);
+
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage("Set time successfully");
         return response;
     }
 }
