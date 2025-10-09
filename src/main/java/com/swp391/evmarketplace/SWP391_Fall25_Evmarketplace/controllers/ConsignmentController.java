@@ -29,7 +29,7 @@ public class ConsignmentController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @GetMapping("/")
+    @GetMapping("/all")
     public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestProject>>> getMineListRequest(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -47,5 +47,4 @@ public class ConsignmentController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    //sdfgzsdfgsg
 }
