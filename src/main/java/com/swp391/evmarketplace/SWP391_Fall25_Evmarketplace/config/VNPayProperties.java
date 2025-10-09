@@ -13,12 +13,18 @@ import java.util.Optional;
 @Component
 @Getter
 public class VNPayProperties {
-    @Value("${vnpay.version}")     private String vnp_Version;
-    @Value("${vnpay.command}")     private String vnp_Command;
-    @Value("${vnpay.pay-url}")     private String vnp_PayUrl;
-    @Value("${vnpay.return-url}")  private String vnp_ReturnUrl;
-    @Value("${vnpay.tmn-code}")    private String vnp_TmnCode;
-    @Value("${vnpay.hash-secret}") private String secretKey;
+    @Value("${vnpay.version}")
+    private String vnp_Version;
+    @Value("${vnpay.command}")
+    private String vnp_Command;
+    @Value("${vnpay.pay-url}")
+    private String vnp_PayUrl;
+    @Value("${vnpay.return-url}")
+    private String vnp_ReturnUrl;
+    @Value("${vnpay.tmn-code}")
+    private String vnp_TmnCode;
+    @Value("${vnpay.hash-secret}")
+    private String secretKey;
 
     public static String getIpAddress(HttpServletRequest request) {
         String ip = Optional.ofNullable(request.getHeader("X-Forwarded-For"))
@@ -28,7 +34,7 @@ public class VNPayProperties {
         return ip;
     }
 
-    public String hmacSHA512(final String key, final String data) {
+    public static String hmacSHA512(final String key, final String data) {
         try {
             Mac mac = Mac.getInstance("HmacSHA512");
             mac.init(new SecretKeySpec(key.trim().getBytes(StandardCharsets.UTF_8), "HmacSHA512"));

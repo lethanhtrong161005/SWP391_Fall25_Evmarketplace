@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.branch.BranchDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.BranchStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -56,4 +57,16 @@ public class Branch {
     @JoinColumn(name = "manager_id",
             foreignKey = @ForeignKey(name = "fk_branch_manager"))
     private Account manager;
+
+    public BranchDto toDto(Branch branch) {
+        BranchDto dto = new BranchDto();
+        dto.setId(branch.getId());
+        dto.setProvince(branch.getProvince());
+        dto.setAddress(branch.getAddress());
+        dto.setPhone(branch.getPhone());
+        dto.setName(branch.getName());
+        dto.setStatus(branch.getStatus().name());
+        return dto;
+    }
+
 }

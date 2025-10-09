@@ -87,4 +87,25 @@ public class ListingController {
         res.setData(data);
         return res;
     }
+
+    @PatchMapping("/{listingId}")
+    public ResponseEntity<?> updateListing(@PathVariable Long listingId, @RequestBody CreateListingRequest req){
+        return ResponseEntity.ok("OK");
+    }
+
+    //Lấy chi tiết bài đăng theo người đăng
+    @GetMapping("/seller/{listingId}")
+    public ResponseEntity<?> getListingBySeller(@PathVariable Long listingId){
+        var res = listingService.getListingDetailBySeller(listingId, authUtil.getCurrentAccount().getId());
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    //Lấy chi tiết bài đăng
+    @GetMapping("/{listingId}")
+    public ResponseEntity<?> getListingById(@PathVariable Long listingId){
+        var res = listingService.getListingDetailById(listingId);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+    
+
 }

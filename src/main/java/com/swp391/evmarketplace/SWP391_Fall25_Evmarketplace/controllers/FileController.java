@@ -4,6 +4,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,13 +69,49 @@ public class FileController {
     }
 
     @GetMapping("/videos/{name}")
-    public ResponseEntity<Resource> getVideo(@PathVariable String name) {
-        Resource resource = fileService.loadVideoAsResource(name);
-        String contentType = guessContentType(resource);
+    public ResponseEntity<Resource> getVideo(
+            @PathVariable String name,
+            @RequestHeader(value = "Range", required = false) String rangeHeader
+    ) throws IOException {
+        Resource video = fileService.loadVideoAsResource(name);
+        Path path = video.getFile().toPath();
+        long fileLength = Files.size(path);
+
+        // Lấy MIME type
+        String contentType = Files.probeContentType(path);
+        if (contentType == null) contentType = "video/mp4";
+
+        // Nếu trình duyệt gửi Range header (vd: bytes=0-)
+        if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+            long start = 0, end = fileLength - 1;
+            String[] ranges = rangeHeader.substring(6).split("-");
+            try {
+                start = Long.parseLong(ranges[0]);
+                if (ranges.length > 1 && !ranges[1].isEmpty()) {
+                    end = Long.parseLong(ranges[1]);
+                }
+            } catch (NumberFormatException ignored) {}
+            if (end >= fileLength) end = fileLength - 1;
+
+            long chunkSize = end - start + 1;
+            InputStream inputStream = Files.newInputStream(path);
+            inputStream.skip(start);
+            Resource partialResource = new InputStreamResource(inputStream);
+
+            return ResponseEntity.status(206)
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .header(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, end, fileLength))
+                    .contentLength(chunkSize)
+                    .body(partialResource);
+        }
+
+        // Nếu không có Range -> trả full file
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, contentDispositionInline(name))
-                .body(resource);
+                .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                .contentLength(fileLength)
+                .body(video);
     }
 
     @DeleteMapping("/videos/{name}")
