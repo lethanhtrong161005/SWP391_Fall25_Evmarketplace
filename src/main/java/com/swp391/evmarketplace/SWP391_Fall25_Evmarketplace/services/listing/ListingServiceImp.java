@@ -206,20 +206,12 @@ public class ListingServiceImp implements ListingService {
     }
 
     public BaseResponse<Map<String, Object>> doSearch(SearchListingRequestDTO requestDTO, EnumSet<ListingStatus> statusSet, int page, int size, String sort, String dir) {
-        // Normalize text filters: treat whitespace-only as null and trim values
-        if (requestDTO.getBrand() != null) {
-            String b = requestDTO.getBrand().trim();
-            requestDTO.setBrand(b.isEmpty() ? null : b);
+        if (requestDTO.getKey() != null) {
+            String key = requestDTO.getKey().trim();
+            requestDTO.setKey(key.isEmpty() ? null : key);
         }
-        if (requestDTO.getModelKeyword() != null) {
-            String mk = requestDTO.getModelKeyword().trim();
-            requestDTO.setModelKeyword(mk.isEmpty() ? null : mk);
-        }
-
         Pageable pageable = buildPageable(page, size, sort, dir);
-
         Slice<ListingListProjection> lists = listingRepository.searchCards(requestDTO, statusSet, pageable);
-
         Map<String, Object> payload = Map.of(
                 "items", lists.getContent(),
                 "page", page,
@@ -328,7 +320,7 @@ public class ListingServiceImp implements ListingService {
                 ListingListItemDTO.builder()
                         .id(prj.getId())
                         .year(prj.getYear())
-                        .status(prj.getListingStatus())
+                        .status(prj.getStatus())
                         .visibility(prj.getVisibility())
                         .title(prj.getTitle())
                         .batteryCapacityKwh(prj.getBatteryCapacityKwh())

@@ -2,8 +2,8 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingStatusCount;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,13 +39,17 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.createdAt as createdAt,
                     l.status as status,
                     l.visibility as visibility,
-                    l.consigned as consigned
+                    l.consigned as isConsigned
                 from Listing l
                 join l.seller a
                 join a.profile p
               where l.status in :statuses
-                and (:#{#req.brand} is null or lower(l.brand) = lower(:#{#req.brand}))
-                and (:#{#req.modelKeyword} is null or lower(l.model) like lower(concat('%', :#{#req.modelKeyword}, '%')))
+                and (
+                          :#{#req.key} is null
+                          or lower(l.brand) like lower(concat('%', :#{#req.key}, '%'))
+                          or lower(l.model) like lower(concat('%', :#{#req.key}, '%'))
+                          or lower(l.title) like lower(concat('%', :#{#req.key}, '%'))
+                        )
                 and (:#{#req.yearFrom} is null or l.year >= :#{#req.yearFrom})
                 and (:#{#req.yearTo}   is null or l.year <= :#{#req.yearTo})
                 and (:#{#req.capacityMin} is null or l.batteryCapacityKwh >= :#{#req.capacityMin})
@@ -78,7 +82,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.createdAt as createdAt,
                     l.status as status,
                     l.visibility as visibility,
-                    l.consigned as consigned
+                    l.consigned as isConsigned
                 from Listing l
                 join l.seller a
                 join a.profile p
@@ -104,7 +108,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                         l.createdAt as createdAt,
                         l.status as status,
                         l.visibility as visibility,
-                        l.consigned as consigned
+                        l.consigned as isConsigned
                       from Listing l
                       join l.seller a
                       where a.id = :sellerId

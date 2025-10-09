@@ -6,9 +6,7 @@ import java.math.BigDecimal;
 
 @Data
 public class SearchListingRequestDTO {
-    private String brand;           // brand
-
-    private String modelKeyword;    // model
+    private String key;           // brand, model, title
 
     private Integer yearFrom;       // range
     private Integer yearTo;
