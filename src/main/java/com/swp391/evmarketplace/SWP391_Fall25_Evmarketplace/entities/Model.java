@@ -67,7 +67,7 @@ public class Model {
         modelDTO.setId(model.getId());
         modelDTO.setName(model.getName());
         modelDTO.setYear(model.getYear());
-        modelDTO.setStatus(modelDTO.getStatus());
+        modelDTO.setStatus(model.getStatus() != null ? model.getStatus().name() : null);
         modelDTO.setBrandId(model.getBrand().getId());
         modelDTO.setCategoryId(model.getCategory().getId());
         modelDTO.setCategoryName(model.getCategory().getName());
