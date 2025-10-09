@@ -39,10 +39,12 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.createdAt as createdAt,
                     l.status as status,
                     l.visibility as visibility,
-                    l.consigned as isConsigned
+                    l.consigned as isConsigned,
+                    GROUP_CONCAT(m.mediaUrl) as mediaListUrl
                 from Listing l
                 join l.seller a
                 join a.profile p
+                left join l.mediaList m
               where l.status in :statuses
                 and (
                           :#{#req.key} is null
@@ -60,6 +62,9 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                 and (:#{#req.mileageMax}  is null or l.mileageKm <= :#{#req.mileageMax})
                 and (:#{#req.sohMin}      is null or l.sohPercent >= :#{#req.sohMin})
                 and (:#{#req.sohMax}      is null or l.sohPercent <= :#{#req.sohMax})
+                group by l.id, l.title, l.brand, l.model, l.year, p.fullName, l.price,
+                         l.province, l.batteryCapacityKwh, l.sohPercent, l.mileageKm,
+                         l.createdAt, l.status, l.visibility, l.consigned
             """)
     Slice<ListingListProjection> searchCards(
             @Param("req") SearchListingRequestDTO req,
@@ -67,7 +72,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             Pageable pageable);
 
     @Query("""
-            select
+                select
                     l.id as id,
                     l.title as title,
                     l.brand as brand,
@@ -82,11 +87,16 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.createdAt as createdAt,
                     l.status as status,
                     l.visibility as visibility,
-                    l.consigned as isConsigned
+                    l.consigned as isConsigned,
+                    GROUP_CONCAT(m.mediaUrl) as mediaListUrl
                 from Listing l
-                join l.seller a
-                join a.profile p
-            where l.status in :statuses
+                    join l.seller a
+                    join a.profile p
+                    left join l.mediaList m
+                where l.status in :statuses
+                group by l.id, l.title, l.brand, l.model, l.year, p.fullName, l.price,
+                         l.province, l.batteryCapacityKwh, l.sohPercent, l.mileageKm,
+                         l.createdAt, l.status, l.visibility, l.consigned
             """)
     Slice<ListingListProjection> getAllList(
             @Param("statuses") Collection<ListingStatus> statuses,
@@ -126,47 +136,47 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
 
     @Query(
             value = """
-                select
-                  l.id as id,
-                  l.title as title,
-                  l.brand as brand,
-                  l.model as model,
-                  l.year as year,
-                  l.price as price,
-                  l.province as province,
-                  l.batteryCapacityKwh as batteryCapacityKwh,
-                  l.sohPercent as sohPercent,
-                  l.mileageKm as mileageKm,
-                  l.createdAt as createdAt,
-                  l.status as status,
-                  l.visibility as visibility,
-                  l.consigned as isConsigned,
-                  p.fullName as sellerName
-                from Listing l
-                join l.seller s
-                left join s.profile p
-                where s.id = :sellerId
-                  and (:status is null or l.status = :status)
-                  and (
-                       :q is null
-                       or lower(l.title) like lower(concat('%', :q, '%'))
-                       or lower(l.brand) like lower(concat('%', :q, '%'))
-                       or lower(l.model) like lower(concat('%', :q, '%'))
-                  )
-                """,
+                    select
+                      l.id as id,
+                      l.title as title,
+                      l.brand as brand,
+                      l.model as model,
+                      l.year as year,
+                      l.price as price,
+                      l.province as province,
+                      l.batteryCapacityKwh as batteryCapacityKwh,
+                      l.sohPercent as sohPercent,
+                      l.mileageKm as mileageKm,
+                      l.createdAt as createdAt,
+                      l.status as status,
+                      l.visibility as visibility,
+                      l.consigned as isConsigned,
+                      p.fullName as sellerName
+                    from Listing l
+                    join l.seller s
+                    left join s.profile p
+                    where s.id = :sellerId
+                      and (:status is null or l.status = :status)
+                      and (
+                           :q is null
+                           or lower(l.title) like lower(concat('%', :q, '%'))
+                           or lower(l.brand) like lower(concat('%', :q, '%'))
+                           or lower(l.model) like lower(concat('%', :q, '%'))
+                      )
+                    """,
             countQuery = """
-                select count(l)
-                from Listing l
-                join l.seller s
-                where s.id = :sellerId
-                  and (:status is null or l.status = :status)
-                  and (
-                       :q is null
-                       or lower(l.title) like lower(concat('%', :q, '%'))
-                       or lower(l.brand) like lower(concat('%', :q, '%'))
-                       or lower(l.model) like lower(concat('%', :q, '%'))
-                  )
-                """
+                    select count(l)
+                    from Listing l
+                    join l.seller s
+                    where s.id = :sellerId
+                      and (:status is null or l.status = :status)
+                      and (
+                           :q is null
+                           or lower(l.title) like lower(concat('%', :q, '%'))
+                           or lower(l.brand) like lower(concat('%', :q, '%'))
+                           or lower(l.model) like lower(concat('%', :q, '%'))
+                      )
+                    """
     )
     Page<ListingListProjection> findMine(
             @Param("sellerId") Long sellerId,
@@ -176,10 +186,10 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     );
 
     @Query("""
-       select l.status as status, count(l) as total
-       from Listing l
-       where l.seller.id = :sellerId
-       group by l.status
-       """)
+            select l.status as status, count(l) as total
+            from Listing l
+            where l.seller.id = :sellerId
+            group by l.status
+            """)
     List<ListingStatusCount> countBySellerGroupedStatus(@Param("sellerId") Long sellerId);
 }
