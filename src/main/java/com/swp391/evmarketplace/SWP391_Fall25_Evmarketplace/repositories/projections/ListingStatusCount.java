@@ -1,4 +1,4 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 

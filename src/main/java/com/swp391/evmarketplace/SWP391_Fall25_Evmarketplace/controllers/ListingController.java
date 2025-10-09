@@ -87,4 +87,16 @@ public class ListingController {
         res.setData(data);
         return res;
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getListingDetail(@PathVariable Long id){
+        return ResponseEntity.ok("OK");
+    }
+
+    @PatchMapping("/{listingId}")
+    public ResponseEntity<?> updateListing(@PathVariable Long listingId, @RequestBody CreateListingRequest req){
+        return ResponseEntity.ok("OK");
+    }
+    
+
 }

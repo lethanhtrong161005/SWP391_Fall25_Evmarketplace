@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.config.VNPayProperties;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -13,7 +14,9 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.vnpay.VNPayService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +27,8 @@ import org.springframework.data.domain.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -48,6 +53,12 @@ public class ListingServiceImp implements ListingService {
     private FileService fileService;
     @Autowired
     private AuthUtil authUtil;
+    @Autowired
+    private ConfigRepository configRepository;
+    @Autowired
+    private SalePaymentRepository salePaymentRepository;
+    @Autowired
+    private VNPayService  vNPayService;
     @Value("${server.url}")
     private String serverUrl;
 
@@ -328,7 +339,7 @@ public class ListingServiceImp implements ListingService {
                 ListingListItemDTO.builder()
                         .id(prj.getId())
                         .year(prj.getYear())
-                        .status(prj.getListingStatus())
+                        .status(prj.getStatus())
                         .visibility(prj.getVisibility())
                         .title(prj.getTitle())
                         .batteryCapacityKwh(prj.getBatteryCapacityKwh())
@@ -374,4 +385,65 @@ public class ListingServiceImp implements ListingService {
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
     }
+
+    //Payment Listing
+
+    private long cfgLong(String key, long def) {
+        return configRepository.findById(key)
+                .map(c -> { try
+                { return Long.parseLong(c.getValue());
+                } catch (Exception e){ return def; }})
+                .orElse(def);
+    }
+
+    @Override
+    public BaseResponse<String> createPromotionPaymentUrl(Long listingId, HttpServletRequest request) {
+        var me = authUtil.getCurrentAccount();
+        var listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new IllegalArgumentException("Listing not found"));
+        if (!listing.getSeller().getId().equals(me.getId()))
+            throw new CustomBusinessException("Not your listing");
+
+        if (listing.getStatus() != ListingStatus.APPROVED)
+            throw new CustomBusinessException("Listing must be APPROVED to promote");
+
+        long feeVnd = cfgLong("promoted_fee_vnd", 50000L);
+
+        var pay = new SalePayment();
+        pay.setListing(listing);
+        pay.setPayer(me);
+        pay.setAmount(BigDecimal.valueOf(feeVnd));
+        pay.setMethod(PaymentMethod.VNPAY);
+        pay.setPurpose(PaymentPurpose.PROMOTION);
+        pay.setStatus(PaymentStatus.INIT);
+        salePaymentRepository.save(pay);
+
+        String txnRef = "PROMO-" + pay.getId();
+        pay.setProviderTxnId(txnRef);
+        salePaymentRepository.save(pay);
+
+        Map<String,String> returnParams = Map.of(
+                "purpose","PROMOTION",
+                "listingId", String.valueOf(listingId),
+                "paymentId", String.valueOf(pay.getId())
+        );
+
+        String paymentUrl = vNPayService.createPaymentUrl(
+                feeVnd,
+                "Thanh toan promote tin #" + listingId,
+                VNPayProperties.getIpAddress(request),
+                txnRef,
+                returnParams,
+                false
+        );
+
+        BaseResponse<String> res = new BaseResponse<>();
+        res.setData(paymentUrl != null ? paymentUrl : "");
+        res.setStatus(paymentUrl != null ? 200 : 500);
+        res.setSuccess(paymentUrl != null);
+        res.setMessage(paymentUrl != null ? "Get PaymentUrl Success" : "Get PaymentUrl Failed");
+        return res;
+    }
+
+
 }
