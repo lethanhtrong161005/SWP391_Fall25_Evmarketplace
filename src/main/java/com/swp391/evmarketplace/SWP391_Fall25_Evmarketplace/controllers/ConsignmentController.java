@@ -28,11 +28,14 @@ public class ConsignmentController {
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> create(
-            @RequestPart("payload") CreateConsignmentRequestDTO req,
+            @RequestPart("payload") String payload,
             @RequestPart(value="images", required=false) List<MultipartFile> images,
             @RequestPart(value="videos", required=false) List<MultipartFile> videos
     ){
         try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            CreateConsignmentRequestDTO req = objectMapper.readValue(payload, CreateConsignmentRequestDTO.class);
+
             Account account = authUtil.getCurrentAccount();
             var res = consignmentRequestService.createConsignmentRequest(req, account, images, videos);
             return ResponseEntity.status(res.getStatus()).body(res);
@@ -40,7 +43,6 @@ public class ConsignmentController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
-
     }
 
     @GetMapping("/all")

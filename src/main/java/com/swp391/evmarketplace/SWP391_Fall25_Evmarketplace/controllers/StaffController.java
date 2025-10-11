@@ -67,16 +67,21 @@ public class StaffController {
 
     @PostMapping(value = "/consignment-request/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> create(
-            @RequestPart("payload") CreateConsignmentRequestByStaffDTO req,
+            @RequestPart("payload") String payload,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @RequestPart(value = "videos", required = false) List<MultipartFile> videos
     ) {
         //check acc
-        if (StringUtil.isNullOrEmpty(req.getPhone()))
-            throw new CustomBusinessException(ErrorCode.PHONE_REQUIRED.name());
-        Account owner = accountRepository.findByPhoneNumber(req.getPhone())
-                .orElseThrow(() -> new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name()));
+
         try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            CreateConsignmentRequestByStaffDTO req = objectMapper.readValue(payload, CreateConsignmentRequestByStaffDTO.class);
+
+            if (StringUtil.isNullOrEmpty(req.getPhone()))
+                throw new CustomBusinessException(ErrorCode.PHONE_REQUIRED.name());
+            Account owner = accountRepository.findByPhoneNumber(req.getPhone())
+                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name()));
+
             BaseResponse<Void> res = consignmentRequestService.createConsignmentRequest(req, owner, images, videos);
             return ResponseEntity.status(res.getStatus()).body(res);
         } catch (Exception e) {
