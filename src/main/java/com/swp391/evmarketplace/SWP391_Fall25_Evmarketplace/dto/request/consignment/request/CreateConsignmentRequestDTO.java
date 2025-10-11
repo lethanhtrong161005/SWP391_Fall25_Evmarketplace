@@ -56,9 +56,6 @@ public class CreateConsignmentRequestDTO {
     @NotNull
     private Long preferredBranchId;   // FK -> branch
 
-    @Future
-    private LocalDateTime appointmentTime;
-
     @NotNull(message = "")
     @DecimalMin(value = "0.00", inclusive = false)
     @Digits(integer = 12, fraction = 2)
