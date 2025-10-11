@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentRequestStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
@@ -13,6 +14,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -73,8 +76,10 @@ public class ConsignmentRequest {
         foreignKey = @ForeignKey(name = "fk_cr_branch"))
     private Branch preferredBranch;
 
-    @Column(name = "appointment_time", nullable = false)
-    private LocalDateTime appointmentTime;
+    @OneToMany(mappedBy = "request",  fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ConsignmentRequestMedia> mediaList = new ArrayList<>();
 
     @Column(name = "owner_expected_price", precision = 12, scale = 2)
     private BigDecimal ownerExpectedPrice;
@@ -100,4 +105,9 @@ public class ConsignmentRequest {
 
     @OneToOne(mappedBy = "request")
     private ConsignmentAgreement agreement;
+
+    public void addMedia(ConsignmentRequestMedia media) {
+        media.setRequest(this);
+        mediaList.add(media);
+    }
 }

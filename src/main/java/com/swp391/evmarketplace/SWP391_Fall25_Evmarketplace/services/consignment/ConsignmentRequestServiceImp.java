@@ -9,13 +9,17 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProject;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -35,11 +39,13 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     private CategoryBrandRepository categoryBrandRepository;
     @Autowired
     private BrandRepository brandRepository;
+    @Autowired
+    private FileService fileService;
 
 
     @Transactional
     @Override
-    public BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO, Account account) {
+    public BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO, Account account, List<MultipartFile> images, List<MultipartFile> videos) {
         //cate
         Category category = categoryRepository.findById(requestDTO.getCategoryId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CATEGORY_NOT_FOUND.name()));
@@ -105,10 +111,41 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         consignmentRequest.setSohPercent(requestDTO.getSohPercent());
         consignmentRequest.setMileageKm(requestDTO.getMileageKm());
         consignmentRequest.setPreferredBranch(branch);
-        consignmentRequest.setAppointmentTime(requestDTO.getAppointmentTime());
+//        consignmentRequest.setAppointmentTime(requestDTO.getAppointmentTime());
         consignmentRequest.setOwnerExpectedPrice(requestDTO.getOwnerExpectedPrice());
         consignmentRequest.setNote(requestDTO.getNote());
         consignmentRequest.setStatus(ConsignmentRequestStatus.SUBMITTED);
+
+        consignmentRequestRepository.save(consignmentRequest);
+
+        //media
+        try {
+            if (images != null) {
+                for (var img : images) {
+                    if (img == null || img.isEmpty()) continue;
+                    var stored = fileService.storeImage(img);
+                    var media = new ConsignmentRequestMedia();
+                    media.setRequest(consignmentRequest);
+                    media.setMediaUrl(stored.getStoredName());
+                    media.setMediaType(MediaType.IMAGE);
+                    consignmentRequest.addMedia(media);
+                }
+            }
+
+            if (videos != null) {
+                for (var v : videos) {
+                    if (v == null || v.isEmpty()) continue;
+                    var stored = fileService.storeVideo(v);
+                    var media = new ConsignmentRequestMedia();
+                    media.setRequest(consignmentRequest);
+                    media.setMediaUrl(stored.getStoredName());
+                    media.setMediaType(MediaType.VIDEO);
+                    consignmentRequest.addMedia(media);
+                }
+            }
+        } catch (IOException e) {
+            throw new CustomBusinessException("Upload media failed: " + e.getMessage());
+        }
 
         consignmentRequestRepository.save(consignmentRequest);
 
@@ -167,19 +204,19 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         return response;
     }
 
-    @Override
-    public BaseResponse<Void> setRequestSchedule(UpdateSetScheduleRequestDTO dto) {
-
-        Optional<ConsignmentRequest> request = consignmentRequestRepository.findById(dto.getId());
-        if (request.isEmpty()) throw new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name());
-        ConsignmentRequest consignmentRequest = request.get();
-        consignmentRequest.setAppointmentTime(dto.getAppointmentTime());
-        consignmentRequestRepository.save(consignmentRequest);
-
-        BaseResponse<Void> response = new BaseResponse<>();
-        response.setSuccess(true);
-        response.setStatus(200);
-        response.setMessage("Set time successfully");
-        return response;
-    }
+//    @Override
+//    public BaseResponse<Void> setRequestSchedule(UpdateSetScheduleRequestDTO dto) {
+//
+//        Optional<ConsignmentRequest> request = consignmentRequestRepository.findById(dto.getId());
+//        if (request.isEmpty()) throw new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name());
+//        ConsignmentRequest consignmentRequest = request.get();
+////        consignmentRequest.setAppointmentTime(dto.getAppointmentTime());
+//        consignmentRequestRepository.save(consignmentRequest);
+//
+//        BaseResponse<Void> response = new BaseResponse<>();
+//        response.setSuccess(true);
+//        response.setStatus(200);
+//        response.setMessage("Set time successfully");
+//        return response;
+//    }
 }
