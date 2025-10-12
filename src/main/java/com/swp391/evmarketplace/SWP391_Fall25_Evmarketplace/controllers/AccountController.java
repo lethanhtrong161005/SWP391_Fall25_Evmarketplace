@@ -145,17 +145,17 @@ public class AccountController {
     }
 
     //list
-    @GetMapping("/listing")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> getSellerList(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false, defaultValue = "desc") String dir
-    ) {
-        Account account = authUtil.getCurrentAccount();
-        BaseResponse<Map<String, Object>> response = listingService.getSellerList(account.getId(), page, size, sort, dir);
-
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
+//    @GetMapping("/listing")
+//    public ResponseEntity<BaseResponse<Map<String, Object>>> getSellerList(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size,
+//            @RequestParam(required = false) String sort,
+//            @RequestParam(required = false, defaultValue = "desc") String dir
+//    ) {
+//        Account account = authUtil.getCurrentAccount();
+//        BaseResponse<Map<String, Object>> response = listingService.getSellerList(account.getId(), page, size, sort, dir);
+//
+//        return ResponseEntity.status(response.getStatus()).body(response);
+//    }
 
 }

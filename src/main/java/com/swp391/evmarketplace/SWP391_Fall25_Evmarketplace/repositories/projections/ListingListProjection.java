@@ -1,11 +1,14 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ListingMedia;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ListingListProjection {
     Long getId();
+    Long getCategoryId();
     String getTitle();
     String getBrand();
     String getModel();
@@ -20,5 +23,5 @@ public interface ListingListProjection {
     String getStatus();
     String getVisibility();
     Boolean getIsConsigned();
-    List<String> getMediaListUrl();
+    List<ListingMedia> getMediaListUrl();
 }

@@ -20,7 +20,6 @@ public interface ConsignmentRequestProject {
     BigDecimal getSohPercent();
     Integer getMileageKm();
     String getPreferredBranchName();
-//    LocalDateTime getAppointmentTime();
     BigDecimal getOwnerExpectedPrice();
     ConsignmentRequestStatus getStatus();
     LocalDateTime getCreatedAt();

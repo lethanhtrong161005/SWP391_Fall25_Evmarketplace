@@ -20,6 +20,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileSe
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.vnpay.VNPayService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -214,19 +215,20 @@ public class ListingServiceImp implements ListingService {
     }
 
 
-    private Pageable buildPageable(int page, int size, String sort, String dir) {
-        Sort s = (sort == null || sort.isBlank())
-                ? Sort.by(Sort.Direction.DESC, "createdAt") //mặc định show acc mới tạo gần nhất
-                : Sort.by("desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC, sort);
-        return PageRequest.of(Math.max(page, 0), Math.max(size, 1), s); // số trang 0 âm, ít nhất 1 phần tử trong mỗi trang
-    }
+//    private Pageable buildPageable(int page, int size, String sort, String dir) {
+//        Sort s = (sort == null || sort.isBlank())
+//                ? Sort.by(Sort.Direction.DESC, "createdAt") //mặc định show acc mới tạo gần nhất
+//                : Sort.by("desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC, sort);
+//        return PageRequest.of(Math.max(page, 0), Math.max(size, 1), s); // số trang 0 âm, ít nhất 1 phần tử trong mỗi trang
+//    }
 
     public BaseResponse<Map<String, Object>> doSearch(SearchListingRequestDTO requestDTO, EnumSet<ListingStatus> statusSet, int page, int size, String sort, String dir) {
         if (requestDTO.getKey() != null) {
             String key = requestDTO.getKey().trim();
             requestDTO.setKey(key.isEmpty() ? null : key);
         }
-        Pageable pageable = buildPageable(page, size, sort, dir);
+//        Pageable pageable = buildPageable(page, size, sort, dir);
+        Pageable pageable = PageableUtils.buildPageable(page, size, sort, dir);
         Slice<ListingListProjection> lists = listingRepository.searchCards(requestDTO, statusSet, pageable);
         Map<String, Object> payload = Map.of(
                 "items", lists.getContent(),
@@ -247,9 +249,16 @@ public class ListingServiceImp implements ListingService {
 
     @Override
     public BaseResponse<Map<String, Object>> getAllListingsPublic(int page, int size, String sort, String dir) {
-        Pageable pageable = buildPageable(page, size, sort, dir);
-
+        Pageable pageable = PageableUtils.buildPageable(page, size, sort, dir);
         Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.of(ListingStatus.ACTIVE), pageable);
+        List<ListingListProjection> list = slice.getContent();
+        for (ListingListProjection l : list){
+            List<ListingMedia> mediaLists = listingMediaRepository.findAllByListingId(l.getId());
+            if(mediaLists.size() > 0){
+
+            }
+
+        }
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
@@ -271,8 +280,7 @@ public class ListingServiceImp implements ListingService {
 
     @Override
     public BaseResponse<Map<String, Object>> getAllListForManage(int page, int size, String sort, String dir) {
-        Pageable pageable = buildPageable(page, size, sort, dir);
-
+        Pageable pageable = PageableUtils.buildPageable(page, size, sort, dir);
         Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.allOf(ListingStatus.class), pageable);
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
@@ -282,34 +290,6 @@ public class ListingServiceImp implements ListingService {
                 "page", page,
                 "size", size,
                 "hasNext", slice.hasNext()
-        );
-
-        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
-        response.setData(payload);
-        response.setStatus(200);
-        response.setSuccess(true);
-        response.setMessage("OK");
-
-        return response;
-    }
-
-    @Override
-    public BaseResponse<Map<String, Object>> getSellerList(Long id, int page, int size, String sort, String dir) {
-        Pageable pageable = buildPageable(page, size, sort, dir);
-
-        if (id == null) throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
-
-        Page<ListingListProjection> lists = listingRepository.findBySeller(id, pageable);
-        if (lists.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
-
-        Map<String, Object> payload = Map.of(
-                "items", lists.getContent(),
-                "page", page,
-                "size", size,
-                "totalPages", lists.getTotalPages(),
-                "totalElements", lists.getTotalElements(),
-                "hasNext", lists.hasNext(),
-                "hasPrevious", lists.hasPrevious()
         );
 
         BaseResponse<Map<String, Object>> response = new BaseResponse<>();
