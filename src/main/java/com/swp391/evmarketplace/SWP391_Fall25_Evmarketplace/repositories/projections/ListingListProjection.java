@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface ListingListProjection {
     Long getId();
+    Long getCategoryId();
     String getTitle();
     String getBrand();
     String getModel();

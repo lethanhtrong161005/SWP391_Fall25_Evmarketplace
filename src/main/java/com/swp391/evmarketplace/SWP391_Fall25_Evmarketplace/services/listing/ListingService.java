@@ -24,7 +24,6 @@ public interface ListingService {
    BaseResponse<Map<String, Object>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir);
   BaseResponse<Map<String, Object>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir);
    BaseResponse<Map<String, Object>> getAllListForManage(int page, int size, String sort, String dir);
-   BaseResponse<Map<String, Object>> getSellerList(Long id, int page, int size, String sort, String dir);
    BaseResponse<Map<String, Object>> getAllListingsPublic(int page, int size, String sort, String dir);
 
    //Thanh toán bài đăng
