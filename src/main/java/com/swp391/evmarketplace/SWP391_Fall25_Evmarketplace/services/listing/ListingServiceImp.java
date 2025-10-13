@@ -20,7 +20,6 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileSe
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.vnpay.VNPayService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -31,7 +30,6 @@ import org.springframework.data.domain.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -130,7 +128,7 @@ public class ListingServiceImp implements ListingService {
            listing.setAddress(req.getAddress());
            listing.setConsigned(false);
 
-           // Liên kết với catalog nếu có brandId + modelId
+           // 5) Tự link catalog nếu có brandId + modelId
            if (req.getBrandId() != null && req.getModelId() != null) {
                if (type == ItemType.VEHICLE) {
                    productVehicleRepository
@@ -289,34 +287,6 @@ public class ListingServiceImp implements ListingService {
                 "page", page,
                 "size", size,
                 "hasNext", slice.hasNext()
-        );
-
-        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
-        response.setData(payload);
-        response.setStatus(200);
-        response.setSuccess(true);
-        response.setMessage("OK");
-
-        return response;
-    }
-
-    @Override
-    public BaseResponse<Map<String, Object>> getSellerList(Long id, int page, int size, String sort, String dir) {
-        Pageable pageable = buildPageable(page, size, sort, dir);
-
-        if (id == null) throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
-
-        Page<ListingListProjection> lists = listingRepository.findBySeller(id, pageable);
-        if (lists.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
-
-        Map<String, Object> payload = Map.of(
-                "items", lists.getContent(),
-                "page", page,
-                "size", size,
-                "totalPages", lists.getTotalPages(),
-                "totalElements", lists.getTotalElements(),
-                "hasNext", lists.hasNext(),
-                "hasPrevious", lists.hasPrevious()
         );
 
         BaseResponse<Map<String, Object>> response = new BaseResponse<>();

@@ -28,6 +28,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     @Query("""
               select
                     l.id as id,
+                    c.id as categoryId,
                     l.title as title,
                     l.brand as brand,
                     l.model as model,
@@ -45,6 +46,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     GROUP_CONCAT(m.mediaUrl) as mediaListUrl
                 from Listing l
                 join l.seller a
+                join l.category c
                 join a.profile p
                 left join l.mediaList m
               where l.status in :statuses
@@ -76,6 +78,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     @Query("""
                 select
                     l.id as id,
+                    c.id as categoryId,
                     l.title as title,
                     l.brand as brand,
                     l.model as model,
@@ -93,6 +96,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     GROUP_CONCAT(m.mediaUrl) as mediaListUrl
                 from Listing l
                     join l.seller a
+                    join l.category c
                     join a.profile p
                     left join l.mediaList m
                 where l.status in :statuses
