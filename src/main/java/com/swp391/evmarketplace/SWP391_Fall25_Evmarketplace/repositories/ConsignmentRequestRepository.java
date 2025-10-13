@@ -22,12 +22,11 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    cr.year                 as year,
                    cr.batteryCapacityKwh   as batteryCapacityKwh,
                    b.name                  as preferredBranchName,
-                   cr.appointmentTime      as appointmentTime,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
                    cr.createdAt            as createdAt
                  from ConsignmentRequest cr
-                 join cr. category c
+                 join cr.category c
                  join cr.preferredBranch b
                  join cr.owner a
                  left join a.profile p

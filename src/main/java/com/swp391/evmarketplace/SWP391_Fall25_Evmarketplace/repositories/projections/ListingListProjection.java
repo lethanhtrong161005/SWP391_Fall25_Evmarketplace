@@ -20,6 +20,7 @@ public interface ListingListProjection {
     String getStatus();
     String getVisibility();
     Boolean getIsConsigned();
+    List<String> getMediaListUrl();
 
 
     //Bổ sung
@@ -28,5 +29,5 @@ public interface ListingListProjection {
     LocalDateTime getPromotedUntil();
     LocalDateTime getHiddenAt();
     LocalDateTime getDeletedAt();
-    List<String> getMediaListUrl();
+
 }

@@ -3,7 +3,6 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 import ch.qos.logback.core.util.StringUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestByStaffDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -82,7 +81,7 @@ public class StaffController {
             Account owner = accountRepository.findByPhoneNumber(req.getPhone())
                     .orElseThrow(() -> new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name()));
 
-            BaseResponse<Void> res = consignmentRequestService.createConsignmentRequest(req, owner);
+            BaseResponse<Void> res = consignmentRequestService.createConsignmentRequest(req, owner, images, videos);
             return ResponseEntity.status(res.getStatus()).body(res);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
