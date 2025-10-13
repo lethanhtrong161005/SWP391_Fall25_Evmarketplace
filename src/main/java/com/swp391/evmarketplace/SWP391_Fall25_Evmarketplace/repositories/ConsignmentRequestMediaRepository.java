@@ -13,6 +13,6 @@ public interface ConsignmentRequestMediaRepository extends JpaRepository<Consign
     @Query("select m.mediaUrl from ConsignmentRequestMedia m where m.request.id = :requestId")
     List<String> findAllMediaUrlsByRequestId(@Param("requestId") Long requestId);
 
-    @Query("select m.request.id, m.mediaUrl from ConsignmentRequestMedia m where m.request.id in :requestIds")
+    @Query("select m.request.id, m.mediaUrl, m.mediaType from ConsignmentRequestMedia m where m.request.id in :requestIds")
     List<Object[]> findAllMediaUrlsByRequestIds(@Param("requestIds") List<Long> requestIds);
 }

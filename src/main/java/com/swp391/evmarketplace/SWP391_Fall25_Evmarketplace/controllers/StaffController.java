@@ -88,7 +88,7 @@ public class StaffController {
         }
     }
 
-    @GetMapping("/consignment-request")
+    @GetMapping("/consignment-request/all")
     public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestListItemDTO>>> getAllConsignmentRequests(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,

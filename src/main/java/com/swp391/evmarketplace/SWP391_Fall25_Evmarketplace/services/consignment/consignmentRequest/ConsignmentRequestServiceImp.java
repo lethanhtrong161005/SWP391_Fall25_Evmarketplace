@@ -11,8 +11,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusi
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -46,6 +48,8 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     private FileService fileService;
     @Autowired
     private ConsignmentRequestMediaRepository consignmentRequestMediaRepository;
+    @Value("${server.url}")
+    private String serverUrl;
 
     @Transactional
     @Override
@@ -177,7 +181,8 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         for (Object[] pair : mediaPairs) {
             Long rid = (Long) pair[0];
             String url = (String) pair[1];
-            mediaMap.computeIfAbsent(rid, k -> new ArrayList<>()).add(url);
+            MediaType type = (MediaType) pair[2];
+            mediaMap.computeIfAbsent(rid, k -> new ArrayList<>()).add(MedialUtils.converMediaNametoMedialUrl(url, type.name(), serverUrl));
         }
 
         List<ConsignmentRequestListItemDTO> items = new ArrayList<>();
@@ -231,7 +236,8 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         for (Object[] pair : mediaPairs) {
             Long rid = (Long) pair[0];
             String url = (String) pair[1];
-            mediaMap.computeIfAbsent(rid, k -> new ArrayList<>()).add(url);
+            MediaType type = (MediaType) pair[2];
+            mediaMap.computeIfAbsent(rid, k -> new ArrayList<>()).add(MedialUtils.converMediaNametoMedialUrl(url, type.name(), serverUrl));
         }
 
         List<ConsignmentRequestListItemDTO> items = new ArrayList<>();
