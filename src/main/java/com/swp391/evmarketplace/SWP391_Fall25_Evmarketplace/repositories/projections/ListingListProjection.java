@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projec
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface ListingListProjection {
     Long getId();
@@ -27,4 +28,5 @@ public interface ListingListProjection {
     LocalDateTime getPromotedUntil();
     LocalDateTime getHiddenAt();
     LocalDateTime getDeletedAt();
+    List<String> getMediaListUrl();
 }

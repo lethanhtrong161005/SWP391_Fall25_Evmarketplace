@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.UpdateSetScheduleRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
@@ -29,7 +30,7 @@ public class ConsignmentController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @GetMapping("/")
+    @GetMapping("/all")
     public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestProject>>> getMineListRequest(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,

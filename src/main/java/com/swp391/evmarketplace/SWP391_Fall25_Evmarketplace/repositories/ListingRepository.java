@@ -41,10 +41,12 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.createdAt as createdAt,
                     l.status as status,
                     l.visibility as visibility,
-                    l.consigned as isConsigned
+                    l.consigned as isConsigned,
+                    GROUP_CONCAT(m.mediaUrl) as mediaListUrl
                 from Listing l
                 join l.seller a
                 join a.profile p
+                left join l.mediaList m
               where l.status in :statuses
                 and (
                           :#{#req.key} is null
@@ -62,6 +64,9 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                 and (:#{#req.mileageMax}  is null or l.mileageKm <= :#{#req.mileageMax})
                 and (:#{#req.sohMin}      is null or l.sohPercent >= :#{#req.sohMin})
                 and (:#{#req.sohMax}      is null or l.sohPercent <= :#{#req.sohMax})
+                group by l.id, l.title, l.brand, l.model, l.year, p.fullName, l.price,
+                         l.province, l.batteryCapacityKwh, l.sohPercent, l.mileageKm,
+                         l.createdAt, l.status, l.visibility, l.consigned
             """)
     Slice<ListingListProjection> searchCards(
             @Param("req") SearchListingRequestDTO req,
@@ -69,7 +74,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             Pageable pageable);
 
     @Query("""
-            select
+                select
                     l.id as id,
                     l.title as title,
                     l.brand as brand,
@@ -84,11 +89,16 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.createdAt as createdAt,
                     l.status as status,
                     l.visibility as visibility,
-                    l.consigned as isConsigned
+                    l.consigned as isConsigned,
+                    GROUP_CONCAT(m.mediaUrl) as mediaListUrl
                 from Listing l
-                join l.seller a
-                join a.profile p
-            where l.status in :statuses
+                    join l.seller a
+                    join a.profile p
+                    left join l.mediaList m
+                where l.status in :statuses
+                group by l.id, l.title, l.brand, l.model, l.year, p.fullName, l.price,
+                         l.province, l.batteryCapacityKwh, l.sohPercent, l.mileageKm,
+                         l.createdAt, l.status, l.visibility, l.consigned
             """)
     Slice<ListingListProjection> getAllList(
             @Param("statuses") Collection<ListingStatus> statuses,
