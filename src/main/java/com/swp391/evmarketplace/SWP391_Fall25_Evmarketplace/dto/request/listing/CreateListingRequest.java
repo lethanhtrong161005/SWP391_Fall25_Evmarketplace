@@ -1,5 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility;
@@ -19,6 +21,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CreateListingRequest {
 
     @NotNull
@@ -78,4 +81,21 @@ public class CreateListingRequest {
     private Visibility visibility;        // NORMAL | BOOSTED
 
 
+    //Data liên quan đến pin
+    @DecimalMin(value = "0.0", inclusive = false, message = "Voltage must be > 0")
+    @Digits(integer = 6, fraction = 2)
+    private BigDecimal voltageV;
+
+    /** Hóa học pin, ví dụ: LFP, NMC, NCA, LMO... (tùy chọn) */
+    @Size(max = 50)
+    private String batteryChemistry;
+
+    /** Khối lượng, đơn vị kg */
+    @DecimalMin(value = "0.0", inclusive = false, message = "Mass must be > 0")
+    @Digits(integer = 6, fraction = 3)
+    private BigDecimal massKg;
+
+    /** Kích thước theo mm, ví dụ "780 x 175 x 220" (L x W x H) */
+    @Size(max = 100)
+    private String dimensionsMm;
 }

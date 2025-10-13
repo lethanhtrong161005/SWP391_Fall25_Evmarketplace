@@ -19,4 +19,12 @@ public interface ListingListProjection {
     String getStatus();
     String getVisibility();
     Boolean getIsConsigned();
+
+
+    //Bổ sung
+    LocalDateTime getUpdatedAt();
+    LocalDateTime getExpiresAt();
+    LocalDateTime getPromotedUntil();
+    LocalDateTime getHiddenAt();
+    LocalDateTime getDeletedAt();
 }

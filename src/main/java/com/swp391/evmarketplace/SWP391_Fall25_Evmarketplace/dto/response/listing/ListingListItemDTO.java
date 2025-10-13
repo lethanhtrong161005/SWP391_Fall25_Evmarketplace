@@ -20,12 +20,21 @@ public class ListingListItemDTO {
     private BigDecimal batteryCapacityKwh;
     private LocalDateTime createdAt;
     private String province;
-    private String mileageKm;         // FE đang cần string
+    private String mileageKm;
     private BigDecimal sohPercent;
     private String model;
     private String brand;
     private BigDecimal price;
 
-    private Boolean isConsigned;      // theo sample
-    private String sellerName;        // optional
+    private Boolean isConsigned;
+    private String sellerName;
+
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
+    private LocalDateTime expiresAt;
+    private LocalDateTime promotedUntil;
+    private LocalDateTime hiddenAt;
+
+    //Ngày xoá vĩnh viễn đối với tin đã yêu cầu xoá mềm
+    private LocalDateTime purgeAt;
 }

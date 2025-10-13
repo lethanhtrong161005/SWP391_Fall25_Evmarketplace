@@ -76,6 +76,11 @@ public class Account {
     @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Favorite> favorites = new ArrayList<>();
 
+    @OneToMany(mappedBy = "actor", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<ListingStatusHistory> listingStatusChanges = new ArrayList<>();
+
 
     @PrePersist
     protected void onCreate() {

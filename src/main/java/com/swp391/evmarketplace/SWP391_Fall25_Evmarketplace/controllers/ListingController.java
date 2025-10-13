@@ -1,13 +1,20 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.ChangeStatusRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +28,8 @@ import java.util.Map;
 public class ListingController {
     @Autowired
     private ListingService listingService;
-
+    @Autowired
+    private ObjectMapper objectMapper;
     @Autowired
     private AuthUtil authUtil;
 
@@ -36,18 +44,19 @@ public class ListingController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PostMapping(value="/post", consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value="/post",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<?> postListing(
-            @RequestPart("payload") CreateListingRequest req,
+            @RequestPart("payload") String payload,
             @RequestPart(value="images", required=false) List<MultipartFile> images,
             @RequestPart(value="videos", required=false) List<MultipartFile> videos
     ){
         try {
-            // parse JSON → DTO
+            CreateListingRequest req = objectMapper.readValue(payload, CreateListingRequest.class);
             var res = listingService.createListing(req, images, videos);
             return ResponseEntity.status(res.getStatus()).body(res);
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
@@ -88,9 +97,34 @@ public class ListingController {
         return res;
     }
 
-    @PatchMapping("/{listingId}")
-    public ResponseEntity<?> updateListing(@PathVariable Long listingId, @RequestBody CreateListingRequest req){
-        return ResponseEntity.ok("OK");
+    @PutMapping(value = "/{listingId}",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<?> updateListing(
+            @PathVariable Long listingId,
+            @RequestParam("payload") String payloadJson,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "videos", required = false) List<MultipartFile> videos,
+            @RequestParam(value = "keepMediaIds", required = false) List<Long> keepMediaIds // <= String->Long binding
+    ) {
+        try {
+            UpdateListingRequest req = objectMapper.readValue(payloadJson, UpdateListingRequest.class);
+            var res = listingService.updatedListing(
+                    listingId, authUtil.getCurrentAccount().getId(),
+                    req, images, videos, keepMediaIds == null ? List.of() : keepMediaIds
+            );
+            return ResponseEntity.status(res.getStatus()).body(res);
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false, "status", 400, "message", "Invalid JSON in 'payload'", "detail", e.getOriginalMessage()
+            ));
+        }
+    }
+
+    @DeleteMapping("/delete/{listingId}")
+    public ResponseEntity<?> deleteListing(@PathVariable Long listingId) {
+        var res = listingService.deleteListing(listingId);
+        return ResponseEntity.status(res.getStatus()).body(res);
     }
 
     //Lấy chi tiết bài đăng theo người đăng
@@ -104,6 +138,20 @@ public class ListingController {
     @GetMapping("/{listingId}")
     public ResponseEntity<?> getListingById(@PathVariable Long listingId){
         var res = listingService.getListingDetailById(listingId);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    //Thay đổi trạng thái bài đăng
+    @PostMapping("/status/change")
+    public ResponseEntity<?> changeListingStatus(@Valid @RequestBody ChangeStatusRequest request){
+        var res = listingService.changeStatus(request.getId(), request.getStatus());
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    //Restore
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<?> restoreListing(@PathVariable Long id){
+        var res = listingService.restore(id);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
     
