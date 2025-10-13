@@ -3,7 +3,6 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 import ch.qos.logback.core.util.StringUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestByStaffDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;

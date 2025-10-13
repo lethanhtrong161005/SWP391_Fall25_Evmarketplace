@@ -13,7 +13,11 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
-
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
+  datasource:
+    hikari:
+      connectionInitSql: "SET time_zone = '+07:00'"
   servlet:
     multipart:
       max-file-size: 500MB
@@ -71,6 +75,12 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: trace
     org.springframework.web: info
     org.springframework.transaction: debug
+
+jobs:
+  listing-cleanup:
+    enabled: true
+    days: 30
+    cron: "0 * * * * *"
 
 
 file-upload:

@@ -2,7 +2,11 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listin
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility;
+import jakarta.persistence.Column;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -54,6 +58,13 @@ public class ListingDto {
     private String color;
     private String description;
 
+
+    //Chỉ dành cho pin
+    private BigDecimal voltage;
+    private String batteryChemistry;
+    private BigDecimal massKg;
+    private String dimensions;
+
     private String province;
     private String district;
     private String ward;
@@ -65,4 +76,15 @@ public class ListingDto {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private LocalDateTime hiddenAt;
+    private LocalDateTime deletedAt;
+
+    private ListingStatus prevStatus;
+    private Visibility prevVisibility;
+    private LocalDateTime prevExpiresAt;
+
+    private String rejectedReason;
+    private LocalDateTime rejectedAt;
+
 }

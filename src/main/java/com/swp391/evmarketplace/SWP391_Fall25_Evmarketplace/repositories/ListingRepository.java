@@ -5,10 +5,12 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingStatusCount;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -136,47 +138,52 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
 
     @Query(
             value = """
-                    select
-                      l.id as id,
-                      l.title as title,
-                      l.brand as brand,
-                      l.model as model,
-                      l.year as year,
-                      l.price as price,
-                      l.province as province,
-                      l.batteryCapacityKwh as batteryCapacityKwh,
-                      l.sohPercent as sohPercent,
-                      l.mileageKm as mileageKm,
-                      l.createdAt as createdAt,
-                      l.status as status,
-                      l.visibility as visibility,
-                      l.consigned as isConsigned,
-                      p.fullName as sellerName
-                    from Listing l
-                    join l.seller s
-                    left join s.profile p
-                    where s.id = :sellerId
-                      and (:status is null or l.status = :status)
-                      and (
-                           :q is null
-                           or lower(l.title) like lower(concat('%', :q, '%'))
-                           or lower(l.brand) like lower(concat('%', :q, '%'))
-                           or lower(l.model) like lower(concat('%', :q, '%'))
-                      )
-                    """,
+        select
+          l.id as id,
+          l.title as title,
+          l.brand as brand,
+          l.model as model,
+          l.year as year,
+          l.price as price,
+          l.province as province,
+          l.batteryCapacityKwh as batteryCapacityKwh,
+          l.sohPercent as sohPercent,
+          l.mileageKm as mileageKm,
+          l.createdAt as createdAt,
+          l.updatedAt as updatedAt,
+          l.expiresAt as expiresAt,
+          l.promotedUntil as promotedUntil,
+          l.hiddenAt as hiddenAt,
+          l.deletedAt as deletedAt,
+          l.status as status,
+          l.visibility as visibility,
+          l.consigned as isConsigned,
+          p.fullName as sellerName
+        from Listing l
+        join l.seller s
+        left join s.profile p
+        where s.id = :sellerId
+          and (:status is null or l.status = :status)
+          and (
+               :q is null
+               or lower(l.title) like lower(concat('%', :q, '%'))
+               or lower(l.brand) like lower(concat('%', :q, '%'))
+               or lower(l.model) like lower(concat('%', :q, '%'))
+          )
+        """,
             countQuery = """
-                    select count(l)
-                    from Listing l
-                    join l.seller s
-                    where s.id = :sellerId
-                      and (:status is null or l.status = :status)
-                      and (
-                           :q is null
-                           or lower(l.title) like lower(concat('%', :q, '%'))
-                           or lower(l.brand) like lower(concat('%', :q, '%'))
-                           or lower(l.model) like lower(concat('%', :q, '%'))
-                      )
-                    """
+        select count(l)
+        from Listing l
+        join l.seller s
+        where s.id = :sellerId
+          and (:status is null or l.status = :status)
+          and (
+               :q is null
+               or lower(l.title) like lower(concat('%', :q, '%'))
+               or lower(l.brand) like lower(concat('%', :q, '%'))
+               or lower(l.model) like lower(concat('%', :q, '%'))
+          )
+        """
     )
     Page<ListingListProjection> findMine(
             @Param("sellerId") Long sellerId,
@@ -185,11 +192,40 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             Pageable pageable
     );
 
+
     @Query("""
-            select l.status as status, count(l) as total
-            from Listing l
-            where l.seller.id = :sellerId
-            group by l.status
-            """)
+       select l.status as status, count(l) as total
+       from Listing l
+       where l.seller.id = :sellerId
+       group by l.status
+       """)
     List<ListingStatusCount> countBySellerGroupedStatus(@Param("sellerId") Long sellerId);
+
+
+    //Xoá tin ở trạng thái SOFT_DELETED sau 30 ngày và không có bị ràng buộc.
+    @Modifying
+    @Transactional
+    @Query(value = """
+      DELETE l FROM listing l
+      LEFT JOIN sale_order o ON o.listing_id = l.id
+      LEFT JOIN viewing_appointment a ON a.listing_id = l.id
+      WHERE l.status = 'SOFT_DELETED'
+        AND l.deleted_at IS NOT NULL
+        AND l.deleted_at < (NOW() - INTERVAL :days DAY)
+        AND o.id IS NULL
+        AND a.id IS NULL
+      """, nativeQuery = true)
+    int hardDeleteSoftDeletedOlderThan(@Param("days") int days);
+
+    @Query(value = """
+      SELECT COUNT(*) FROM listing l
+      LEFT JOIN sale_order o ON o.listing_id = l.id
+      LEFT JOIN viewing_appointment a ON a.listing_id = l.id
+      WHERE l.status = 'SOFT_DELETED'
+        AND l.deleted_at IS NOT NULL
+        AND l.deleted_at < (NOW() - INTERVAL :days DAY)
+        AND o.id IS NULL
+        AND a.id IS NULL
+      """, nativeQuery = true)
+    long countPurgeCandidates(@Param("days") int days);
 }
