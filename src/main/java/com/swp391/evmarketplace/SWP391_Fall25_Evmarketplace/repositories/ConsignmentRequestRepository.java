@@ -1,7 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProject;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,11 +16,12 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    p.fullName              as accountName,
                    cr.itemType             as itemType,
                    c.name                  as category,
-                   cr.intendedFor          as intendedFor,
                    cr.brand                as brand,
                    cr.model                as model,
                    cr.year                 as year,
                    cr.batteryCapacityKwh   as batteryCapacityKwh,
+                   cr.sohPercent           as sohPercent,
+                   cr.mileageKm            as mileageKm,
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
@@ -31,11 +32,11 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                  join cr.owner a
                  left join a.profile p
             """,
-                countQuery = """
-                        select count(cr.id) from ConsignmentRequest cr
-                        """
+            countQuery = """
+                    select count(cr.id) from ConsignmentRequest cr
+                    """
     )
-    Page<ConsignmentRequestProject> getAll(Pageable pageable);
+    Page<ConsignmentRequestProjection> getAll(Pageable pageable);
 
     @Query(value = """
                  select
@@ -44,11 +45,12 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    p.fullName              as accountName,
                    cr.itemType             as itemType,
                    c.name                  as category,
-                   cr.intendedFor          as intendedFor,
                    cr.brand                as brand,
                    cr.model                as model,
                    cr.year                 as year,
                    cr.batteryCapacityKwh   as batteryCapacityKwh,
+                  cr.sohPercent           as sohPercent,
+                  cr.mileageKm            as mileageKm,
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
@@ -61,10 +63,10 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                  where a.id = :id
             """,
             countQuery = """
-                        select count(cr.id) from ConsignmentRequest cr
-                        """
+                    select count(cr.id) from ConsignmentRequest cr
+                    """
     )
-    Page<ConsignmentRequestProject> getAllByID(@Param("id") Long id , Pageable pageable);
+    Page<ConsignmentRequestProjection> getAllByID(@Param("id") Long id, Pageable pageable);
 
 
 }

@@ -108,7 +108,6 @@ public class ListingServiceImp implements ListingService {
            listing.setCategory(category);
            listing.setTitle(req.getTitle());
            listing.setSeller(authUtil.getCurrentAccount());
-
            listing.setBrand(req.getBrand());
            listing.setBrandId(req.getBrandId());
            listing.setModel(req.getModel());

@@ -57,9 +57,6 @@ public enum ErrorCode {
     CONSIGNMENT_REQUEST_LIST_NOT_FOUND,
     CONSIGNMENT_REQUEST_NOT_FOUND,
 
-    //intended
-    INTENDED_FOR_REQUIRED,
-
     //brand
     BRAND_NOT_IN_CATEGORY,
 

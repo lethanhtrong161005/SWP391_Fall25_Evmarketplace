@@ -9,12 +9,12 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ConsignmentRequestDetailResponseDTO {
     private Account owner;
     private ItemType itemType;
     private Category category;
-    private CategoryCode intendedFor;
     private String brand;
     private String model;
     private Integer year;
@@ -22,12 +22,12 @@ public class ConsignmentRequestDetailResponseDTO {
     private BigDecimal sohPercent;
     private Integer mileageKm;
     private Branch preferredBranch;
-    private LocalDateTime appointmentTime;
     private BigDecimal ownerExpectedPrice;
     private String note;
     private ConsignmentRequestStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
-
+    private List<String> mediaUrl;
 }
+
+

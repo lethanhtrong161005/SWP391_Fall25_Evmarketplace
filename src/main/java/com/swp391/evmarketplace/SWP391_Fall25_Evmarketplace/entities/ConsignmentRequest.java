@@ -49,10 +49,6 @@ public class ConsignmentRequest {
         foreignKey = @ForeignKey(name = "fk_cr_category"))
     private Category category;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "intended_for", length = 20)
-    private CategoryCode intendedFor; // only for BATTERY
-
     @Column(name = "brand", length = 100, nullable = false)
     private String brand;
 

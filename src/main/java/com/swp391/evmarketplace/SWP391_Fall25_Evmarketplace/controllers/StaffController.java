@@ -3,7 +3,6 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 import ch.qos.logback.core.util.StringUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestByStaffDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -11,8 +10,8 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProject;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.ConsignmentRequestService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest.ConsignmentRequestService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,13 +89,13 @@ public class StaffController {
     }
 
     @GetMapping("/consignment-request")
-    public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestProject>>> getAllConsignmentRequests(
+    public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestListItemDTO>>> getAllConsignmentRequests(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String dir
     ) {
-        BaseResponse<PageResponse<ConsignmentRequestProject>> response = consignmentRequestService.getAll(page, size, dir, sort);
+        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getAll(page, size, dir, sort);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

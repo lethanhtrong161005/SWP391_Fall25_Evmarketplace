@@ -2,12 +2,11 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.UpdateSetScheduleRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProject;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.ConsignmentRequestService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest.ConsignmentRequestService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -46,14 +45,14 @@ public class ConsignmentController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestProject>>> getMineListRequest(
+    public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestListItemDTO>>> getMineListRequest(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String dir
     ){
         Long id = authUtil.getCurrentAccount().getId();
-        BaseResponse<PageResponse<ConsignmentRequestProject>> response = consignmentRequestService.getListById( id, page, size, dir, sort);
+        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getListById( id, page, size, dir, sort);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

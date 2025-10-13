@@ -20,9 +20,6 @@ public class CreateConsignmentRequestDTO {
     @NotNull(message = "categoryId is required")
     private Long categoryId;    // FK -> category
 
-    // only for BATTERY
-    private CategoryCode intendedFor; // EV_CAR/E_MOTORBIKE/E_BIKE
-
     @NotBlank
     @Size(max = 100)
     private String brand;
