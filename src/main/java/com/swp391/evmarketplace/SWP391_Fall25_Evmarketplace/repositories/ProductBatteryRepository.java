@@ -13,6 +13,7 @@ import java.util.Optional;
 
 @Repository
 public interface ProductBatteryRepository extends JpaRepository<ProductBattery, Long> {
+
     Optional<ProductBattery> findFirstByCategoryIdAndBrandIdAndModelId(Long categoryId, Long brandId, Long modelId);
 
     boolean existsByBrand_IdAndModel_IdAndCapacityKwhAndVoltage(
@@ -26,6 +27,7 @@ public interface ProductBatteryRepository extends JpaRepository<ProductBattery, 
     boolean existsByBrand_IdAndModel_IdAndCapacityKwhAndVoltageAndIdNot(
             Long brandId, Long modelId, BigDecimal capacityKwh, BigDecimal voltage, Long idNot
     );
+
 
     @EntityGraph(attributePaths = {"brand","model","category"})
     Optional<ProductBattery> findFirstByCategory_IdAndBrand_IdAndModel_Id(

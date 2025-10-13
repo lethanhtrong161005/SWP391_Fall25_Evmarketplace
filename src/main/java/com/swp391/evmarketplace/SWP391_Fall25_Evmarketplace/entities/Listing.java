@@ -136,7 +136,6 @@ public class Listing {
     @Column(name = "rejected_reason", length = 255)
     private String rejectedReason;
 
-    @UpdateTimestamp
     @Column(name = "rejected_at")
     private LocalDateTime rejectedAt;
 
@@ -159,9 +158,48 @@ public class Listing {
     @JsonIgnore
     private List<Favorite> favorites = new ArrayList<>();
 
+    @Column(name = "voltage_v")
+    private BigDecimal voltage;
+
+    @Column(name = "battery_chemistry")
+    private String batteryChemistry;
+
+    @Column(name = "mass_kg")
+    private BigDecimal massKg;
+
+    @Column(name = "dimensions_mm")
+    private String dimensions;
+
+    @Column(name = "hidden_at")
+    private LocalDateTime hiddenAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "prev_status")
+    @Enumerated(EnumType.STRING)
+    private ListingStatus prevStatus;
+
+    @Column(name = "prev_visibility")
+    @Enumerated(EnumType.STRING)
+    private Visibility prevVisibility;
+
+    @Column(name = "prev_expires_at")
+    private LocalDateTime prevExpiresAt;
+
+
     public void addMedia(ListingMedia media) {
         media.setListing(this);
         mediaList.add(media);
+    }
+
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt DESC")
+    private List<ListingStatusHistory> statusHistories = new ArrayList<>();
+
+    public void addHistory(ListingStatusHistory h) {
+        h.setListing(this);
+        this.statusHistories.add(h);
     }
 
     public ListingDto toDto(Listing listing, BrandRepository brandRepository, CategoryRepository categoryRepository, ModelRepository modelRepository) {
@@ -215,6 +253,21 @@ public class Listing {
         listingDto.setStatus(listing.getStatus());
         listingDto.setVisibility(listing.getVisibility());
 
+        //Chỉ dành cho pin
+        listingDto.setVoltage(listing.getVoltage() != null ? listing.getVoltage() : null);
+        listingDto.setBatteryChemistry(listing.getBatteryChemistry() != null ? listing.getBatteryChemistry() : null);
+        listingDto.setMassKg(listing.getMassKg() != null ? listing.getMassKg() : null);
+        listingDto.setDimensions(listing.getDimensions() != null ? listing.getDimensions() : null);
+
+        listing.setHiddenAt(listing.getHiddenAt() != null ? listing.getHiddenAt() : null);
+        listing.setDeletedAt(listing.getDeletedAt() != null ? listing.getDeletedAt() : null);
+
+        listingDto.setRejectedReason(listing.getRejectedReason() != null ? listing.getRejectedReason() : null);
+        listingDto.setRejectedAt(listing.getRejectedAt() != null ? listing.getRejectedAt() : null);
+
+        listingDto.setPrevStatus(listing.getPrevStatus() != null ? listing.getPrevStatus() : null);
+        listingDto.setPrevVisibility(listing.getPrevVisibility() != null ? listing.getPrevVisibility() : null);
+        listingDto.setPrevExpiresAt(listing.getPrevExpiresAt() != null ? listing.getPrevExpiresAt() : null);
         if(listing.getBrandId() != null){
             listingDto.setBrandId(listing.getBrandId());
         }
