@@ -262,7 +262,7 @@ public class ListingServiceImp implements ListingService {
 
         Long userId = authUtil.getCurrentAccountIdOrNull();
 
-        Slice<ListingListProjection> slice = listingRepository.getAllListWithFav(EnumSet.of(ListingStatus.ACTIVE), userId, pageable);
+        Slice<ListingListProjection> slice = listingRepository.getAllListWithFavPublic(EnumSet.of(ListingStatus.ACTIVE), userId, pageable);
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
@@ -292,11 +292,11 @@ public class ListingServiceImp implements ListingService {
 
         Long userId = authUtil.getCurrentAccountIdOrNull();
 
-        Slice<ListingListProjection> slice = listingRepository.getAllListWithFav(EnumSet.allOf(ListingStatus.class), userId, pageable);
+        Page<ListingListProjection> pages = listingRepository.getAllListWithFavManage(EnumSet.allOf(ListingStatus.class), userId, pageable);
 
-        if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
+        if (pages.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
-        List<ListingCardDTO> items = slice.getContent().stream()
+        List<ListingCardDTO> items = pages.getContent().stream()
                 .map(this::toCardDtoWithFav)
                 .toList();
 
@@ -304,7 +304,10 @@ public class ListingServiceImp implements ListingService {
                 "items", items,
                 "page", page,
                 "size", size,
-                "hasNext", slice.hasNext()
+                "totalPages", pages.getTotalPages(),
+                "totalElements", pages.getTotalElements(),
+                "hasNext", pages.hasNext(),
+                "hasPrevious", pages.hasPrevious()
         );
 
         BaseResponse<Map<String, Object>> response = new BaseResponse<>();

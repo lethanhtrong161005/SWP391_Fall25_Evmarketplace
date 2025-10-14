@@ -70,6 +70,48 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             @Param("statuses") Collection<ListingStatus> statuses,
             Pageable pageable);
 
+    @Query( value = """
+                select
+                    l.id as id,
+                    c.id as categoryId,
+                    l.title as title,
+                    l.brand as brand,
+                    l.model as model,
+                    l.year as year,
+                    p.fullName as sellerName,
+                    l.price as price,
+                    l.province as province,
+                    l.batteryCapacityKwh as batteryCapacityKwh,
+                    l.sohPercent as sohPercent,
+                    l.mileageKm as mileageKm,
+                    l.createdAt as createdAt,
+                    l.status as status,
+                    l.visibility as visibility,
+                    l.consigned as isConsigned,
+                    (select count(f) from Favorite f where f.listing = l) as favoriteCount,
+                    case when (:accountId is not null) and exists
+                                      (select 1 from Favorite fx where fx.listing = l and fx.account.id = :accountId)
+                                    then true else false end as likedByCurrentUser
+                from Listing l
+                    join l.seller a
+                    join l.category c
+                    join a.profile p
+                    left join Favorite f on f.listing = l
+                where l.status in :statuses
+            """,
+            countQuery = """
+                      select count(l)
+                      from Listing l
+                        join l.seller a
+                        join l.category c
+                        join a.profile p
+                      where l.status in :statuses
+                    """)
+    Slice<ListingListProjection> getAllListWithFavPublic(
+            @Param("statuses") Collection<ListingStatus> statuses,
+            @Param("accountId") Long accountId,
+            Pageable pageable);
+
     @Query("""
                 select
                     l.id as id,
@@ -99,7 +141,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     left join Favorite f on f.listing = l
                 where l.status in :statuses
             """)
-    Slice<ListingListProjection> getAllListWithFav(
+    Page<ListingListProjection> getAllListWithFavManage(
             @Param("statuses") Collection<ListingStatus> statuses,
             @Param("accountId") Long accountId,
             Pageable pageable);
