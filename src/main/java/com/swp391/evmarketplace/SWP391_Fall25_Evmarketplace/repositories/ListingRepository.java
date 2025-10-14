@@ -42,13 +42,11 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.createdAt as createdAt,
                     l.status as status,
                     l.visibility as visibility,
-                    l.consigned as isConsigned,
-                    GROUP_CONCAT(m.mediaUrl) as mediaListUrl
+                    l.consigned as isConsigned
                 from Listing l
                 join l.seller a
                 join l.category c
                 join a.profile p
-                left join l.mediaList m
               where l.status in :statuses
                 and (
                           :#{#req.key} is null
@@ -66,9 +64,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                 and (:#{#req.mileageMax}  is null or l.mileageKm <= :#{#req.mileageMax})
                 and (:#{#req.sohMin}      is null or l.sohPercent >= :#{#req.sohMin})
                 and (:#{#req.sohMax}      is null or l.sohPercent <= :#{#req.sohMax})
-                group by l.id, l.title, l.brand, l.model, l.year, p.fullName, l.price,
-                         l.province, l.batteryCapacityKwh, l.sohPercent, l.mileageKm,
-                         l.createdAt, l.status, l.visibility, l.consigned
             """)
     Slice<ListingListProjection> searchCards(
             @Param("req") SearchListingRequestDTO req,
@@ -93,23 +88,16 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.status as status,
                     l.visibility as visibility,
                     l.consigned as isConsigned,
-                                
-                    GROUP_CONCAT(m.mediaUrl) as mediaListUrl,
-                    COUNT(DISTINCT f.id) as favoriteCount,
-                    CASE WHEN SUM(
-                          CASE WHEN (:accountId IS NOT NULL AND f.account.id = :accountId) THEN 1 ELSE 0 END
-                    ) > 0 THEN true ELSE false END as likedByCurrentUser            
-                             
+                    (select count(f) from Favorite f where f.listing = l) as favoriteCount,
+                    case when (:accountId is not null) and exists
+                                      (select 1 from Favorite fx where fx.listing = l and fx.account.id = :accountId)
+                                    then true else false end as likedByCurrentUser
                 from Listing l
                     join l.seller a
                     join l.category c
                     join a.profile p
-                    left join l.mediaList m
                     left join Favorite f on f.listing = l
                 where l.status in :statuses
-                group by l.id, l.title, l.brand, l.model, l.year, p.fullName, l.price,
-                         l.province, l.batteryCapacityKwh, l.sohPercent, l.mileageKm,
-                         l.createdAt, l.status, l.visibility, l.consigned
             """)
     Slice<ListingListProjection> getAllListWithFav(
             @Param("statuses") Collection<ListingStatus> statuses,
@@ -150,52 +138,52 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
 
     @Query(
             value = """
-        select
-          l.id as id,
-          l.title as title,
-          l.brand as brand,
-          l.model as model,
-          l.year as year,
-          l.price as price,
-          l.province as province,
-          l.batteryCapacityKwh as batteryCapacityKwh,
-          l.sohPercent as sohPercent,
-          l.mileageKm as mileageKm,
-          l.createdAt as createdAt,
-          l.updatedAt as updatedAt,
-          l.expiresAt as expiresAt,
-          l.promotedUntil as promotedUntil,
-          l.hiddenAt as hiddenAt,
-          l.deletedAt as deletedAt,
-          l.status as status,
-          l.visibility as visibility,
-          l.consigned as isConsigned,
-          p.fullName as sellerName
-        from Listing l
-        join l.seller s
-        left join s.profile p
-        where s.id = :sellerId
-          and (:status is null or l.status = :status)
-          and (
-               :q is null
-               or lower(l.title) like lower(concat('%', :q, '%'))
-               or lower(l.brand) like lower(concat('%', :q, '%'))
-               or lower(l.model) like lower(concat('%', :q, '%'))
-          )
-        """,
+                    select
+                      l.id as id,
+                      l.title as title,
+                      l.brand as brand,
+                      l.model as model,
+                      l.year as year,
+                      l.price as price,
+                      l.province as province,
+                      l.batteryCapacityKwh as batteryCapacityKwh,
+                      l.sohPercent as sohPercent,
+                      l.mileageKm as mileageKm,
+                      l.createdAt as createdAt,
+                      l.updatedAt as updatedAt,
+                      l.expiresAt as expiresAt,
+                      l.promotedUntil as promotedUntil,
+                      l.hiddenAt as hiddenAt,
+                      l.deletedAt as deletedAt,
+                      l.status as status,
+                      l.visibility as visibility,
+                      l.consigned as isConsigned,
+                      p.fullName as sellerName
+                    from Listing l
+                    join l.seller s
+                    left join s.profile p
+                    where s.id = :sellerId
+                      and (:status is null or l.status = :status)
+                      and (
+                           :q is null
+                           or lower(l.title) like lower(concat('%', :q, '%'))
+                           or lower(l.brand) like lower(concat('%', :q, '%'))
+                           or lower(l.model) like lower(concat('%', :q, '%'))
+                      )
+                    """,
             countQuery = """
-        select count(l)
-        from Listing l
-        join l.seller s
-        where s.id = :sellerId
-          and (:status is null or l.status = :status)
-          and (
-               :q is null
-               or lower(l.title) like lower(concat('%', :q, '%'))
-               or lower(l.brand) like lower(concat('%', :q, '%'))
-               or lower(l.model) like lower(concat('%', :q, '%'))
-          )
-        """
+                    select count(l)
+                    from Listing l
+                    join l.seller s
+                    where s.id = :sellerId
+                      and (:status is null or l.status = :status)
+                      and (
+                           :q is null
+                           or lower(l.title) like lower(concat('%', :q, '%'))
+                           or lower(l.brand) like lower(concat('%', :q, '%'))
+                           or lower(l.model) like lower(concat('%', :q, '%'))
+                      )
+                    """
     )
     Page<ListingListProjection> findMine(
             @Param("sellerId") Long sellerId,
@@ -206,11 +194,11 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
 
 
     @Query("""
-       select l.status as status, count(l) as total
-       from Listing l
-       where l.seller.id = :sellerId
-       group by l.status
-       """)
+            select l.status as status, count(l) as total
+            from Listing l
+            where l.seller.id = :sellerId
+            group by l.status
+            """)
     List<ListingStatusCount> countBySellerGroupedStatus(@Param("sellerId") Long sellerId);
 
 
@@ -218,26 +206,27 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     @Modifying
     @Transactional
     @Query(value = """
-      DELETE l FROM listing l
-      LEFT JOIN sale_order o ON o.listing_id = l.id
-      LEFT JOIN viewing_appointment a ON a.listing_id = l.id
-      WHERE l.status = 'SOFT_DELETED'
-        AND l.deleted_at IS NOT NULL
-        AND l.deleted_at < (NOW() - INTERVAL :days DAY)
-        AND o.id IS NULL
-        AND a.id IS NULL
-      """, nativeQuery = true)
+            DELETE l FROM listing l
+            LEFT JOIN sale_order o ON o.listing_id = l.id
+            LEFT JOIN viewing_appointment a ON a.listing_id = l.id
+            WHERE l.status = 'SOFT_DELETED'
+              AND l.deleted_at IS NOT NULL
+              AND l.deleted_at < (NOW() - INTERVAL :days DAY)
+              AND o.id IS NULL
+              AND a.id IS NULL
+            """, nativeQuery = true)
     int hardDeleteSoftDeletedOlderThan(@Param("days") int days);
 
     @Query(value = """
-      SELECT COUNT(*) FROM listing l
-      LEFT JOIN sale_order o ON o.listing_id = l.id
-      LEFT JOIN viewing_appointment a ON a.listing_id = l.id
-      WHERE l.status = 'SOFT_DELETED'
-        AND l.deleted_at IS NOT NULL
-        AND l.deleted_at < (NOW() - INTERVAL :days DAY)
-        AND o.id IS NULL
-        AND a.id IS NULL
-      """, nativeQuery = true)
+            SELECT COUNT(*) FROM listing l
+            LEFT JOIN sale_order o ON o.listing_id = l.id
+            LEFT JOIN viewing_appointment a ON a.listing_id = l.id
+            WHERE l.status = 'SOFT_DELETED'
+              AND l.deleted_at IS NOT NULL
+              AND l.deleted_at < (NOW() - INTERVAL :days DAY)
+              AND o.id IS NULL
+              AND a.id IS NULL
+            """, nativeQuery = true)
     long countPurgeCandidates(@Param("days") int days);
+
 }

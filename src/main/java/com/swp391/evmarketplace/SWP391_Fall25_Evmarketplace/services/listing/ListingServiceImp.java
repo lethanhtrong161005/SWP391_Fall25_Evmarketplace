@@ -10,6 +10,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.branch.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.vehicle.VehicleListReponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingCardDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
@@ -59,7 +60,7 @@ public class ListingServiceImp implements ListingService {
     @Autowired
     private SalePaymentRepository salePaymentRepository;
     @Autowired
-    private VNPayService  vNPayService;
+    private VNPayService vNPayService;
     @Autowired
     private ListingMediaRepository mediaRepository;
     @Value("${server.url}")
@@ -69,130 +70,130 @@ public class ListingServiceImp implements ListingService {
     @Transactional
     @Override
     public BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos) {
-       try{
-           // 1) Category
-           var category = categoryRepository.findById(req.getCategoryId())
-                   .orElseThrow(() -> new CustomBusinessException("Category not found"));
+        try {
+            // 1) Category
+            var category = categoryRepository.findById(req.getCategoryId())
+                    .orElseThrow(() -> new CustomBusinessException("Category not found"));
 
-           // 2) Nếu có modelId → dùng model làm “nguồn chân lý” để nhận diện loại và kiểm tính hợp lệ
-           Model model = null;
-           if (req.getModelId() != null) {
-               model = modelRepository.findById(req.getModelId())
-                       .orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
+            // 2) Nếu có modelId → dùng model làm “nguồn chân lý” để nhận diện loại và kiểm tính hợp lệ
+            Model model = null;
+            if (req.getModelId() != null) {
+                model = modelRepository.findById(req.getModelId())
+                        .orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
 
-               // Model phải thuộc đúng category người dùng chọn
-               if (!model.getCategory().getId().equals(req.getCategoryId())) {
-                   throw new CustomBusinessException("Model does not belong to selected category");
-               }
-               // Nếu có brandId thì check model.brand
-               if (req.getBrandId() != null && !model.getBrand().getId().equals(req.getBrandId())) {
-                   throw new CustomBusinessException("Model does not belong to selected brand");
-               }
-           }
+                // Model phải thuộc đúng category người dùng chọn
+                if (!model.getCategory().getId().equals(req.getCategoryId())) {
+                    throw new CustomBusinessException("Model does not belong to selected category");
+                }
+                // Nếu có brandId thì check model.brand
+                if (req.getBrandId() != null && !model.getBrand().getId().equals(req.getBrandId())) {
+                    throw new CustomBusinessException("Model does not belong to selected brand");
+                }
+            }
 
-           // 3) Resolve loại (VEHICLE/BATTERY)
-           ItemType type = resolveItemType(req, model);
+            // 3) Resolve loại (VEHICLE/BATTERY)
+            ItemType type = resolveItemType(req, model);
 
-           // Cross-check căn bản (tránh gửi nhầm code)
-           if (type == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
-               throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
-           }
-           if (type == ItemType.VEHICLE && "BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
-               throw new CustomBusinessException("categoryCode must not be BATTERY for itemType=VEHICLE");
-           }
+            // Cross-check căn bản (tránh gửi nhầm code)
+            if (type == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
+                throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
+            }
+            if (type == ItemType.VEHICLE && "BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
+                throw new CustomBusinessException("categoryCode must not be BATTERY for itemType=VEHICLE");
+            }
 
-           // 4) Build listing snapshot
-           var listing = new Listing();
-           listing.setCategory(category);
-           listing.setTitle(req.getTitle());
-           listing.setSeller(authUtil.getCurrentAccount());
+            // 4) Build listing snapshot
+            var listing = new Listing();
+            listing.setCategory(category);
+            listing.setTitle(req.getTitle());
+            listing.setSeller(authUtil.getCurrentAccount());
 
-           listing.setBrand(req.getBrand());
-           listing.setBrandId(req.getBrandId());
-           listing.setModel(req.getModel());
-           listing.setModelId(req.getModelId());
-           listing.setYear(req.getYear());
-           listing.setBatteryCapacityKwh(req.getBatteryCapacityKwh());
-           listing.setSohPercent(req.getSohPercent());
-           listing.setMileageKm(req.getMileageKm());
-           listing.setColor(req.getColor());
-           listing.setDescription(req.getDescription());
-           listing.setPrice(req.getPrice());
-           listing.setVisibility(req.getVisibility());
-           listing.setVerified(false);
-           listing.setStatus(req.getStatus());
-           listing.setProvince(req.getProvince());
-           listing.setDistrict(req.getDistrict());
-           listing.setWard(req.getWard());
-           listing.setAddress(req.getAddress());
-           listing.setConsigned(false);
+            listing.setBrand(req.getBrand());
+            listing.setBrandId(req.getBrandId());
+            listing.setModel(req.getModel());
+            listing.setModelId(req.getModelId());
+            listing.setYear(req.getYear());
+            listing.setBatteryCapacityKwh(req.getBatteryCapacityKwh());
+            listing.setSohPercent(req.getSohPercent());
+            listing.setMileageKm(req.getMileageKm());
+            listing.setColor(req.getColor());
+            listing.setDescription(req.getDescription());
+            listing.setPrice(req.getPrice());
+            listing.setVisibility(req.getVisibility());
+            listing.setVerified(false);
+            listing.setStatus(req.getStatus());
+            listing.setProvince(req.getProvince());
+            listing.setDistrict(req.getDistrict());
+            listing.setWard(req.getWard());
+            listing.setAddress(req.getAddress());
+            listing.setConsigned(false);
 
-           // 5) Tự link catalog nếu có brandId + modelId
-           if (req.getBrandId() != null && req.getModelId() != null) {
-               if (type == ItemType.VEHICLE) {
-                   productVehicleRepository
-                           .findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId())
-                           .ifPresent(listing::setProductVehicle);
-                   // đảm bảo loại kia null
-                   listing.setProductBattery(null);
-               } else { // BATTERY
+            // 5) Tự link catalog nếu có brandId + modelId
+            if (req.getBrandId() != null && req.getModelId() != null) {
+                if (type == ItemType.VEHICLE) {
+                    productVehicleRepository
+                            .findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId())
+                            .ifPresent(listing::setProductVehicle);
+                    // đảm bảo loại kia null
+                    listing.setProductBattery(null);
+                } else { // BATTERY
                     listing.setVoltage(req.getVoltageV());
                     listing.setBatteryChemistry(req.getBatteryChemistry());
                     listing.setMassKg(req.getMassKg());
                     listing.setDimensions(req.getDimensionsMm());
 
-                   productBatteryRepository
-                           .findFirstByCategory_IdAndBrand_IdAndModel_Id(req.getCategoryId(), req.getBrandId(), req.getModelId())
-                           .ifPresent(listing::setProductBattery);
-                   listing.setProductVehicle(null);
+                    productBatteryRepository
+                            .findFirstByCategory_IdAndBrand_IdAndModel_Id(req.getCategoryId(), req.getBrandId(), req.getModelId())
+                            .ifPresent(listing::setProductBattery);
+                    listing.setProductVehicle(null);
 
-               }
-           }
+                }
+            }
 
-           listingRepository.save(listing);
+            listingRepository.save(listing);
 
-           // 6) Media
-           try {
-               if (images != null) {
-                   for (var img : images) {
-                       if (img == null || img.isEmpty()) continue;
-                       var stored = fileService.storeImage(img);
-                       var media = new ListingMedia();
-                       media.setListing(listing);
-                       media.setMediaUrl(stored.getStoredName());
-                       media.setMediaType(MediaType.IMAGE);
-                       listing.addMedia(media);
-                   }
-               }
-               if (videos != null) {
-                   for (var v : videos) {
-                       if (v == null || v.isEmpty()) continue;
-                       var stored = fileService.storeVideo(v);
-                       var media = new ListingMedia();
-                       media.setListing(listing);
-                       media.setMediaUrl(stored.getStoredName());
-                       media.setMediaType(MediaType.VIDEO);
-                       listing.addMedia(media);
-                   }
-               }
-           } catch (IOException ioe) {
-               throw new CustomBusinessException("Upload media failed: " + ioe.getMessage());
-           }
+            // 6) Media
+            try {
+                if (images != null) {
+                    for (var img : images) {
+                        if (img == null || img.isEmpty()) continue;
+                        var stored = fileService.storeImage(img);
+                        var media = new ListingMedia();
+                        media.setListing(listing);
+                        media.setMediaUrl(stored.getStoredName());
+                        media.setMediaType(MediaType.IMAGE);
+                        listing.addMedia(media);
+                    }
+                }
+                if (videos != null) {
+                    for (var v : videos) {
+                        if (v == null || v.isEmpty()) continue;
+                        var stored = fileService.storeVideo(v);
+                        var media = new ListingMedia();
+                        media.setListing(listing);
+                        media.setMediaUrl(stored.getStoredName());
+                        media.setMediaType(MediaType.VIDEO);
+                        listing.addMedia(media);
+                    }
+                }
+            } catch (IOException ioe) {
+                throw new CustomBusinessException("Upload media failed: " + ioe.getMessage());
+            }
 
-           listingRepository.save(listing);
+            listingRepository.save(listing);
 
-           var res = new BaseResponse<CreateListingResponse>();
-           CreateListingResponse resp = new CreateListingResponse();
-           resp.setListingId(listing.getId());
-           resp.setPersistedStatus(listing.getStatus().name());
-           res.setSuccess(true);
-           res.setStatus(201);
-           res.setData(resp);
-           res.setMessage("Listing created");
-           return res;
-       } catch (Exception e) {
-           throw new CustomBusinessException(e.getMessage());
-       }
+            var res = new BaseResponse<CreateListingResponse>();
+            CreateListingResponse resp = new CreateListingResponse();
+            resp.setListingId(listing.getId());
+            resp.setPersistedStatus(listing.getStatus().name());
+            res.setSuccess(true);
+            res.setStatus(201);
+            res.setData(resp);
+            res.setMessage("Listing created");
+            return res;
+        } catch (Exception e) {
+            throw new CustomBusinessException(e.getMessage());
+        }
     }
 
     @Override
@@ -231,12 +232,18 @@ public class ListingServiceImp implements ListingService {
             requestDTO.setKey(key.isEmpty() ? null : key);
         }
         Pageable pageable = buildPageable(page, size, sort, dir);
-        Slice<ListingListProjection> lists = listingRepository.searchCards(requestDTO, statusSet, pageable);
+        Slice<ListingListProjection> slice = listingRepository.searchCards(requestDTO, statusSet, pageable);
+        if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
+
+        List<ListingCardDTO> items = slice.getContent().stream()
+                .map(this::toCardDtoWithFav)
+                .toList();
+
         Map<String, Object> payload = Map.of(
-                "items", lists.getContent(),
+                "items", items,
                 "page", page,
                 "size", size,
-                "hasNext", lists.hasNext()
+                "hasNext", slice.hasNext()
         );
 
         BaseResponse<Map<String, Object>> response = new BaseResponse<>();
@@ -259,9 +266,12 @@ public class ListingServiceImp implements ListingService {
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
+        List<ListingCardDTO> items = slice.getContent().stream()
+                .map(this::toCardDtoWithFav)
+                .toList();
 
         Map<String, Object> payload = Map.of(
-                "items", slice.getContent(),
+                "items", items,
                 "page", page,
                 "size", size,
                 "hasNext", slice.hasNext()
@@ -286,8 +296,12 @@ public class ListingServiceImp implements ListingService {
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
+        List<ListingCardDTO> items = slice.getContent().stream()
+                .map(this::toCardDtoWithFav)
+                .toList();
+
         Map<String, Object> payload = Map.of(
-                "items", slice.getContent(),
+                "items", items,
                 "page", page,
                 "size", size,
                 "hasNext", slice.hasNext()
@@ -300,6 +314,43 @@ public class ListingServiceImp implements ListingService {
         response.setMessage("OK");
 
         return response;
+    }
+
+    private ListingCardDTO toCardDto(ListingListProjection prj) {
+
+        String thumbName = listingMediaRepository.findThumbnailUrlByListingId(prj.getId())
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.NOT_FOUND_IMAGE.name()));
+
+        String thumbUrl = (thumbName == null || thumbName.isBlank())
+                ? null
+                : MedialUtils.converMediaNametoMedialUrl(thumbName, MediaType.IMAGE.name(), serverUrl);
+
+        return ListingCardDTO.builder()
+                .id(prj.getId())
+                .categoryId(prj.getCategoryId())
+                .title(prj.getTitle())
+                .brand(prj.getBrand())
+                .model(prj.getModel())
+                .year(prj.getYear())
+                .sellerName(prj.getSellerName())
+                .price(prj.getPrice())
+                .province(prj.getProvince())
+                .batteryCapacityKwh(prj.getBatteryCapacityKwh())
+                .sohPercent(prj.getSohPercent())
+                .mileageKm(prj.getMileageKm())
+                .createdAt(prj.getCreatedAt())
+                .status(prj.getStatus())
+                .visibility(prj.getVisibility())
+                .isConsigned(prj.getIsConsigned())
+                .thumbnailUrl(thumbUrl)
+                .build();
+    }
+
+    private ListingCardDTO toCardDtoWithFav(ListingListProjection prj) {
+        ListingCardDTO dto = toCardDto(prj);
+        dto.setFavoriteCount(prj.getFavoriteCount());
+        dto.setLikedByCurrentUser(prj.getLikedByCurrentUser());
+        return dto;
     }
 
     @Override
@@ -392,9 +443,13 @@ public class ListingServiceImp implements ListingService {
     //Payment Listing
     private long cfgLong(String key, long def) {
         return configRepository.findById(key)
-                .map(c -> { try
-                { return Long.parseLong(c.getValue());
-                } catch (Exception e){ return def; }})
+                .map(c -> {
+                    try {
+                        return Long.parseLong(c.getValue());
+                    } catch (Exception e) {
+                        return def;
+                    }
+                })
                 .orElse(def);
     }
 
@@ -402,12 +457,12 @@ public class ListingServiceImp implements ListingService {
     @Override
     public BaseResponse<ListingDetailResponseDto> getListingDetailBySeller(Long listingId, Long sellerId) {
         Listing listing = listingRepository.findById(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
-        if(listing.getSeller().getId() != sellerId){
+        if (listing.getSeller().getId() != sellerId) {
             throw new CustomBusinessException("Listing must be APPROVED to promote");
         }
         BaseResponse<ListingDetailResponseDto> res = new BaseResponse<>();
         ListingDetailResponseDto detail = convertToDto(listing);
-        if(detail != null){
+        if (detail != null) {
             res.setData(detail);
             res.setSuccess(true);
             res.setMessage("Get Listing Detail Success");
@@ -422,7 +477,7 @@ public class ListingServiceImp implements ListingService {
         Listing listing = listingRepository.findById(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
         BaseResponse<ListingDetailResponseDto> res = new BaseResponse<>();
         ListingDetailResponseDto detail = convertToDto(listing);
-        if(detail != null){
+        if (detail != null) {
             res.setData(detail);
             res.setSuccess(true);
             res.setMessage("Get Listing Detail Success");
@@ -447,28 +502,28 @@ public class ListingServiceImp implements ListingService {
         dto.setSellerId(accountDto);
 
         //Lấy cơ sở giữ dùng cho kí gửi
-        if(listing.getBranch() != null){
+        if (listing.getBranch() != null) {
             BranchDto branchDto = listing.getBranch().toDto(listing.getBranch());
             dto.setBranch(branchDto);
         }
 
         //Lấy ProductVehicle nếu có
-        if(listing.getProductVehicle() != null){
+        if (listing.getProductVehicle() != null) {
             VehicleListReponse vehicleDto = listing.getProductVehicle().toDto(listing.getProductVehicle());
             dto.setProductVehicle(vehicleDto);
         }
 
         //Lấy ProductBattery
-        if(listing.getProductBattery() != null){
+        if (listing.getProductBattery() != null) {
             BatteryListResponse batteryDto = listing.getProductBattery().toDto(listing.getProductBattery());
             dto.setProductBattery(batteryDto);
         }
 
         //Lấy các media của listing
         List<ListingMedia> mediaList = listingMediaRepository.findAllByListingId(listing.getId());
-        if(mediaList.size() > 0){
+        if (mediaList.size() > 0) {
             List<ListingMediaDto> dtos = new ArrayList<>();
-            for(ListingMedia media : mediaList){
+            for (ListingMedia media : mediaList) {
                 ListingMediaDto listingMediaDto = media.toDto(media);
                 listingMediaDto.setMediaUrl(MedialUtils.converMediaNametoMedialUrl(media.getMediaUrl(), media.getMediaType().name(), serverUrl));
                 dtos.add(listingMediaDto);
@@ -650,39 +705,39 @@ public class ListingServiceImp implements ListingService {
 
         if (req.getVisibility() != null) listing.setVisibility(req.getVisibility());
         if (req.getStatus() != null) listing.setStatus(req.getStatus());
-        if(ListingStatus.REJECTED == req.getStatus()){
+        if (ListingStatus.REJECTED == req.getStatus()) {
             listing.setStatus(ListingStatus.PENDING);
-        }else if(ListingStatus.EXPIRED == req.getStatus()){
+        } else if (ListingStatus.EXPIRED == req.getStatus()) {
             listing.setStatus(ListingStatus.PENDING);
         }
 
         // PIN (nếu category là BATTERY)
         if (isBatteryCategory) {
-            if (req.getVoltageV() != null)          listing.setVoltage(req.getVoltageV());
-            if (req.getBatteryChemistry() != null)  listing.setBatteryChemistry(req.getBatteryChemistry());
-            if (req.getMassKg() != null)            listing.setMassKg(req.getMassKg());
-            if (req.getDimensionsMm() != null)      listing.setDimensions(req.getDimensionsMm());
+            if (req.getVoltageV() != null) listing.setVoltage(req.getVoltageV());
+            if (req.getBatteryChemistry() != null) listing.setBatteryChemistry(req.getBatteryChemistry());
+            if (req.getMassKg() != null) listing.setMassKg(req.getMassKg());
+            if (req.getDimensionsMm() != null) listing.setDimensions(req.getDimensionsMm());
         }
 
         // ===== MEDIA =====
         // Nếu keepMediaIds == null → hiểu là "giữ nguyên tất cả" (chỉ thêm file mới).
         System.out.println("MediaId: " + keepMediaIds.size());
-        try{
+        try {
             if (keepMediaIds != null) {
                 List<ListingMedia> current = listingMediaRepository.findAllByListingId(listing.getId());
                 for (ListingMedia m : current) {
                     if (!keepMediaIds.contains(m.getId())) {
-                        System.out.println(m.getId() + " - " + m.getMediaUrl() );
-                        if(m.getMediaType() == MediaType.IMAGE){
+                        System.out.println(m.getId() + " - " + m.getMediaUrl());
+                        if (m.getMediaType() == MediaType.IMAGE) {
                             fileService.deleteImage(m.getMediaUrl());
-                        }else if(m.getMediaType() == MediaType.VIDEO){
+                        } else if (m.getMediaType() == MediaType.VIDEO) {
                             fileService.deleteVideo(m.getMediaUrl());
                         }
                         listingMediaRepository.delete(m);
                     }
                 }
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new CustomBusinessException("Failed to delete listing media");
         }
 
@@ -722,7 +777,9 @@ public class ListingServiceImp implements ListingService {
         return res;
     }
 
-    private boolean notBlank(String s) { return s != null && !s.isBlank(); }
+    private boolean notBlank(String s) {
+        return s != null && !s.isBlank();
+    }
 
     @Transactional
     @Override
@@ -731,10 +788,10 @@ public class ListingServiceImp implements ListingService {
                 .orElseThrow(() -> new CustomBusinessException("Listing not found"));
 
         var actor = authUtil.getCurrentAccount();
-        var role  = actor.getRole();
-        boolean isOwner    = listing.getSeller().getId().equals(actor.getId());
-        boolean isConsign  = Boolean.TRUE.equals(listing.getConsigned());
-        ListingStatus st   = listing.getStatus();
+        var role = actor.getRole();
+        boolean isOwner = listing.getSeller().getId().equals(actor.getId());
+        boolean isConsign = Boolean.TRUE.equals(listing.getConsigned());
+        ListingStatus st = listing.getStatus();
 
         // 1) Consigned: chỉ cho xoá khi SOLD (đã bán xong)
         if (isConsign && st != ListingStatus.SOLD) {
@@ -748,7 +805,7 @@ public class ListingServiceImp implements ListingService {
             case MEMBER -> {
                 // Member chỉ xoá mềm tin của chính mình và khi PENDING/REJECTED
                 boolean canDelete = isOwner && (st == ListingStatus.PENDING || st == ListingStatus.REJECTED
-                || st == ListingStatus.EXPIRED || st == ListingStatus.HIDDEN || st == ListingStatus.APPROVED);
+                        || st == ListingStatus.EXPIRED || st == ListingStatus.HIDDEN || st == ListingStatus.APPROVED);
                 if (!canDelete) {
                     throw new CustomBusinessException("You can only delete your own PENDING/REJECTED/HIDDEN/EXPIRED/APPROVED listing");
                 }
