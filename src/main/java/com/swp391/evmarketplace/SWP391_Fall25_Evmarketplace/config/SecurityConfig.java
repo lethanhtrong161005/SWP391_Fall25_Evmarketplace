@@ -68,7 +68,6 @@ public class SecurityConfig {
 
                     ).permitAll();
 
-
                     //auth
                     auth.requestMatchers("/api/accounts/change-password",
                             "/api/accounts/update-profile",
