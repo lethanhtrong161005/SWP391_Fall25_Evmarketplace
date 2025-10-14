@@ -265,6 +265,7 @@ public class Listing {
         listingDto.setRejectedReason(listing.getRejectedReason() != null ? listing.getRejectedReason() : null);
         listingDto.setRejectedAt(listing.getRejectedAt() != null ? listing.getRejectedAt() : null);
 
+
         listingDto.setPrevStatus(listing.getPrevStatus() != null ? listing.getPrevStatus() : null);
         listingDto.setPrevVisibility(listing.getPrevVisibility() != null ? listing.getPrevVisibility() : null);
         listingDto.setPrevExpiresAt(listing.getPrevExpiresAt() != null ? listing.getPrevExpiresAt() : null);
