@@ -90,18 +90,26 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                     l.status as status,
                     l.visibility as visibility,
                     l.consigned as isConsigned,
-                    GROUP_CONCAT(m.mediaUrl) as mediaListUrl
+                                
+                    GROUP_CONCAT(m.mediaUrl) as mediaListUrl,
+                    COUNT(DISTINCT f.id) as favoriteCount,
+                    CASE WHEN SUM(
+                          CASE WHEN (:accountId IS NOT NULL AND f.account.id = :accountId) THEN 1 ELSE 0 END
+                    ) > 0 THEN true ELSE false END as likedByCurrentUser            
+                             
                 from Listing l
                     join l.seller a
                     join a.profile p
                     left join l.mediaList m
+                    left join Favorite f on f.listing = l
                 where l.status in :statuses
                 group by l.id, l.title, l.brand, l.model, l.year, p.fullName, l.price,
                          l.province, l.batteryCapacityKwh, l.sohPercent, l.mileageKm,
                          l.createdAt, l.status, l.visibility, l.consigned
             """)
-    Slice<ListingListProjection> getAllList(
+    Slice<ListingListProjection> getAllListWithFav(
             @Param("statuses") Collection<ListingStatus> statuses,
+            @Param("accountId") Long accountId,
             Pageable pageable);
 
     @Query(

@@ -1,5 +1,4 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,4 +29,7 @@ public interface ListingListProjection {
     LocalDateTime getHiddenAt();
     LocalDateTime getDeletedAt();
 
+    //Thêm cho tính năng favorite
+    Long getFavoriteCount();
+    Boolean getLikedByCurrentUser();
 }

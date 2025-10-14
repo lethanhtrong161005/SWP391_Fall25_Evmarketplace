@@ -68,7 +68,6 @@ public class ListingServiceImp implements ListingService {
     private String serverUrl;
 
 
-
     @Transactional
     @Override
     public BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos) {
@@ -256,9 +255,12 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<Map<String, Object>> getAllListingsPublic(int page, int size, String sort, String dir) {
         Pageable pageable = buildPageable(page, size, sort, dir);
 
-        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.of(ListingStatus.ACTIVE), pageable);
+        Long userId = authUtil.getCurrentAccountIdOrNull();
+
+        Slice<ListingListProjection> slice = listingRepository.getAllListWithFav(EnumSet.of(ListingStatus.ACTIVE), userId, pageable);
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
+
 
         Map<String, Object> payload = Map.of(
                 "items", slice.getContent(),
@@ -280,7 +282,9 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<Map<String, Object>> getAllListForManage(int page, int size, String sort, String dir) {
         Pageable pageable = buildPageable(page, size, sort, dir);
 
-        Slice<ListingListProjection> slice = listingRepository.getAllList(EnumSet.allOf(ListingStatus.class), pageable);
+        Long userId = authUtil.getCurrentAccountIdOrNull();
+
+        Slice<ListingListProjection> slice = listingRepository.getAllListWithFav(EnumSet.allOf(ListingStatus.class), userId, pageable);
 
         if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 

@@ -17,8 +17,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class Profile {
-
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
