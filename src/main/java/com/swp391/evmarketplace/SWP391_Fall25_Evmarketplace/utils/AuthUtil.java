@@ -1,11 +1,9 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.AppUserDetails;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -21,5 +19,27 @@ public class AuthUtil {
             return ((AppUserDetails) principal).getAccount();
         }
         throw new CustomBusinessException("Invalid principal type");
+    }
+
+    public Account getCurrentAccountOrNull() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return null;
+
+        Object principal = auth.getPrincipal();
+
+        if (principal instanceof AppUserDetails aud) {
+            return aud.getAccount();
+        }
+        // String "anonymousUser"
+        if (principal instanceof String s) {
+            if ("anonymousUser".equalsIgnoreCase(s)) return null;
+        }
+
+        return null;
+    }
+
+    public Long getCurrentAccountIdOrNull() {
+        Account acc = getCurrentAccountOrNull();
+        return acc != null ? acc.getId() : null;
     }
 }

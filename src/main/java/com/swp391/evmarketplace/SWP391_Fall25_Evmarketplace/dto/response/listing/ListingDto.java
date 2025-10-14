@@ -27,6 +27,7 @@ public class ListingDto {
 
     //Lấy id của người bán
     private Long sellerId;
+    private String sellerName;
 
     //Lấy id vehicle nếu có trong catalog
     private Long productVehicleId;
@@ -86,5 +87,9 @@ public class ListingDto {
 
     private String rejectedReason;
     private LocalDateTime rejectedAt;
+
+    private Long favoriteCount;
+    private Boolean likedByCurrentUser;
+    private String thumbnailUrl;
 
 }

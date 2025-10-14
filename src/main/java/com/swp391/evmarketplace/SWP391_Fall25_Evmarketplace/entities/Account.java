@@ -95,4 +95,15 @@ public class Account {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public AccountReponseDTO toDto(Account account) {
+        AccountReponseDTO dto = new AccountReponseDTO();
+        dto.setId(account.getId());
+        dto.setPhoneNumber(account.getPhoneNumber());
+        dto.setEmail(account.getEmail());
+        dto.setRole(account.getRole());
+        dto.setStatus(account.getStatus());
+        dto.setProfile(account.getProfile());
+        dto.setRole(account.getRole());
+        return dto;
+    }
 }
