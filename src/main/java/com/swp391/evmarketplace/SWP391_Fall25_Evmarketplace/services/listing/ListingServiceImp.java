@@ -322,7 +322,7 @@ public class ListingServiceImp implements ListingService {
     private ListingCardDTO toCardDto(ListingListProjection prj) {
 
         String thumbName = listingMediaRepository.findThumbnailUrlByListingId(prj.getId())
-                .orElseThrow(() -> new CustomBusinessException(ErrorCode.NOT_FOUND_IMAGE.name()));
+                .orElse(null);
 
         String thumbUrl = (thumbName == null || thumbName.isBlank())
                 ? null
