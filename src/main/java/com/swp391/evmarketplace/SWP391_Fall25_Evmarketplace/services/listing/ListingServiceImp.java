@@ -64,6 +64,8 @@ public class ListingServiceImp implements ListingService {
     private ListingMediaRepository mediaRepository;
     @Value("${server.url}")
     private String serverUrl;
+    @Autowired
+    private FavoriteRepository favoriteRepository;
 
 
     @Transactional
@@ -436,6 +438,13 @@ public class ListingServiceImp implements ListingService {
 
         //Lấy Listing
         ListingDto listingDto = listing.toDto(listing, brandRepository, categoryRepository, modelRepository);
+        long favoriteCount = favoriteRepository.countByListing_Id(listing.getId());
+        listingDto.setFavoriteCount(favoriteCount);
+        Long useId = authUtil.getCurrentAccountIdOrNull();
+        listingDto.setLikedByCurrentUser(false);
+        if(useId != null){
+            listingDto.setLikedByCurrentUser(favoriteRepository.existsByAccount_IdAndListing_Id(useId, listing.getId()));
+        }
         dto.setListing(listingDto);
 
         //Lấy sellerId
@@ -445,6 +454,8 @@ public class ListingServiceImp implements ListingService {
         accountDto.setProfile(listing.getSeller().getProfile());
         accountDto.setPhoneNumber(listing.getSeller().getPhoneNumber());
         dto.setSellerId(accountDto);
+
+
 
         //Lấy cơ sở giữ dùng cho kí gửi
         if(listing.getBranch() != null){
