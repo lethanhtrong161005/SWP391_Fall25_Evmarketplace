@@ -81,6 +81,10 @@ public class SecurityConfig {
                     //staff
                     auth.requestMatchers("api/staff/**").hasRole("STAFF");
 
+                    //manager
+                    auth.requestMatchers("/api/shifts/templates/**").hasRole("MANAGER");
+
+
                     //admin
                     auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
                     auth.requestMatchers(HttpMethod.POST,
