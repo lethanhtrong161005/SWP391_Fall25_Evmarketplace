@@ -20,7 +20,6 @@ public interface ListingListProjection {
     String getStatus();
     String getVisibility();
     Boolean getIsConsigned();
-    List<String> getMediaListUrl();
 
 
     //Bổ sung

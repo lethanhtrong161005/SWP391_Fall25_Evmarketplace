@@ -8,4 +8,5 @@ public class ListingMediaDto {
     private Long id;
     private String mediaUrl;
     private MediaType mediaType;
+
 }
