@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.shift;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDayDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.InspectionScheduleStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.InspectionScheduleRepository;
@@ -40,6 +41,21 @@ public class ShiftAvailabilityService {
             return res;
         }
 
+                // validate date: not in the past and not over 10 days ahead
+                LocalDate today = LocalDate.now();
+                if (date.isBefore(today)) {
+                        res.setStatus(400);
+                        res.setSuccess(false);
+                        res.setMessage("DATE_PAST_NOT_ALLOWED");
+                        return res;
+                }
+                if (date.isAfter(today.plusDays(10))) {
+                        res.setStatus(400);
+                        res.setSuccess(false);
+                        res.setMessage("DATE_EXCEEDS_10_DAYS_LIMIT");
+                        return res;
+                }
+
         //list ca làm theo loại(xe/ pin) đang hoạt động tại 1 cơ sở
         var shifts = shiftTemplateRepository.findByBranch_IdAndItemTypeAndIsActiveTrue(branchId, itemType);
         //ca làm và số lần được book trong ngày
@@ -68,6 +84,60 @@ public class ShiftAvailabilityService {
         res.setData(items);
         return res;
     }
+
+        // Availability for a date range (inclusive)
+        public BaseResponse<List<ShiftAvailabilityDayDTO>> getAvailabilityRange(Long branchId, ItemType itemType, LocalDate startDate, LocalDate endDate) {
+                var res = new BaseResponse<List<ShiftAvailabilityDayDTO>>();
+                if (branchId == null || itemType == null || startDate == null || endDate == null) {
+                        res.setStatus(400);
+                        res.setSuccess(false);
+                        res.setMessage("BAD_REQUEST");
+                        return res;
+                }
+
+                LocalDate today = LocalDate.now();
+                if (startDate.isBefore(today)) {
+                        res.setStatus(400);
+                        res.setSuccess(false);
+                        res.setMessage("START_DATE_PAST_NOT_ALLOWED");
+                        return res;
+                }
+                if (endDate.isBefore(startDate)) {
+                        res.setStatus(400);
+                        res.setSuccess(false);
+                        res.setMessage("END_BEFORE_START");
+                        return res;
+                }
+                if (endDate.isAfter(today.plusDays(10))) {
+                        res.setStatus(400);
+                        res.setSuccess(false);
+                        res.setMessage("END_DATE_EXCEEDS_10_DAYS_LIMIT");
+                        return res;
+                }
+
+                List<ShiftAvailabilityDayDTO> days = new ArrayList<>();
+                for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+                        var dayRes = getAvailability(branchId, itemType, d);
+                        if (!dayRes.isSuccess()) {
+                                // propagate first error
+                                return new BaseResponse<List<ShiftAvailabilityDayDTO>>() {{
+                                        setStatus(dayRes.getStatus());
+                                        setSuccess(false);
+                                        setMessage(dayRes.getMessage());
+                                }};
+                        }
+                        days.add(ShiftAvailabilityDayDTO.builder()
+                                        .date(d)
+                                        .shifts(dayRes.getData())
+                                        .build());
+                }
+
+                res.setStatus(200);
+                res.setSuccess(true);
+                res.setMessage("OK");
+                res.setData(days);
+                return res;
+        }
 
     public boolean isTemplateInUse(Long templateId) {
         return inspectionScheduleRepository.existsByShift_IdAndStatusIn(templateId, OCCUPIED);

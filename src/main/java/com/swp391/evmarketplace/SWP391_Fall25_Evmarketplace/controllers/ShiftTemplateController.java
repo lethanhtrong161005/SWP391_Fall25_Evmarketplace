@@ -6,6 +6,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftTemplateResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDayDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.shift.ShiftAvailabilityService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.shift.ShiftTemplateService;
@@ -58,6 +59,17 @@ public class ShiftTemplateController {
             @RequestParam java.time.LocalDate date
     ) {
         var res = shiftAvailabilityService.getAvailability(branchId, itemType, date);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @GetMapping("/availability/range")
+    public ResponseEntity<BaseResponse<java.util.List<ShiftAvailabilityDayDTO>>> getAvailabilityRange(
+            @RequestParam Long branchId,
+            @RequestParam ItemType itemType,
+            @RequestParam("startDate") java.time.LocalDate startDate,
+            @RequestParam("endDate") java.time.LocalDate endDate
+    ) {
+        var res = shiftAvailabilityService.getAvailabilityRange(branchId, itemType, startDate, endDate);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 }
