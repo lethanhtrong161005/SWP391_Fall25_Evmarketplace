@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.favorite;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.favorite.FavoriteDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Favorite;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
@@ -11,7 +12,16 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.Favorit
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ListingRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class FavoriteServiceImp implements FavoriteService {
@@ -22,6 +32,8 @@ public class FavoriteServiceImp implements FavoriteService {
     private ListingRepository listingRepository;
     @Autowired
     private AccountRepository accountRepository;
+    @Value("${server.url}")
+    private String serverUrl;
 
     //Giới hạn tối đa sô lượng bài đăng được yêu thích
     private static final int FAVORITE_LIMIT = 50;
@@ -76,7 +88,32 @@ public class FavoriteServiceImp implements FavoriteService {
     }
 
     @Override
-    public BaseResponse<?> getFavoriteByAccount(Long accountId) {
-        return null;
+    @Transactional
+    public BaseResponse<?> getFavoriteByAccount(Long accountId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Slice<Favorite> raw = favoriteRepository
+                .findByAccount_IdOrderByCreatedAtDesc(accountId, pageable);
+
+        List<FavoriteDto> items = raw.getContent().stream()
+                .map(f -> f.toDto(f, serverUrl))
+                .toList();
+
+        Slice<FavoriteDto> slice = new SliceImpl<>(items, pageable, raw.hasNext());
+
+        Map<String, Object> payload = Map.of(
+                "items", slice.getContent(),
+                "page", page,
+                "size", size,
+                "hasNext", slice.hasNext()
+        );
+
+        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setMessage("Successfully retrieved favorites");
+        response.setStatus(200);
+        response.setData(payload);
+        return response;
     }
+
 }
