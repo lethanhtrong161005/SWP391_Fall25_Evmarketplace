@@ -99,4 +99,16 @@ public class StaffController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+
+    /**
+     * Duy
+     *
+     * */
+    @PutMapping("/listing/approve/{id}")
+    public ResponseEntity<?> approve(@PathVariable Long id){
+        return ResponseEntity.ok("OK");
+    }
+
+
+
 }

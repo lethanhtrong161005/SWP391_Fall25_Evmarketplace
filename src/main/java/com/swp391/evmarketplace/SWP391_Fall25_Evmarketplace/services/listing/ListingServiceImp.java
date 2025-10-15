@@ -1033,5 +1033,14 @@ public class ListingServiceImp implements ListingService {
         return res;
     }
 
+    @Override
+    public BaseResponse<?> approveListing(Long id) {
+        Listing listing = listingRepository.findById(id).orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        if(listing.getStatus() != ListingStatus.PENDING) {
+            throw new CustomBusinessException("You are not allowed to approve this listing");
+        }
+        listing.setStatus(ListingStatus.APPROVED);
+        return null;
+    }
 
 }
