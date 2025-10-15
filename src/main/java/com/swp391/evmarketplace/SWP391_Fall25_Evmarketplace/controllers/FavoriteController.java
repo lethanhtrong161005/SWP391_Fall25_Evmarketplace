@@ -16,21 +16,25 @@ public class FavoriteController {
     @Autowired
     private AuthUtil authUtil;
 
-    @PutMapping("/me/add/{listingId}")
-    public ResponseEntity<?> addFavorite(@PathVariable Long listingId) {
-        var res = favoriteService.addFavorite(authUtil.getCurrentAccount().getId(), listingId);
+    @PostMapping("/{id}")
+    public ResponseEntity<?> addFavorite(@PathVariable Long id) {
+        var res = favoriteService.addFavorite(authUtil.getCurrentAccount().getId(), id);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @DeleteMapping("/me/delete/{listingId}")
-    public ResponseEntity<?> deleteFavorite(@PathVariable Long listingId) {
-        var res = favoriteService.removeFavorite(authUtil.getCurrentAccount().getId(), listingId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteFavorite(@PathVariable Long id) {
+        var res = favoriteService.removeFavorite(authUtil.getCurrentAccount().getId(), id);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @GetMapping("/me/all")
-    public ResponseEntity<?> getAllFavorites() {
-        return ResponseEntity.ok("done");
+    @GetMapping
+    public ResponseEntity<?> getAllFavorite(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        var res = favoriteService.getFavoriteByAccount(authUtil.getCurrentAccountIdOrNull(), page, size);
+        return ResponseEntity.status(res.getStatus()).body(res);
     }
 
 

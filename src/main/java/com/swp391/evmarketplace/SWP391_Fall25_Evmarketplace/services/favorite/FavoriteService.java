@@ -7,5 +7,5 @@ public interface FavoriteService {
 
     BaseResponse<?> removeFavorite(Long userId, Long listingId);
 
-    BaseResponse<?> getFavoriteByAccount(Long accountId);
+    BaseResponse<?> getFavoriteByAccount(Long accountId, int page, int size);
 }

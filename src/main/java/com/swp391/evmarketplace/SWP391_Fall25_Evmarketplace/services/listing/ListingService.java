@@ -69,4 +69,5 @@ public interface ListingService {
 
     BaseResponse<?> restore(Long listingId);
 
+
 }
