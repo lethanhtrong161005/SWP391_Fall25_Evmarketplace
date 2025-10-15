@@ -40,6 +40,15 @@ public class ConsignmentRequest {
         foreignKey = @ForeignKey(name = "fk_cr_owner"))
     private Account owner;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "staff_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_consignment_staff"))
+    private Account staff;
+
+    @Lob
+    @Column(name = "rejected_reason", columnDefinition = "text")
+    private String rejectedReason;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "item_type", nullable = false, length = 16)
     private ItemType itemType;

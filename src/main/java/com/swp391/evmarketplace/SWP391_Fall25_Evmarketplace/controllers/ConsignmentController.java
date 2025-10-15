@@ -35,8 +35,7 @@ public class ConsignmentController {
             ObjectMapper objectMapper = new ObjectMapper();
             CreateConsignmentRequestDTO req = objectMapper.readValue(payload, CreateConsignmentRequestDTO.class);
 
-            Account account = authUtil.getCurrentAccount();
-            var res = consignmentRequestService.createConsignmentRequest(req, account, images, videos);
+            var res = consignmentRequestService.createConsignmentRequest(req, images, videos);
             return ResponseEntity.status(res.getStatus()).body(res);
         } catch (Exception e){
             e.printStackTrace();

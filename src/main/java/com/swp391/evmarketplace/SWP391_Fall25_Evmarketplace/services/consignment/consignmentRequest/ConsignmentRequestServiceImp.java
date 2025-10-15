@@ -1,7 +1,8 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.AcceptedConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestDetailResponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.RejectedConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -11,6 +12,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusi
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,16 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
 
-    @Autowired
-    private AccountRepository accountRepository;
     @Autowired
     private CategoryRepository categoryRepository;
     @Autowired
@@ -48,12 +45,16 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     private FileService fileService;
     @Autowired
     private ConsignmentRequestMediaRepository consignmentRequestMediaRepository;
+    @Autowired
+    AuthUtil authUtil;
     @Value("${server.url}")
     private String serverUrl;
 
     @Transactional
     @Override
-    public BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO, Account account, List<MultipartFile> images, List<MultipartFile> videos) {
+    public BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO, List<MultipartFile> images, List<MultipartFile> videos) {
+        Account account = authUtil.getCurrentAccount();
+
         Category category = categoryRepository.findById(requestDTO.getCategoryId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CATEGORY_NOT_FOUND.name()));
         Branch branch = branchRepository.findById(requestDTO.getPreferredBranchId())
@@ -278,4 +279,52 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         response.setMessage(pages.isEmpty() ? (ErrorCode.CONSIGNMENT_REQUEST_LIST_NOT_FOUND.name() + ": " + id) : "Ok");
         return response;
     }
+
+    @Override
+    public BaseResponse<Void> RequestAccepted(AcceptedConsignmentRequestDTO dto) {
+        ConsignmentRequest request = consignmentRequestRepository.findById(dto.getId())
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
+
+        Account account = authUtil.getCurrentAccount();
+
+        if (request.getStatus().equals(ConsignmentRequestStatus.SUBMITTED)) {
+            request.setStatus(dto.getStatus());
+            request.setStaff(account);
+            consignmentRequestRepository.save(request);
+        } else {
+            throw new CustomBusinessException("Consignment request status must be submitted");
+        }
+
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setStatus(200);
+        response.setMessage("OK");
+        response.setSuccess(true);
+        return response;
+    }
+
+    @Override
+    public BaseResponse<Void> RequestRejected(RejectedConsignmentRequestDTO dto) {
+        ConsignmentRequest request = consignmentRequestRepository.findById(dto.getId())
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
+
+        Account account = authUtil.getCurrentAccount();
+
+        if (request.getStatus().equals(ConsignmentRequestStatus.SUBMITTED)) {
+            request.setStatus(dto.getStatus());
+            request.setRejectedReason(dto.getRejectedReason());
+            request.setStaff(account);
+            consignmentRequestRepository.save(request);
+        } else {
+            throw new CustomBusinessException("Consignment request status must be submitted");
+        }
+
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setStatus(200);
+        response.setMessage("OK");
+        response.setSuccess(true);
+        return response;
+    }
+
+
 }
+

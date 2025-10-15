@@ -53,7 +53,7 @@ public class ConsignmentAgreement {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
-    private ConsignmentAgreementStatus status = ConsignmentAgreementStatus.DRAFT;
+    private ConsignmentAgreementStatus status;
 
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
