@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.RejectListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
@@ -69,5 +70,7 @@ public interface ListingService {
 
     BaseResponse<?> restore(Long listingId);
 
+    BaseResponse<?> approveListing(Long id);
 
+    BaseResponse<?> rejectListing(Long id, RejectListingRequest req);
 }

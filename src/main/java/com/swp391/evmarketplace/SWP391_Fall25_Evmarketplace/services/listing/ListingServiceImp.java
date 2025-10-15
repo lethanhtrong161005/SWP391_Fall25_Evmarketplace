@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.RejectListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
@@ -1093,5 +1094,36 @@ public class ListingServiceImp implements ListingService {
         return res;
     }
 
+    @Override
+    @Transactional
+    public BaseResponse<?> approveListing(Long id) {
+        Listing listing = listingRepository.findById(id).orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        if(listing.getStatus() != ListingStatus.PENDING) {
+            throw new CustomBusinessException("You are not allowed to approve this listing");
+        }
+        listing.setStatus(ListingStatus.APPROVED); //Có cài trigger
+        listingRepository.save(listing);
+        BaseResponse<?> res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Approved listing");
+        return res;
+    }
+
+    @Override
+    public BaseResponse<?> rejectListing(Long id, RejectListingRequest req) {
+        Listing listing = listingRepository.findById(id).orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        if(listing.getStatus() != ListingStatus.PENDING) {
+            throw new CustomBusinessException("You are not allowed to reject this listing");
+        }
+        listing.setRejectedReason(req.getReason());
+        listing.setStatus(ListingStatus.REJECTED);
+        listingRepository.save(listing);
+        BaseResponse<?> res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Rejected listing");
+        return res;
+    }
 
 }

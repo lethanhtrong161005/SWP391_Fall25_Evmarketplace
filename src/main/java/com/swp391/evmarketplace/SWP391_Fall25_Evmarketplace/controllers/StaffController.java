@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 import ch.qos.logback.core.util.StringUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestByStaffDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.RejectListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -14,6 +15,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consign
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest.ConsignmentRequestService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -98,5 +100,24 @@ public class StaffController {
         BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getAll(page, size, dir, sort);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+
+
+
+    @PutMapping("/listing/approve/{id}")
+    public ResponseEntity<?> approve(@PathVariable Long id){
+        var res = listingService.approveListing(id);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @PutMapping("/listing/reject/{id}")
+    public ResponseEntity<?> reject(
+            @PathVariable Long id,
+            @Valid @RequestBody RejectListingRequest request
+    ){
+        var res = listingService.rejectListing(id, request);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+
 
 }

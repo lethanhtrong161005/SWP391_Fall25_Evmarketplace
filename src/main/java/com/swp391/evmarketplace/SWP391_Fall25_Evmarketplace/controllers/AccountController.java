@@ -120,6 +120,7 @@ public class AccountController {
     }
 
     //update email
+    //Chưa Test
     @PostMapping("/email/request-otp")
     public ResponseEntity<BaseResponse<String>> requestEmailOtp(@Valid @RequestBody EmailOtpRequestDTO dto) {
         BaseResponse<String> response = accountService.sendOtpEmail(dto.getEmail());
@@ -137,6 +138,7 @@ public class AccountController {
         BaseResponse<Void> response = accountService.updateEmail(requestDTO);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+    //Chưa Test
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
