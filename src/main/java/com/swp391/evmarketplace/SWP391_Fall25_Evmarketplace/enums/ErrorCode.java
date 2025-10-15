@@ -31,6 +31,9 @@ public enum ErrorCode {
     //listing
     LISTING_NOT_FOUND,
 
+    //media
+    NOT_FOUND_IMAGE,
+
     //nhóm email
     EMAIL_ALREADY_EXISTS,
     EMAIL_FAIL,
