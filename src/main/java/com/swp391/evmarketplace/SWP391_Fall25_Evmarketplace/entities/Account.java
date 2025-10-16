@@ -88,7 +88,6 @@ public class Account {
     private List<Notification> notifications = new ArrayList<>();
 
 
-
     @PrePersist
     protected void onCreate() {
         if (this.createdAt == null) {
