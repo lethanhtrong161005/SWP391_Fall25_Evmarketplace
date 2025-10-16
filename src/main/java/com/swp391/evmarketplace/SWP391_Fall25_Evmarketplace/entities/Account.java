@@ -54,6 +54,14 @@ public class Account {
     @Column(name = "status", nullable = false)
     private AccountStatus status = AccountStatus.ACTIVE;  // ACTIVE, SUSPENDED
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "branch_id",
+            foreignKey = @ForeignKey(name = "fk_account_branch")
+    )
+    @ToString.Exclude
+    private Branch branch;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

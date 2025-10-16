@@ -14,6 +14,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.Lo
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.OtpResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StaffAccountResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Branch;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Otp;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
@@ -22,6 +23,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.mapper.AccountMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.BranchRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.OtpRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
@@ -59,6 +61,8 @@ public class AccountServiceImp implements AccountService {
     private AccountMapper accountMapper;
     @Autowired
     private JavaMailSender mailSender;
+    @Autowired
+    private BranchRepository branchRepository;
 
     @Override
     public BaseResponse<String> sendOtpRegister(String phoneNumber) {
@@ -455,8 +459,6 @@ public class AccountServiceImp implements AccountService {
     }
 
 
-
-
     public Pageable buildPageable(int page, int size, String sort, String dir) {
         Sort s = (sort == null || sort.isBlank())
                 ? Sort.by(Sort.Direction.DESC, "createdAt") //mặc định show acc mới tạo gần nhất
@@ -617,10 +619,15 @@ public class AccountServiceImp implements AccountService {
             throw new CustomBusinessException("PHONE_NUMBER_EXIST");
         }
 
+        Branch branch = branchRepository.findById(requestDTO.getBranchId())
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRANCH_NOT_FOUND.name()));
+
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         Account account = new Account();
         account.setPhoneNumber(requestDTO.getPhoneNumber());
         account.setPassword(encoder.encode(requestDTO.getPassword()));
+        account.setBranch(branch);
+        account.setRole(requestDTO.getRole());
 
         Profile profile = new Profile();
         profile.setFullName(requestDTO.getFullName());
@@ -640,6 +647,21 @@ public class AccountServiceImp implements AccountService {
         response.setStatus(200);
         response.setData(responseDTO);
 
+        return response;
+    }
+
+    public BaseResponse<List<Account>> getStaffListInBranch(Long branchId) {
+        if (branchId == null) throw new CustomBusinessException("Branch Id is required");
+
+        List<Account> accounts = accountRepository.findByRoleAndStatusAndBranch_Id(AccountRole.STAFF, AccountStatus.ACTIVE, branchId);
+        if (accounts == null || accounts.isEmpty())
+            throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
+
+        BaseResponse<List<Account>> response = new BaseResponse<>();
+        response.setData(accounts);
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage("OK");
         return response;
     }
 

@@ -11,4 +11,5 @@ public class StaffAccountResponseDTO {
     private String phoneNumber;
     private String password;
     private String fullName;
+    private Long branchId;
 }

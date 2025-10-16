@@ -1,6 +1,9 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Branch;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,5 +23,12 @@ public class CreateStaffAccountRequestDTO {
     )
     private String password;
 
+    @NotBlank
     private String fullName;
+
+    @NotNull
+    private Long branchId;
+
+    @NotNull
+    private AccountRole role;
 }

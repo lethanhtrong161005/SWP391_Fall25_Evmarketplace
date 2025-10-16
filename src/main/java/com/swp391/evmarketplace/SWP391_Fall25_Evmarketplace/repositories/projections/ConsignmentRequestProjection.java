@@ -9,6 +9,7 @@ public interface ConsignmentRequestProjection {
     Long getId();
     String getAccountPhone();
     String getAccountName();
+    Long getStaffId();
     String getItemType();
     String getCategory();
     String getBrand();
