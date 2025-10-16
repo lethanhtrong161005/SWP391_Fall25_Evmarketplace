@@ -308,17 +308,17 @@ public class AccountServiceImp implements AccountService {
         otpRepository.save(phoneOtp);
 
         String content = "Your OTP is: " + otp;
-        boolean isSendOtp = false;
+        boolean isSendOtp = true; //Chỉnh logic chỗ này
         String result = "";
-        try {
-            result = speedSMSAPI.sendSMS(
-                    phoneNumber,
-                    content
-            );
-            isSendOtp = true;
-        } catch (Exception e) {
-            throw new CustomBusinessException("SMS failed");
-        }
+//        try {
+//            result = speedSMSAPI.sendSMS(
+//                    phoneNumber,
+//                    content
+//            );
+//            isSendOtp = true;
+//        } catch (Exception e) {
+//            throw new CustomBusinessException("SMS failed");
+//        }
 
         BaseResponse<String> baseResponse = new BaseResponse<>();
         if (isSendOtp) {

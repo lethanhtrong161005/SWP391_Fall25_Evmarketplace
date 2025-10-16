@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.favorite.FavoriteDto;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.message.NotificationDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
@@ -27,4 +28,5 @@ public class AccountReponseDTO {
     private AccountStatus status;
     private Profile profile;
     private List<FavoriteDto> favorites;
+    private List<NotificationDto> notifications;
 }

@@ -81,6 +81,12 @@ public class Account {
     @ToString.Exclude
     private List<ListingStatusHistory> listingStatusChanges = new ArrayList<>();
 
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<Notification> notifications = new ArrayList<>();
+
 
     @PrePersist
     protected void onCreate() {
@@ -106,4 +112,5 @@ public class Account {
         dto.setRole(account.getRole());
         return dto;
     }
+
 }
