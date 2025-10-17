@@ -8,4 +8,6 @@ import java.util.Map;
 
 public interface ConfigService {
     BaseResponse<Map<String, ConfigResponseDto>> getFeeListingConfig();
+    ConfigResponseDto findByKey(String key);
+    int getModerationLockTtlSecs();
 }

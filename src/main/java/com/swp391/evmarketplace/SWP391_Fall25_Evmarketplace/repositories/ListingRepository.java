@@ -5,11 +5,13 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingStatusCount;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -271,4 +273,24 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
             """, nativeQuery = true)
     long countPurgeCandidates(@Param("days") int days);
 
+
+    /** Khoá bản ghi để thao tác lock an toàn */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select l from Listing l where l.id = :id")
+    Optional<Listing> findByIdForUpdate(@Param("id") Long id);
+
+
+
+    /** Tất cả tin tôi đang lock (service lọc TTL còn hiệu lực). */
+    List<Listing> findByModerationLockedBy_IdOrderByModerationLockedAtDesc(Long accountId);
+    Page<Listing> findByStatus(ListingStatus status, Pageable pageable);
+    // Queue (theo trạng thái)
+    List<Listing> findByStatusOrderByCreatedAtAsc(ListingStatus status);
+    List<Listing> findByStatusAndTitleContainingIgnoreCaseOrderByCreatedAtAsc(
+            ListingStatus status, String title
+    );
+    // My locks
+    List<Listing> findByModerationLockedBy_IdAndTitleContainingIgnoreCaseOrderByModerationLockedAtDesc(
+            Long accountId, String title
+    );
 }

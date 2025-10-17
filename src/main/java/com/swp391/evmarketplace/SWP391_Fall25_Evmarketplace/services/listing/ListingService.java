@@ -10,6 +10,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.CreateListingResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingDetailResponseDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListItemDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,7 +26,7 @@ public interface ListingService {
    //cho phép sort theo thời gian tạo
    BaseResponse<Map<String, Object>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir);
   BaseResponse<Map<String, Object>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir);
-   BaseResponse<Map<String, Object>> getAllListForManage(int page, int size, String sort, String dir);
+   BaseResponse<Map<String, Object>> getAllListForModerator(int page, int size, String sort, String dir);
    BaseResponse<Map<String, Object>> getAllListingsPublic(int page, int size, String sort, String dir);
 
 
@@ -70,7 +71,14 @@ public interface ListingService {
 
     BaseResponse<?> restore(Long listingId);
 
-    BaseResponse<?> approveListing(Long id);
+    BaseResponse<?> claim(Long listingId, Long actorId, boolean force);
 
-    BaseResponse<?> rejectListing(Long id, RejectListingRequest req);
+    BaseResponse<?> extend(Long listingId, Long actorId);
+    BaseResponse<?> release(Long listingId, Long actorId, boolean force);
+    List<Map<String, Object>> myActiveLocks(Long actorId, String rawTitle);
+    BaseResponse<?> approve(Long listingId, Long actorId, boolean force);
+    BaseResponse<?> reject(Long listingId, Long actorId, String reason, boolean force);
+    BaseResponse<Map<String, Object>> getQueuePaged(
+         ListingStatus status, int pageIdx, int pageSize, String rawTitle
+    );
 }

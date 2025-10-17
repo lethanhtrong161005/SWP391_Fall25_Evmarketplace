@@ -32,12 +32,25 @@ public class ConfigServiceImp implements ConfigService {
         return configResponseDtoBaseResponse;
     }
 
-    private ConfigResponseDto findByKey(String key) {
+    public ConfigResponseDto findByKey(String key) {
         return configRepository.findById(key)
                 .map(item -> {
                             return item.toDto(item);
                         }
-                ).orElse(null);
+                ).orElseThrow(() -> new CustomBusinessException("Config not found!"));
+    }
+
+
+    public int getModerationLockTtlSecs() {
+        int def = 600; // fallback
+        int min = 60, max = 3600; // 1–60 phút
+
+        var cfg = findByKey("moderation_lock_ttl_secs");
+        int v = def;
+        if (cfg != null && cfg.getCfgValue() != null) {
+            try { v = Integer.parseInt(cfg.getCfgValue().trim()); } catch (Exception ignored) {}
+        }
+        return Math.max(min, Math.min(max, v));
     }
 
 }
