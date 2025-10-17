@@ -80,9 +80,9 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                  left join a.profile p
                  where a.id = :id
             """,
-            countQuery = """
-                    select count(cr.id) from ConsignmentRequest cr join cr.owner a where a.id = :ownerId
-                    """
+      countQuery = """
+        select count(cr.id) from ConsignmentRequest cr join cr.owner a where a.id = :id
+        """
     )
     Page<ConsignmentRequestProjection> getAllByOwnerId(@Param("id") Long id, Pageable pageable);
 

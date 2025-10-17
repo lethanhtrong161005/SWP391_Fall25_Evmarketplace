@@ -40,9 +40,9 @@ public class ConsignmentRequest {
         foreignKey = @ForeignKey(name = "fk_cr_owner"))
     private Account owner;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "staff_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_consignment_staff"))
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_id", nullable = true,
+        foreignKey = @ForeignKey(name = "fk_consignment_staff"))
     private Account staff;
 
     @Lob
