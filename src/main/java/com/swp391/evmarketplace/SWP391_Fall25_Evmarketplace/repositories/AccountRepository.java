@@ -38,5 +38,6 @@ public interface AccountRepository extends JpaRepository<Account,Long> {
     @Query("select a from Account a where a.id = :id")
     Optional<Account> lockById(@Param("id") Long id);
 
+    @EntityGraph(attributePaths = {"branch"})
     List<Account> findByRoleAndStatusAndBranch_Id(AccountRole role, AccountStatus status, Long branchId);
 }

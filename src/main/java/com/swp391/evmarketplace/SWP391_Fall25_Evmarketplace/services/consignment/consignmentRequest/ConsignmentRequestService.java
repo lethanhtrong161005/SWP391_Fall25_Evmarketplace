@@ -14,9 +14,14 @@ public interface ConsignmentRequestService {
     BaseResponse<Void> createConsignmentRequest(CreateConsignmentRequestDTO requestDTO, List<MultipartFile> images, List<MultipartFile> videos);
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getAll(int page, int size, String dir, String sort);
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByOwnerId(Long id, int page, int size, String dir, String sort);
-
     BaseResponse<Void> RequestAccepted(AcceptedConsignmentRequestDTO requestDTO);
     BaseResponse<Void> RequestRejected(RejectedConsignmentRequestDTO requestDTO);
     BaseResponse<List<ConsignmentRequestListItemDTO>> getListByBranchIdAndStaffIsNull(Long branchId);
     BaseResponse<Void> setStaffForRequest(Long requestId, Long staffId);
+
+    //lấy tất cả request có staff
+    BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffId(int page, int size, String dir, String sort);
+    //lấy tất cả request staff nhưng chưa xem xét
+    BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffIdAndNotConsider(int page, int size, String dir, String sort);
+
 }

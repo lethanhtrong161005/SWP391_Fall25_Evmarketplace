@@ -45,11 +45,8 @@ public class ConsignmentAgreement {
     @Column(name = "commission_percent", precision = 5, scale = 2, nullable = false)
     private BigDecimal commissionPercent;
 
-    @Column(name = "listing_price", precision = 12, scale = 2, nullable = false)
-    private BigDecimal listingPrice;
-
-    @Column(name = "min_acceptable_price", precision = 12, scale = 2, nullable = false)
-    private BigDecimal minAcceptablePrice;
+    @Column(name = "acceptable_price", precision = 12, scale = 2, nullable = false)
+    private BigDecimal acceptablePrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)

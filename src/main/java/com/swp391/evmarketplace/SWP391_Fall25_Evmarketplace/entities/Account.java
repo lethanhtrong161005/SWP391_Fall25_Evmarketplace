@@ -60,6 +60,7 @@ public class Account {
             foreignKey = @ForeignKey(name = "fk_account_branch")
     )
     @ToString.Exclude
+    @JsonIgnore
     private Branch branch;
 
     @CreationTimestamp

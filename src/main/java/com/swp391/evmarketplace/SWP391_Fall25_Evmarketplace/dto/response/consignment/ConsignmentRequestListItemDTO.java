@@ -18,6 +18,8 @@ public class ConsignmentRequestListItemDTO {
     private Long id;
     private String accountPhone;
     private String accountName;
+    private Long staffId;
+    private String rejectedReason;
     private String itemType; // keep as String to align with current projection
     private String category;
     private String brand;

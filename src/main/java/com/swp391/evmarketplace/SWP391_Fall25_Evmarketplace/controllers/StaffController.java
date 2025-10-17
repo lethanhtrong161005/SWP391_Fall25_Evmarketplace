@@ -12,6 +12,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consign
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest.ConsignmentRequestService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -58,26 +59,41 @@ public class StaffController {
     }
 
     //consignment request
-    @GetMapping("/consignment-request/")
-    public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestListItemDTO>>> getAllConsignmentRequests(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String dir
-    ) {
-        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getAll(page, size, dir, sort);
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
+
 
     @PutMapping("/consignment-request/consider_accepted")
-    public ResponseEntity<BaseResponse<Void>> requestAccepted(@RequestBody AcceptedConsignmentRequestDTO dto) {
+    public ResponseEntity<BaseResponse<Void>> requestAccepted(@RequestBody @Valid AcceptedConsignmentRequestDTO dto) {
         BaseResponse<Void> response = consignmentRequestService.RequestAccepted(dto);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PutMapping("/consignment-request/consider_rejected")
-    public ResponseEntity<BaseResponse<Void>> requestRejected(@RequestBody RejectedConsignmentRequestDTO dto) {
+    public ResponseEntity<BaseResponse<Void>> requestRejected(@RequestBody @Valid RejectedConsignmentRequestDTO dto) {
         BaseResponse<Void> response = consignmentRequestService.RequestRejected(dto);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    //lấy tất cả request có staff
+    @GetMapping("/consignment-request")
+    public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestListItemDTO>>> getStaffList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "desc") String dir
+    ){
+        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getListByStaffId(page, size, dir, sort);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    //lấy tất cả request staff nhưng chưa duyệt
+    @GetMapping("/consignment-request/consider")
+    public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestListItemDTO>>> getStaffListForConsider(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "desc") String dir
+    ){
+        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getListByStaffIdAndNotConsider(page, size, dir, sort);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
