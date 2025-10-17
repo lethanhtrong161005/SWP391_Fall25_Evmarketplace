@@ -11,12 +11,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProjection;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account.AccountService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
-import org.apache.catalina.util.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -28,6 +26,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentRequestStatus.*;
 
 @Service
 public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
@@ -121,7 +121,7 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         consignmentRequest.setPreferredBranch(branch);
         consignmentRequest.setOwnerExpectedPrice(requestDTO.getOwnerExpectedPrice());
         consignmentRequest.setNote(requestDTO.getNote());
-        consignmentRequest.setStatus(ConsignmentRequestStatus.SUBMITTED);
+        consignmentRequest.setStatus(SUBMITTED);
 
         consignmentRequestRepository.save(consignmentRequest);
 
@@ -199,9 +199,9 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
 
         Account account = authUtil.getCurrentAccount();
 
-            request.setStatus(ConsignmentRequestStatus.SCHEDULING);
-            request.setStaff(account);
-            consignmentRequestRepository.save(request);
+        request.setStatus(SCHEDULING);
+        request.setStaff(account);
+        consignmentRequestRepository.save(request);
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setStatus(200);
@@ -316,11 +316,48 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         Account account = authUtil.getCurrentAccount();
 
         Pageable pageable = PageableUtils.buildPageable(page, size, sort, dir);
-        Page<ConsignmentRequestProjection> pages = consignmentRequestRepository.getAllByStaffId(account.getId(), EnumSet.of(ConsignmentRequestStatus.SUBMITTED), pageable);
+        Page<ConsignmentRequestProjection> pages = consignmentRequestRepository.getAllByStaffId(account.getId(), EnumSet.of(SUBMITTED), pageable);
         PageResponse<ConsignmentRequestListItemDTO> body = toPageResponse(pages);
         return ok(body, pages.isEmpty(), ErrorCode.CONSIGNMENT_REQUEST_LIST_NOT_FOUND.name());
     }
 
+
+    //user hủy request
+
+    private static final Set<ConsignmentRequestStatus> CANCELLABLE_BEFORE_INSPECTING = EnumSet.of(
+            SUBMITTED, SCHEDULING, SCHEDULED, RESCHEDULED
+    );
+
+    @Override
+    public BaseResponse<Void> UserCancelRequest(Long requestId) {
+        if (requestId == null) {
+            throw new CustomBusinessException("consignment request id is required");
+        }
+
+        Account current = authUtil.getCurrentAccount();
+        ConsignmentRequest request = consignmentRequestRepository
+                .findByIdAndOwnerId(requestId, current.getId())
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
+
+        if (!(current.getRole().equals(AccountRole.MEMBER)) || request.getStatus() == INSPECTING) {
+            throw new CustomBusinessException("cannot cancel this state");
+        }
+
+        if (CANCELLABLE_BEFORE_INSPECTING.contains(request.getStatus())) {
+            request.setStatus(ConsignmentRequestStatus.CANCELLED);
+            // cancel by, at, reason
+            // cancel scheduled
+            consignmentRequestRepository.save(request);
+        }
+
+
+        BaseResponse<Void> res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Cancelled");
+        return res;
+
+    }
 
     //=========================HELPER============================
 

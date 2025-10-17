@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentRequest, Long> {
     @Query(value = """
@@ -158,5 +159,6 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
     )
     List<ConsignmentRequestProjection> getAllByBranchIdAndStaffIsNull(@Param("id") Long branchId);
 
+  Optional<ConsignmentRequest> findByIdAndOwnerId(Long id, Long ownerId);
 
 }

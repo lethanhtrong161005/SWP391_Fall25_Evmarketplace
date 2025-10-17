@@ -24,4 +24,5 @@ public interface ConsignmentRequestService {
     //lấy tất cả request staff nhưng chưa xem xét
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffIdAndNotConsider(int page, int size, String dir, String sort);
 
+    BaseResponse<Void> UserCancelRequest(Long requestId);
 }

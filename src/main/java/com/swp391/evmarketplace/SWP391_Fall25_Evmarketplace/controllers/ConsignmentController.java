@@ -54,4 +54,10 @@ public class ConsignmentController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<BaseResponse<Void>> cancelRequest(@PathVariable("id") Long id) {
+        BaseResponse<Void> res = consignmentRequestService.UserCancelRequest(id);
+        return ResponseEntity.ok(res);
+    }
+
 }
