@@ -79,7 +79,10 @@ public class SecurityConfig {
 
                     //staff
                     auth.requestMatchers("api/staff/**").hasRole("STAFF");
-                    auth.requestMatchers(HttpMethod.PUT, "/api/staff/listing/**").hasRole("STAFF");
+
+
+                    //moderator
+                    auth.requestMatchers("/api/moderator/listing/**").hasAnyRole("MODERATOR", "ADMIN", "MANAGER");
 
                     //manager
                     auth.requestMatchers("/api/shifts/templates/**").hasRole("MANAGER");

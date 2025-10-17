@@ -27,6 +27,4 @@ public class AccountReponseDTO {
     private boolean emailVerified;
     private AccountStatus status;
     private Profile profile;
-    private List<FavoriteDto> favorites;
-    private List<NotificationDto> notifications;
 }

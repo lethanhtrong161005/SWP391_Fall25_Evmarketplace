@@ -40,30 +40,6 @@ public class StaffController {
     private ObjectMapper objectMapper;
 
 
-    //líting
-    @GetMapping("/listing")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> getAllList(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false, defaultValue = "desc") String dir
-    ) {
-        BaseResponse<Map<String, Object>> response = listingService.getAllListForManage(page, size, sort, dir);
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
-
-    @GetMapping("/listing/search")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> searchCards(
-            @ModelAttribute SearchListingRequestDTO requestDTO,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false, defaultValue = "desc") String dir
-    ) {
-        BaseResponse<Map<String, Object>> response = listingService.searchForManage(requestDTO, page, size, sort, dir);
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
-
     //consignment request
 
     @PostMapping(value = "/consignment-request/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -100,24 +76,5 @@ public class StaffController {
         BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getAll(page, size, dir, sort);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
-
-
-
-    @PutMapping("/listing/approve/{id}")
-    public ResponseEntity<?> approve(@PathVariable Long id){
-        var res = listingService.approveListing(id);
-        return ResponseEntity.status(res.getStatus()).body(res);
-    }
-
-    @PutMapping("/listing/reject/{id}")
-    public ResponseEntity<?> reject(
-            @PathVariable Long id,
-            @Valid @RequestBody RejectListingRequest request
-    ){
-        var res = listingService.rejectListing(id, request);
-        return ResponseEntity.status(res.getStatus()).body(res);
-    }
-
-
 
 }
