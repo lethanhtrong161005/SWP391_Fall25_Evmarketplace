@@ -7,6 +7,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -90,6 +91,23 @@ public class Account {
     @ToString.Exclude
     private List<ListingStatusHistory> listingStatusChanges = new ArrayList<>();
 
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<Notification> notifications = new ArrayList<>();
+
+    @OneToMany(mappedBy = "moderator", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<Listing> moderatedListings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "moderationLockedBy", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    @BatchSize(size = 50)
+    private List<Listing> moderationLockedListings = new ArrayList<>();
+
 
     @PrePersist
     protected void onCreate() {
@@ -115,4 +133,5 @@ public class Account {
         dto.setRole(account.getRole());
         return dto;
     }
+
 }

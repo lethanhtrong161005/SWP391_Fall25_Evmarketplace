@@ -188,6 +188,8 @@ public class Listing {
     private LocalDateTime prevExpiresAt;
 
 
+
+
     public void addMedia(ListingMedia media) {
         media.setListing(this);
         mediaList.add(media);
@@ -196,6 +198,44 @@ public class Listing {
     @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt DESC")
     private List<ListingStatusHistory> statusHistories = new ArrayList<>();
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "moderator_id",
+            foreignKey = @ForeignKey(name = "fk_listing_moderator_id")
+    )
+    @JsonIgnore
+    private Account moderator;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "moderation_locked_by",
+            foreignKey = @ForeignKey(name = "fk_listing_locked_by")
+    )
+    @JsonIgnore
+    private Account moderationLockedBy;
+
+    @Column(name = "moderation_locked_at")
+    private LocalDateTime moderationLockedAt;
+
+    @Column(name = "moderation_lock_ttl_secs", nullable = false)
+    private Integer moderationLockTtlSecs = 600;
+
+    @PrePersist
+    protected void prePersistLockDefaults() {
+        if (moderationLockTtlSecs == null) {
+            moderationLockTtlSecs = 600;
+        }
+    }
+
+    @Transient
+    public int getModerationTtlRemainingSec(LocalDateTime now) {
+        if (moderationLockedAt == null || moderationLockTtlSecs == null) return 0;
+        long elapsed = java.time.Duration.between(moderationLockedAt, now).getSeconds();
+        return Math.max(0, moderationLockTtlSecs - (int) elapsed);
+    }
+
 
     public void addHistory(ListingStatusHistory h) {
         h.setListing(this);
@@ -259,11 +299,12 @@ public class Listing {
         listingDto.setMassKg(listing.getMassKg() != null ? listing.getMassKg() : null);
         listingDto.setDimensions(listing.getDimensions() != null ? listing.getDimensions() : null);
 
-        listing.setHiddenAt(listing.getHiddenAt() != null ? listing.getHiddenAt() : null);
-        listing.setDeletedAt(listing.getDeletedAt() != null ? listing.getDeletedAt() : null);
+        listingDto.setHiddenAt(listing.getHiddenAt() != null ? listing.getHiddenAt() : null);
+        listingDto.setDeletedAt(listing.getDeletedAt() != null ? listing.getDeletedAt() : null);
 
         listingDto.setRejectedReason(listing.getRejectedReason() != null ? listing.getRejectedReason() : null);
         listingDto.setRejectedAt(listing.getRejectedAt() != null ? listing.getRejectedAt() : null);
+        listingDto.setModeratorId(listing.getModerator() != null ? listing.getModerator().getId() : null);
 
         listingDto.setPrevStatus(listing.getPrevStatus() != null ? listing.getPrevStatus() : null);
         listingDto.setPrevVisibility(listing.getPrevVisibility() != null ? listing.getPrevVisibility() : null);

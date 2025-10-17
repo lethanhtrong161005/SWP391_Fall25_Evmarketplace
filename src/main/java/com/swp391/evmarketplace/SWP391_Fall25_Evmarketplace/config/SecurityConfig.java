@@ -80,6 +80,10 @@ public class SecurityConfig {
                     //staff
                     auth.requestMatchers("api/staff/**").hasRole("STAFF");
 
+
+                    //moderator
+                    auth.requestMatchers("/api/moderator/listing/**").hasAnyRole("MODERATOR", "ADMIN", "MANAGER");
+
                     //manager
                     auth.requestMatchers("/api/shifts/templates/**",
                             "api/manager/**"

@@ -44,6 +44,8 @@ public class ListingDto {
     //Lấy mode name của catalog hoặc của model name ngoài
     private String model;
 
+    private Long moderatorId;
+
     private Integer year;
 
     private ListingStatus status;
