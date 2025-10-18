@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.accoun
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.favorite.FavoriteDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.message.NotificationDto;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Branch;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
@@ -26,5 +27,6 @@ public class AccountReponseDTO {
     private boolean phoneVerified;
     private boolean emailVerified;
     private AccountStatus status;
+    private Branch branch;
     private Profile profile;
 }
