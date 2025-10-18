@@ -2,7 +2,6 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.RejectListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
@@ -66,6 +65,8 @@ public class ListingServiceImp implements ListingService {
     private AccountRepository accountRepository;
     @Autowired
     private ConfigService configService;
+    @Autowired
+    private ListingStatusHistoryRepository listingStatusHistoryRepository;
 
 
     @Transactional
@@ -1442,7 +1443,7 @@ public class ListingServiceImp implements ListingService {
         l.setRejectedAt(LocalDateTime.now());
         l.setModerator(actor);
 
-        pushHistory(l, actor, from, ListingStatus.REJECTED, reason, "");
+        pushHistory(l, actor, from, ListingStatus.REJECTED, "REJECTED", reason);
 
         l.setModerationLockedBy(null);
         l.setModerationLockedAt(null);
@@ -1451,6 +1452,63 @@ public class ListingServiceImp implements ListingService {
         res.setSuccess(true);
         res.setStatus(200);
         res.setMessage("Rejected listing");
+        return res;
+    }
+
+
+    @Transactional(readOnly = true)
+    @Override
+    public BaseResponse<PageResponse<ListingHistoryDto>> getModeratorHistory(
+            Long actorId,
+            String q,
+            LocalDateTime fromTs,
+            LocalDateTime toTs,
+            List<String> reasons,
+            Set<ListingStatus> toStatuses,
+            Integer page,
+            Integer size
+    ) {
+        final int p = (page == null || page < 0) ? 0 : page;
+        final int s = (size == null || size <= 0 || size > 100) ? 10 : size;
+
+        if (fromTs != null && toTs != null && !toTs.isAfter(fromTs)) {
+            throw new CustomBusinessException("toTs must be after fromTs");
+        }
+
+        String key = (q == null || q.trim().isEmpty()) ? null : q.trim();
+
+        boolean reasonsEmpty = (reasons == null || reasons.isEmpty());
+
+        List<String> reasonsEff = reasonsEmpty ? List.of("__ANY__") : reasons;
+
+        boolean toEmpty = (toStatuses == null || toStatuses.isEmpty());
+        // tương tự cho IN với enum
+        Set<ListingStatus> toEff = toEmpty ? EnumSet.of(ListingStatus.APPROVED) : toStatuses;
+
+        Pageable pageable = PageRequest.of(p, s, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<ListingHistoryDto> pg = listingStatusHistoryRepository.findModeratorHistory(
+                actorId, key, fromTs, toTs,
+                reasonsEmpty, reasonsEff,
+                toEmpty, toEff,
+                pageable
+        );
+
+        PageResponse<ListingHistoryDto> body = PageResponse.<ListingHistoryDto>builder()
+                .totalElements(pg.getTotalElements())
+                .totalPages(pg.getTotalPages())
+                .hasNext(pg.hasNext())
+                .hasPrevious(pg.hasPrevious())
+                .page(pg.getNumber())
+                .size(pg.getSize())
+                .items(pg.getContent())
+                .build();
+
+        BaseResponse<PageResponse<ListingHistoryDto>> res = new BaseResponse<>();
+        res.setStatus(200);
+        res.setSuccess(true);
+        res.setMessage("OK");
+        res.setData(body);
         return res;
     }
 

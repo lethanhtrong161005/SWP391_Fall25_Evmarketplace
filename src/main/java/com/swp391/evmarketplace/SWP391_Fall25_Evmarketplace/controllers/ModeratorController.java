@@ -1,23 +1,20 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.RejectListingRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import jakarta.validation.Valid;
-import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/moderator")
@@ -90,13 +87,32 @@ public class ModeratorController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @PutMapping("/listing/reject{id}")
+    @PutMapping("/listing/reject/{id}")
     public ResponseEntity<?> rejectModeration(
             @PathVariable Long id,
             @RequestParam(defaultValue = "false") boolean force,
             @Valid @RequestBody RejectListingRequest request
     ) {
         var res = listingService.reject(id, authUtil.getCurrentAccountIdOrNull(), request.getReason(), force);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getModeratorHistory(
+            @RequestParam(required = false) Long actorId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromTs,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toTs,
+            @RequestParam(required = false) List<String> reasons,
+            @RequestParam(required = false) Set<ListingStatus> toStatuses,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        var res = listingService.getModeratorHistory(
+                actorId, q, fromTs, toTs, reasons, toStatuses, page, size
+        );
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 

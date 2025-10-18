@@ -4,25 +4,17 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.auth.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.account.RegisterAccountRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.profile.UpdateProfileRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.LoginResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.OtpResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.profile.ProfileResponseDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OtpType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.mapper.AccountMapper;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account.AccountService;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.profile.ProfileService;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,46 +25,18 @@ import java.util.Map;
 @RequestMapping("/api/accounts")
 @Tag(name = "Accounts", description = "Account APIs")
 public class AccountController {
-    @Autowired
-    private AuthUtil authUtil;
-    @Autowired
-    private AccountMapper accountMapper;
+
     @Autowired
     private AccountService accountService;
     @Autowired
     private ProfileService profileService;
-    @Autowired
-    private ProfileRepository profileRepository;
-    @Autowired
-    private FileService fileService;
-    @Value("${server.url}")
-    private String serverUrl;
-    @Autowired
-    private ListingService listingService;
+
 
 
     @GetMapping("/current")
     public ResponseEntity<?> getAccountDetails() {
-        BaseResponse<AccountReponseDTO> response = new BaseResponse<>();
-        Account ac = authUtil.getCurrentAccount();
-        if (ac != null) {
-            AccountReponseDTO accountReponseDTO = accountMapper.toAccountReponseDTO(ac);
-            String avatarUrl = serverUrl + "/api/files/images/" + accountReponseDTO.getProfile().getAvatarUrl();
-            if (accountReponseDTO.getProfile().getAvatarUrl() != null) {
-                if(ac.getGoogleId() == null) {
-                    accountReponseDTO.getProfile().setAvatarUrl(avatarUrl);
-                }
-            }
-            response.setData(accountReponseDTO);
-            response.setMessage("Get Account Success");
-            response.setSuccess(true);
-            response.setStatus(200);
-        } else {
-            response.setMessage("Get Account Failed");
-            response.setSuccess(false);
-            response.setStatus(400);
-        }
-        return ResponseEntity.status(response.getStatus()).body(response);
+        var res = accountService.getAccountCurrent();
+        return ResponseEntity.status(res.getStatus()).body(res);
     }
 
     @PostMapping("/request-otp")
