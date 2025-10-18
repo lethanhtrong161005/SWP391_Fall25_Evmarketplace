@@ -10,6 +10,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import jakarta.validation.Valid;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -97,6 +99,25 @@ public class ModeratorController {
             @Valid @RequestBody RejectListingRequest request
     ) {
         var res = listingService.reject(id, authUtil.getCurrentAccountIdOrNull(), request.getReason(), force);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<?> getModeratorHistory(
+            @RequestParam(required = false) Long actorId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromTs,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toTs,
+            @RequestParam(required = false) List<String> reasons,
+            @RequestParam(required = false) Set<ListingStatus> toStatuses,       
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        var res = listingService.getModeratorHistory(
+                actorId, q, fromTs, toTs, reasons, toStatuses, page, size
+        );
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
