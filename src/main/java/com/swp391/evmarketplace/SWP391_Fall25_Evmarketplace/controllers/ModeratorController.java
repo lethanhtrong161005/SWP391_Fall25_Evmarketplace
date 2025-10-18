@@ -92,7 +92,7 @@ public class ModeratorController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @PutMapping("/listing/reject{id}")
+    @PutMapping("/listing/reject/{id}")
     public ResponseEntity<?> rejectModeration(
             @PathVariable Long id,
             @RequestParam(defaultValue = "false") boolean force,
