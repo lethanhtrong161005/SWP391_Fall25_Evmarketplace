@@ -1,16 +1,16 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.branch.BranchDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.BranchStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -30,10 +30,10 @@ public class Branch {
     private Long id;
 
     @Column(nullable = false, length = 255)
-    private String name;              // Tên cơ sở
+    private String name;
 
     @Column(nullable = false, length = 100)
-    private String province;          // Tỉnh/thành
+    private String province;
 
     @Column(nullable = false, length = 255)
     private String address;           // Địa chỉ chi tiết
@@ -53,10 +53,22 @@ public class Branch {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "manager_id",
-            foreignKey = @ForeignKey(name = "fk_branch_manager"))
+    @OneToOne
+    @JoinColumn(
+            name = "manager_id",
+            unique = true,
+            foreignKey = @ForeignKey(name = "fk_branch_manager")
+    )
     private Account manager;
+
+    @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<Account> accounts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY)
+    @JsonIgnore @ToString.Exclude
+    private List<Listing> listings = new ArrayList<>();
 
     public BranchDto toDto(Branch branch) {
         BranchDto dto = new BranchDto();

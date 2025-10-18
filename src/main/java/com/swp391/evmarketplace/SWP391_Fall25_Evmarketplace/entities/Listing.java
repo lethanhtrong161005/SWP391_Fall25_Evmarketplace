@@ -222,6 +222,7 @@ public class Listing {
     @Column(name = "moderation_lock_ttl_secs", nullable = false)
     private Integer moderationLockTtlSecs = 600;
 
+
     @PrePersist
     protected void prePersistLockDefaults() {
         if (moderationLockTtlSecs == null) {
