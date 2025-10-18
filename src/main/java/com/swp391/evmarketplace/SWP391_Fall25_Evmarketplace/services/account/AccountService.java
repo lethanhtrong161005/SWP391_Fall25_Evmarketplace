@@ -26,6 +26,8 @@ public interface AccountService {
     BaseResponse<Void> changePassword(ChangePasswordRequest request);
     BaseResponse<Void> updateEmail(UpdateEmailRequestDTO requestDTO);
 
+    BaseResponse<?> getAccountCurrent();
+
     BaseResponse<String> sendOtpEmail(String email);
     BaseResponse<OtpResponse> verifyEmailOtp(VerifyEmailOtpRequestDTO verifyEmailOtp);
 

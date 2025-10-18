@@ -26,8 +26,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.OtpRepo
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.SpeedSMSAPI;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -59,6 +61,8 @@ public class AccountServiceImp implements AccountService {
     private AccountMapper accountMapper;
     @Autowired
     private JavaMailSender mailSender;
+    @Value("${server.url}")
+    private String serverUrl;
 
     @Override
     public BaseResponse<String> sendOtpRegister(String phoneNumber) {
@@ -66,6 +70,25 @@ public class AccountServiceImp implements AccountService {
             throw new CustomBusinessException("Phone number already exists");
         }
         return doSendOtp(phoneNumber);
+    }
+
+    @Override
+    public BaseResponse<?> getAccountCurrent() {
+        Account ac = authUtil.getCurrentAccount();
+        AccountReponseDTO dto = new AccountReponseDTO();
+        BaseResponse<AccountReponseDTO> response = new BaseResponse<>();
+        if(ac != null) {
+            dto = ac.toDto(ac, serverUrl);
+            response.setData(dto);
+            response.setMessage("Get Account Success");
+            response.setSuccess(true);
+            response.setStatus(200);
+        } else {
+            response.setMessage("Get Account Failed");
+            response.setSuccess(false);
+            response.setStatus(400);
+        }
+        return response;
     }
 
     @Override
@@ -465,6 +488,7 @@ public class AccountServiceImp implements AccountService {
     }
 
     @Override
+    //Chỉnh account mappers
     public BaseResponse<Map<String, Object>> getAll(int page, int size, String sort, String dir) {
         Pageable pageable = buildPageable(page, size, sort, dir);
         Page<Account> accounts = accountRepository.findAllAccountBy(pageable);
@@ -472,7 +496,9 @@ public class AccountServiceImp implements AccountService {
             throw new CustomBusinessException(ErrorCode.ACCOUNT_LIST_EMPTY.name());
         }
         List<AccountReponseDTO> items = accounts.getContent()
-                .stream().map(accountMapper::toAccountReponseDTO)
+                .stream().map(item -> {
+                    return item.toDto(item, serverUrl);
+                })
                 .toList();
 
         Map<String, Object> payload = Map.of(
@@ -496,6 +522,7 @@ public class AccountServiceImp implements AccountService {
     }
 
     @Override
+    //Chỉnh account mappers
     public BaseResponse<Map<String, Object>> search(String keyword, int page, int size, String sort, String dir) {
         if (keyword == null || keyword.isBlank()) {
             throw new CustomBusinessException(ErrorCode.KEYWORD_NOT_FOUND.name());
@@ -506,7 +533,9 @@ public class AccountServiceImp implements AccountService {
             throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
         }
 
-        List<AccountReponseDTO> items = accounts.getContent().stream().map(accountMapper::toAccountReponseDTO).toList();
+        List<AccountReponseDTO> items = accounts.getContent().stream().map(item -> {
+            return item.toDto(item, serverUrl);
+        }).toList();
 
         Map<String, Object> payload = Map.of(
                 "items", items,
@@ -529,13 +558,14 @@ public class AccountServiceImp implements AccountService {
     }
 
     @Override
+    // Chỉnh account mapper
     public BaseResponse<AccountReponseDTO> getAccountById(Long id) {
         Optional<Account> optAccount = accountRepository.findById(id);
         if (optAccount.isEmpty()) {
             throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
         }
         Account account = optAccount.get();
-        AccountReponseDTO accountReponseDTO = accountMapper.toAccountReponseDTO(account);
+        AccountReponseDTO accountReponseDTO = account.toDto(account, serverUrl);
 
         BaseResponse<AccountReponseDTO> response = new BaseResponse<>();
         response.setMessage("OK");

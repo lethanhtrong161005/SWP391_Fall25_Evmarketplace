@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
@@ -74,7 +75,8 @@ public class Account {
 
     @OneToMany(mappedBy = "account", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL, orphanRemoval = true)
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JsonIgnore
+    @ToString.Exclude
     private List<Favorite> favorites = new ArrayList<>();
 
     @OneToMany(mappedBy = "actor", fetch = FetchType.LAZY)
@@ -99,6 +101,16 @@ public class Account {
     @BatchSize(size = 50)
     private List<Listing> moderationLockedListings = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "branch_id")
+    @JsonIgnore @ToString.Exclude
+    private Branch branch;
+
+    @OneToOne(mappedBy = "manager")
+    @JsonIgnore
+    @ToString.Exclude
+    private Branch managedBranch;
+
 
     @PrePersist
     protected void onCreate() {
@@ -113,15 +125,26 @@ public class Account {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public AccountReponseDTO toDto(Account account) {
+    public AccountReponseDTO toDto(Account account, String serverUrl) {
         AccountReponseDTO dto = new AccountReponseDTO();
         dto.setId(account.getId());
         dto.setPhoneNumber(account.getPhoneNumber());
         dto.setEmail(account.getEmail());
         dto.setRole(account.getRole());
         dto.setStatus(account.getStatus());
+        dto.setEmailVerified(account.isEmailVerified());
+        dto.setPhoneVerified(account.isPhoneVerified());
         dto.setProfile(account.getProfile());
         dto.setRole(account.getRole());
+        String avatarUrl = MedialUtils.converMediaNametoMedialUrl(dto.getProfile().getAvatarUrl(), "IMAGE", serverUrl);
+        if (dto.getProfile().getAvatarUrl() != null) {
+            if(account.getGoogleId() == null) {
+                dto.getProfile().setAvatarUrl(avatarUrl);
+            }
+        }
+        if(account.getBranch() != null){
+            dto.setBranch(account.getBranch().toDto(account.getBranch()));
+        }
         return dto;
     }
 
