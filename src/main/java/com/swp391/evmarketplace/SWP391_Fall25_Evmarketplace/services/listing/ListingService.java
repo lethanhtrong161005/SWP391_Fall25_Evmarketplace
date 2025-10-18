@@ -9,6 +9,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.CreateListingResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingDetailResponseDto;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingHistoryDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
@@ -16,8 +17,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ListingService {
   BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
@@ -81,4 +84,17 @@ public interface ListingService {
     BaseResponse<Map<String, Object>> getQueuePaged(
          ListingStatus status, int pageIdx, int pageSize, String rawTitle
     );
+
+
+ BaseResponse<PageResponse<ListingHistoryDto>> getModeratorHistory(
+         Long actorId,
+         String q,
+         LocalDateTime fromTs,
+         LocalDateTime toTs,
+         List<String> reasons,
+         Set<ListingStatus> toStatuses,
+         Integer page,
+         Integer size
+ );
+
 }
