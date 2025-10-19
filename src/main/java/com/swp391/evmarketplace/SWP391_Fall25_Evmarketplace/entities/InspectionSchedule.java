@@ -41,10 +41,16 @@ public class InspectionSchedule {
             foreignKey = @ForeignKey(name = "fk_is_request"))
     private ConsignmentRequest request;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "inspector_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_is_inspector"))
     private Account inspector;
+
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "staff_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_is_staff"))
+    private Account staff;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "branch_id", nullable = false,

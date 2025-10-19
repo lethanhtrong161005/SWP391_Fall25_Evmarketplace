@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignmen
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.AcceptedConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.RejectedConsignmentRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.UpdateConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -68,6 +69,9 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
 
         if (branch.getStatus() != BranchStatus.ACTIVE)
             throw new CustomBusinessException(ErrorCode.BRANCH_INACTIVE.name());
+
+        if (category.getStatus() != CategoryStatus.ACTIVE)
+            throw new CustomBusinessException(ErrorCode.CATEGORY_INACTIVE.name());
 
         String brandName = requestDTO.getBrand();
         String modelName = requestDTO.getModel();
@@ -198,10 +202,10 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         ConsignmentRequest request = consignmentRequestRepository.findById(dto.getId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
 
-        Account account = authUtil.getCurrentAccount();
-
+        if (!request.getStatus().equals(SUBMITTED)) {
+            throw new CustomBusinessException("request status is not eligible to be approved");
+        }
         request.setStatus(SCHEDULING);
-        request.setStaff(account);
         request.setStatusChangeAt(LocalDateTime.now());
         consignmentRequestRepository.save(request);
 
@@ -217,17 +221,18 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         ConsignmentRequest request = consignmentRequestRepository.findById(dto.getId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
 
-        Account account = authUtil.getCurrentAccount();
+        if (!request.getStatus().equals(SUBMITTED)) {
+            throw new CustomBusinessException("request status is not eligible to be rejected");
+        }
 
-        if (request.getRejectedReason() == null || request.getRejectedReason().isEmpty()) {
-            request.setStatus(ConsignmentRequestStatus.REQUEST_REJECTED);
-            request.setRejectedReason(dto.getRejectedReason());
-            request.setStaff(account);
-            request.setStatusChangeAt(LocalDateTime.now());
-            consignmentRequestRepository.save(request);
-        } else {
+        if (dto.getRejectedReason() == null || dto.getRejectedReason().trim().isEmpty()) {
             throw new CustomBusinessException("reject reason must not be blank");
         }
+
+        request.setStatus(ConsignmentRequestStatus.REQUEST_REJECTED);
+        request.setRejectedReason(dto.getRejectedReason().trim());
+        request.setStatusChangeAt(LocalDateTime.now());
+        consignmentRequestRepository.save(request);
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setStatus(200);
@@ -256,6 +261,8 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                     .id(p.getId())
                     .accountPhone(p.getAccountPhone())
                     .accountName(p.getAccountName())
+                    .staffId(p.getStaffId())
+                    .rejectedReason(p.getRejectedReason())
                     .itemType(p.getItemType())
                     .category(p.getCategory())
                     .brand(p.getBrand())
@@ -301,15 +308,14 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name()));
 
         BaseResponse<Void> response = new BaseResponse<>();
-       if(request.getStatus().equals(SUBMITTED)){
-           request.setStaff(account);
-           consignmentRequestRepository.save(request);
+        if (request.getStatus().equals(SUBMITTED)) {
+            request.setStaff(account);
+            consignmentRequestRepository.save(request);
 
-           response.setStatus(200);
-           response.setSuccess(true);
-           response.setMessage("Ok");
-       }
-
+            response.setStatus(200);
+            response.setSuccess(true);
+            response.setMessage("Ok");
+        }
 
 
         return response;
@@ -373,6 +379,32 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         return res;
 
     }
+
+    //owner update their request
+//    @Override
+//    public BaseResponse<Void> updateRequest(Long requestId, UpdateConsignmentRequestDTO dto) {
+//        ConsignmentRequest request = consignmentRequestRepository.findById(requestId)
+//                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
+//
+//        if(!EnumSet.of(SUBMITTED, RESCHEDULED).contains(request.getStatus())){
+//            throw new CustomBusinessException("request is can not eligible to update");
+//        }
+//
+//        Category category = categoryRepository.findById(dto.getId())
+//                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CATEGORY_NOT_FOUND.name()));
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//    }
+
 
     //=========================HELPER============================
 

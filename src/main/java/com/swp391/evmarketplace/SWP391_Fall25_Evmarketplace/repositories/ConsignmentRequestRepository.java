@@ -7,8 +7,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
@@ -81,9 +83,9 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                  left join a.profile p
                  where a.id = :id
             """,
-      countQuery = """
-        select count(cr.id) from ConsignmentRequest cr join cr.owner a where a.id = :id
-        """
+            countQuery = """
+                    select count(cr.id) from ConsignmentRequest cr join cr.owner a where a.id = :id
+                    """
     )
     Page<ConsignmentRequestProjection> getAllByOwnerId(@Param("id") Long id, Pageable pageable);
 
@@ -124,7 +126,7 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                     """
     )
     Page<ConsignmentRequestProjection> getAllByStaffId(@Param("id") Long id,
-                                                       @Param("statuses")Collection<ConsignmentRequestStatus> statuses,
+                                                       @Param("statuses") Collection<ConsignmentRequestStatus> statuses,
                                                        Pageable pageable);
 
     //lấy danh sách chưa phân công việc tại cơ sở
@@ -192,6 +194,34 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
     )
     Page<ConsignmentRequestProjection> getAllByBranchIdIgnoreSubmitted(@Param("id") Long branchId, Pageable pageable);
 
-  Optional<ConsignmentRequest> findByIdAndOwnerId(Long id, Long ownerId);
+    Optional<ConsignmentRequest> findByIdAndOwnerId(Long id, Long ownerId);
 
+
+    //approve quá 7 ngày không đặt lịch -> EXPIRED
+    @Modifying
+    @Transactional
+    @Query(value = """
+            UPDATE consignment_request cr
+            LEFT JOIN inspection_schedule i
+                ON i.request_id = cr.id
+                AND i.status IN ('SCHEDULED', 'CHECK_IN', 'CANCELLED')
+            SET cr.status = 'EXPIRED',
+                cr.status_changed_at = NOW()
+            WHERE cr.status = 'SCHEDULING'
+                AND cr.status_changed_at < (NOW() - INTERVAL 7 DAY)
+                AND i.id IS NULL
+            """, nativeQuery = true)
+    int expiredApprovedWithoutSchedule();
+
+    // reject quá 7 ngày không gửi lại form để duyệt -> EXPIRED
+    @Modifying
+    @Transactional
+    @Query(value = """
+            UPDATE consignment_request cr
+            SET cr.status = 'EXPIRED',
+                cr.status_change_At = NOW()
+            WHERE cr.status = 'REQUEST_REJECTED'
+            AND cr.status_changed_at < (NOW() - INTERVAL 7 DAY)
+            """, nativeQuery = true)
+    int expiredRejectedWithoutResubmit();
 }

@@ -69,7 +69,8 @@ public enum ErrorCode {
     MODEL_NOT_BELONG_TO_BRAND,
 
     //category
-    CATEGORY_NOT_FOUND;
+    CATEGORY_NOT_FOUND,
+    CATEGORY_INACTIVE;
 
 
 }
