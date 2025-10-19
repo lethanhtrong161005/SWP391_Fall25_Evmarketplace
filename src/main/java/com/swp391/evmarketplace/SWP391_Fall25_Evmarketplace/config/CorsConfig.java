@@ -21,7 +21,8 @@ public class CorsConfig {
 
         // Allowed origins for dev and production
         configuration.setAllowedOrigins(List.of(
-                frontEndUrl
+                frontEndUrl,
+                "http://127.0.0.1:5500"
         ));
 
         // Allowed HTTP methods

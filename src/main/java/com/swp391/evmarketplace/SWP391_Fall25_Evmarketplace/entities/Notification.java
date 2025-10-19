@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.message.NotificationDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -47,5 +48,14 @@ public class Notification {
                 foreignKey = @ForeignKey(name = "account_id"))
     private Account account;
 
+    public NotificationDto toDto(Notification n) {
+        return new NotificationDto(
+                n.getType(),
+                n.getMessage(),
+                n.getReferenceId(),
+                n.getCreatedAt(),
+                n.getIsRead()
+        );
+    }
     
 }
