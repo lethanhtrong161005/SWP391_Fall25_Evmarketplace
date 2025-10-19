@@ -50,7 +50,8 @@ public class SecurityConfig {
                             "/api/accounts/reset-password",
                             "/api/listing/all",
                             "/api/listing/**",
-                            "/api/accounts/avatar"
+                            "/api/accounts/avatar",
+                            "/ws/**"
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.GET,
                             "/api/files/**",
