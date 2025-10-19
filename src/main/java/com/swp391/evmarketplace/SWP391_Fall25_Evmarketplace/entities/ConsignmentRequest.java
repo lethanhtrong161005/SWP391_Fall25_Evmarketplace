@@ -40,6 +40,15 @@ public class ConsignmentRequest {
         foreignKey = @ForeignKey(name = "fk_cr_owner"))
     private Account owner;
 
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_id", nullable = true,
+        foreignKey = @ForeignKey(name = "fk_consignment_staff"))
+    private Account staff;
+
+    @Lob
+    @Column(name = "rejected_reason", columnDefinition = "text")
+    private String rejectedReason;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "item_type", nullable = false, length = 16)
     private ItemType itemType;
@@ -87,6 +96,9 @@ public class ConsignmentRequest {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private ConsignmentRequestStatus status;
+
+    @Column(name = "status_changed_at")
+    private LocalDateTime statusChangeAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

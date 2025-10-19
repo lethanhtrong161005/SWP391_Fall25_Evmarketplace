@@ -27,7 +27,7 @@ public class ShiftAvailabilityService {
     // count as occupying a slot
     private static final List<InspectionScheduleStatus> OCCUPIED = List.of(
             InspectionScheduleStatus.SCHEDULED,
-            InspectionScheduleStatus.CHECKED_IN,
+            InspectionScheduleStatus.CHECK_IN,
             InspectionScheduleStatus.IN_PROGRESS
     );
 

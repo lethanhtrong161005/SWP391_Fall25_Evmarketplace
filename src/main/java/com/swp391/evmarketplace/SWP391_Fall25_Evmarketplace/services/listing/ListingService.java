@@ -2,7 +2,6 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.RejectListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
@@ -11,9 +10,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingDetailResponseDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingHistoryDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListItemDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 

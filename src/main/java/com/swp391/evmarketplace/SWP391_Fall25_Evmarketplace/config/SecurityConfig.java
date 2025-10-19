@@ -85,7 +85,9 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/moderator/listing/**").hasAnyRole("MODERATOR", "ADMIN", "MANAGER");
 
                     //manager
-                    auth.requestMatchers("/api/shifts/templates/**").hasRole("MANAGER");
+                    auth.requestMatchers("/api/shifts/templates/**",
+                            "api/manager/**"
+                            ).hasRole("MANAGER");
 
 
                     //admin
@@ -111,6 +113,8 @@ public class SecurityConfig {
                                     "/api/product/vehicle/update/**",
                                     "/api/product/battery/update/**")
                             .hasAnyRole("ADMIN","STAFF");
+
+                    auth.requestMatchers("api/admin/**").hasRole("ADMIN");
 
                     auth.anyRequest().authenticated();
                 })
