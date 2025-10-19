@@ -14,7 +14,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.auth.Ot
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StaffAccountResponseDTO;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
 
+import java.util.List;
 import java.util.Map;
 
 public interface AccountService {
@@ -39,6 +42,6 @@ public interface AccountService {
     BaseResponse<Void> unblockAccount(Long accountId);
     BaseResponse<StaffAccountResponseDTO> createStaffAccount(CreateStaffAccountRequestDTO requestDTO);
     BaseResponse<Void> resetPassword(ResetPasswordRequest request);
-
+    BaseResponse<List<Account>> getStaffListInBranch(Long branchId);
 
 }
