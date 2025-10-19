@@ -58,5 +58,8 @@ public class Notification {
                 n.getIsRead()
         );
     }
+
+    //Fix dto
+
     
 }
