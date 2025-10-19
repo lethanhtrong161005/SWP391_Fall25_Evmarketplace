@@ -50,6 +50,7 @@ public class Notification {
 
     public NotificationDto toDto(Notification n) {
         return new NotificationDto(
+                n.getId(),
                 n.getType(),
                 n.getMessage(),
                 n.getReferenceId(),

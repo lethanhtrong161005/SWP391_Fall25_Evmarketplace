@@ -24,8 +24,8 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<?> getNotifications(
-            @RequestParam(defaultValue = "0") Integer size,
-            @RequestParam(defaultValue = "10") Integer page
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
         Long accountId = authUtil.getCurrentAccountIdOrNull();
         if (accountId == null) {

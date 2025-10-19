@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class NotificationDto {
+    private Long id;
     private String type;
     private String message;
     private Long referenceId;
