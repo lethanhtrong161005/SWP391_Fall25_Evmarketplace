@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -201,6 +202,7 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
 
         request.setStatus(SCHEDULING);
         request.setStaff(account);
+        request.setStatusChangeAt(LocalDateTime.now());
         consignmentRequestRepository.save(request);
 
         BaseResponse<Void> response = new BaseResponse<>();
@@ -221,6 +223,7 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
             request.setStatus(ConsignmentRequestStatus.REQUEST_REJECTED);
             request.setRejectedReason(dto.getRejectedReason());
             request.setStaff(account);
+            request.setStatusChangeAt(LocalDateTime.now());
             consignmentRequestRepository.save(request);
         } else {
             throw new CustomBusinessException("reject reason must not be blank");

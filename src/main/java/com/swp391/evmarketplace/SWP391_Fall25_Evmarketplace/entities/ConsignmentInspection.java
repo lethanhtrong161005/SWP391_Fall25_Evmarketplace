@@ -39,9 +39,6 @@ public class ConsignmentInspection {
             foreignKey = @ForeignKey(name = "fk_ci_inspector"))
     private Account inspector;
 
-//    @Column(name = "inspection_time", nullable = false)
-//    private LocalDateTime inspectionTime;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "result", nullable = false, length = 16)
     private ConsignmentInspectionResult result;

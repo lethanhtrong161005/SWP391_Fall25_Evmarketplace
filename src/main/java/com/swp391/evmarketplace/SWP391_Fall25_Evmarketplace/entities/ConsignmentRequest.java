@@ -97,6 +97,9 @@ public class ConsignmentRequest {
     @Column(name = "status", nullable = false, length = 20)
     private ConsignmentRequestStatus status;
 
+    @Column(name = "status_changed_at")
+    private LocalDateTime statusChangeAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
