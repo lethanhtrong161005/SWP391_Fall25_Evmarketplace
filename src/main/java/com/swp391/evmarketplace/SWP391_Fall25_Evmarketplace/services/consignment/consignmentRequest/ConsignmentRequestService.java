@@ -16,7 +16,8 @@ public interface ConsignmentRequestService {
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByOwnerId(Long id, int page, int size, String dir, String sort);
     BaseResponse<Void> RequestAccepted(AcceptedConsignmentRequestDTO requestDTO);
     BaseResponse<Void> RequestRejected(RejectedConsignmentRequestDTO requestDTO);
-    BaseResponse<List<ConsignmentRequestListItemDTO>> getListByBranchIdAndStaffIsNull(Long branchId);
+    BaseResponse<List<ConsignmentRequestListItemDTO>> getAllByBranchIdAndSubmitted(Long branchId);
+    BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getAllByBranchIdIgnoreSubmitted(Long branchId, int page, int size, String dir, String sort);
     BaseResponse<Void> setStaffForRequest(Long requestId, Long staffId);
 
     //lấy tất cả request có staff

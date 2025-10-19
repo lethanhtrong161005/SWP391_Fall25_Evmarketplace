@@ -23,14 +23,14 @@ public class ManagerController {
     AccountService accountService;
 
     //account
-    @GetMapping("/branches/{branchId}/accounts/staff/")
+    @GetMapping("/branches/{branchId}/accounts/staff")
     public ResponseEntity<BaseResponse<List<Account>>> getListStaffAccountInBranch(@PathVariable Long branchId) {
         BaseResponse<List<Account>> response = accountService.getStaffListInBranch(branchId);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     //consignment
-    @GetMapping("/consignment-request/")
+    @GetMapping("/consignment-request")
     public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestListItemDTO>>> getAllConsignmentRequests(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -41,9 +41,21 @@ public class ManagerController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @GetMapping("/branches/{branchId}/consignment-request/ignore-submitted")
+    public ResponseEntity<BaseResponse<PageResponse<ConsignmentRequestListItemDTO>>> getAllByBranchIdIgnoreSubmitted(
+            @PathVariable Long branchId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String dir
+    ) {
+        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getAllByBranchIdIgnoreSubmitted( branchId, page, size, dir, sort);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
     @GetMapping("/branches/{branchId}/consignment-requests/assign")
     public ResponseEntity<BaseResponse<List<ConsignmentRequestListItemDTO>>> getListRequestForAssign(@PathVariable Long branchId) {
-        BaseResponse<List<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getListByBranchIdAndStaffIsNull(branchId);
+        BaseResponse<List<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getAllByBranchIdAndSubmitted(branchId);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

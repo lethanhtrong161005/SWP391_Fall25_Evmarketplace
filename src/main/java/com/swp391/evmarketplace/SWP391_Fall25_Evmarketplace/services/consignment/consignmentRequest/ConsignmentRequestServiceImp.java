@@ -237,8 +237,8 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     }
 
     @Override
-    public BaseResponse<List<ConsignmentRequestListItemDTO>> getListByBranchIdAndStaffIsNull(Long branchId) {
-        List<ConsignmentRequestProjection> rows = consignmentRequestRepository.getAllByBranchIdAndStaffIsNull(branchId);
+    public BaseResponse<List<ConsignmentRequestListItemDTO>> getAllByBranchIdAndSubmitted(Long branchId) {
+        List<ConsignmentRequestProjection> rows = consignmentRequestRepository.getAllByBranchIdAndSubmitted(branchId);
 
         List<Long> ids = rows.stream().map(ConsignmentRequestProjection::getId).toList();
         List<Object[]> mediaPairs = ids.isEmpty() ? List.of() : consignmentRequestMediaRepository.findAllMediaUrlsByRequestIds(ids);
@@ -282,6 +282,14 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     }
 
     @Override
+    public BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getAllByBranchIdIgnoreSubmitted(Long branchId, int page, int size, String dir, String sort) {
+        Pageable pageable = PageableUtils.buildPageable(page, size, sort, dir);
+        Page<ConsignmentRequestProjection> pages = consignmentRequestRepository.getAllByBranchIdIgnoreSubmitted(branchId, pageable);
+        PageResponse<ConsignmentRequestListItemDTO> body = toPageResponse(pages);
+        return ok(body, pages.isEmpty(), ErrorCode.CONSIGNMENT_REQUEST_LIST_NOT_FOUND.name());
+    }
+
+    @Override
     public BaseResponse<Void> setStaffForRequest(Long requestId, Long staffId) {
         if (requestId == null) throw new CustomBusinessException("consignment request id is required");
         if (staffId == null) throw new CustomBusinessException("staff id is required");
@@ -292,13 +300,17 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         Account account = accountRepository.findById(staffId)
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name()));
 
-        request.setStaff(account);
-        consignmentRequestRepository.save(request);
-
         BaseResponse<Void> response = new BaseResponse<>();
-        response.setStatus(200);
-        response.setSuccess(true);
-        response.setMessage("Ok");
+       if(request.getStatus().equals(SUBMITTED)){
+           request.setStaff(account);
+           consignmentRequestRepository.save(request);
+
+           response.setStatus(200);
+           response.setSuccess(true);
+           response.setMessage("Ok");
+       }
+
+
 
         return response;
     }
