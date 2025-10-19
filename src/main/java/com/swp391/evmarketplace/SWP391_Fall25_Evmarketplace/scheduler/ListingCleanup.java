@@ -20,8 +20,6 @@ public class ListingCleanup {
     @Value("${jobs.listing-cleanup.days:30}")
     private int retentionDays;
 
-
-
     @Scheduled(cron = "${jobs.listing-cleanup.cron}", zone = "Asia/Ho_Chi_Minh")
     public void purge() {
         if (!enabled) {

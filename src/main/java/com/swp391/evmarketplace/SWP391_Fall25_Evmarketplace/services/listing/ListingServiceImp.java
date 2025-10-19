@@ -19,7 +19,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusi
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.config.ConfigService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.vnpay.VNPayService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +67,9 @@ public class ListingServiceImp implements ListingService {
     private ConfigService configService;
     @Autowired
     private ListingStatusHistoryRepository listingStatusHistoryRepository;
+    @Autowired
+    private NotificationService notificationService;
+
 
 
     @Transactional
@@ -1407,6 +1410,9 @@ public class ListingServiceImp implements ListingService {
         l.setModerationLockedBy(null);
         l.setModerationLockedAt(null);
 
+        String msg = "Tin \"" + l.getTitle() + "\" đã được duyệt.";
+        notificationService.notifySellerAfterCommit(l, "LISTING_APPROVED", msg);
+
         BaseResponse<?> res = new BaseResponse<>();
         res.setSuccess(true);
         res.setStatus(200);
@@ -1425,7 +1431,7 @@ public class ListingServiceImp implements ListingService {
         Account actor = accountRepository.findById(actorId)
                 .orElseThrow(() -> new CustomBusinessException("Actor not found"));
         if(l.getStatus() != ListingStatus.PENDING) {
-            throw new CustomBusinessException("You are not allowed to approve this listing");
+            throw new CustomBusinessException("You are not allowed to reject this listing");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -1447,6 +1453,10 @@ public class ListingServiceImp implements ListingService {
 
         l.setModerationLockedBy(null);
         l.setModerationLockedAt(null);
+
+        String msg = "Tin \"" + l.getTitle() + "\" bị từ chối: " + reason;
+        notificationService.notifySellerAfterCommit(l, "LISTING_REJECTED", msg);
+
 
         BaseResponse<?> res = new BaseResponse<>();
         res.setSuccess(true);
