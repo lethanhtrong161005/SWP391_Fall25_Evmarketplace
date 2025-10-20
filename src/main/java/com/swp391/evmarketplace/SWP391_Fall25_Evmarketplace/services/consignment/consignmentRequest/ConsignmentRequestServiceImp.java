@@ -244,48 +244,8 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     @Override
     public BaseResponse<List<ConsignmentRequestListItemDTO>> getAllByBranchIdAndSubmitted(Long branchId) {
         List<ConsignmentRequestProjection> rows = consignmentRequestRepository.getAllByBranchIdAndSubmitted(branchId);
-
-        List<Long> ids = rows.stream().map(ConsignmentRequestProjection::getId).toList();
-        List<Object[]> mediaPairs = ids.isEmpty() ? List.of() : consignmentRequestMediaRepository.findAllMediaUrlsByRequestIds(ids);
-        Map<Long, List<String>> mediaMap = new HashMap<>();
-        for (Object[] pair : mediaPairs) {
-            Long rid = (Long) pair[0];
-            String url = (String) pair[1];
-            MediaType type = (MediaType) pair[2];
-            mediaMap.computeIfAbsent(rid, k -> new ArrayList<>()).add(MedialUtils.converMediaNametoMedialUrl(url, type.name(), serverUrl));
-        }
-
-        List<ConsignmentRequestListItemDTO> items = new ArrayList<>();
-        for (ConsignmentRequestProjection p : rows) {
-            items.add(ConsignmentRequestListItemDTO.builder()
-                    .id(p.getId())
-                    .accountPhone(p.getAccountPhone())
-                    .accountName(p.getAccountName())
-                    .staffId(p.getStaffId())
-                    .rejectedReason(p.getRejectedReason())
-                    .itemType(p.getItemType())
-                    .category(p.getCategory())
-                    .brand(p.getBrand())
-                    .model(p.getModel())
-                    .year(p.getYear())
-                    .batteryCapacityKwh(p.getBatteryCapacityKwh())
-                    .sohPercent(p.getSohPercent())
-                    .mileageKm(p.getMileageKm())
-                    .preferredBranchName(p.getPreferredBranchName())
-                    .ownerExpectedPrice(p.getOwnerExpectedPrice())
-                    .status(p.getStatus())
-                    .createdAt(p.getCreatedAt())
-                    .mediaUrls(mediaMap.getOrDefault(p.getId(), List.of()))
-                    .build());
-        }
-
-
-        BaseResponse<List<ConsignmentRequestListItemDTO>> response = new BaseResponse<>();
-        response.setData(items);
-        response.setSuccess(true);
-        response.setStatus(200);
-        response.setMessage(rows.isEmpty() ? "List Empty" : "Ok");
-        return response;
+        List<ConsignmentRequestListItemDTO> body = toList(rows);
+        return ok(body, body.isEmpty(), ErrorCode.CONSIGNMENT_REQUEST_LIST_NOT_FOUND.name());
     }
 
     @Override
@@ -426,7 +386,42 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         return mediaMap;
     }
 
-    //list request
+
+    //list request items
+    private List<ConsignmentRequestListItemDTO> toList(List<ConsignmentRequestProjection> rows) {
+
+        List<Long> ids = rows.stream().map(ConsignmentRequestProjection::getId).toList();
+        Map<Long, List<String>> mediaMap = enrichMedia(ids);
+
+        List<ConsignmentRequestListItemDTO> items = rows.stream()
+                .map(p -> ConsignmentRequestListItemDTO.builder()
+                        .id(p.getId())
+                        .accountPhone(p.getAccountPhone())
+                        .accountName(p.getAccountName())
+                        .staffId(p.getStaffId())
+                        .rejectedReason(p.getRejectedReason())
+                        .itemType(p.getItemType())
+                        .category(p.getCategory())
+                        .brand(p.getBrand())
+                        .model(p.getModel())
+                        .year(p.getYear())
+                        .batteryCapacityKwh(p.getBatteryCapacityKwh())
+                        .sohPercent(p.getSohPercent())
+                        .mileageKm(p.getMileageKm())
+                        .preferredBranchName(p.getPreferredBranchName())
+                        .ownerExpectedPrice(p.getOwnerExpectedPrice())
+                        .status(p.getStatus())
+                        .createdAt(p.getCreatedAt())
+                        .cancelledAt(p.getCancelledAt())
+                        .cancelledReason(p.getCancelledReason())
+                        .cancelledById(p.getCancelledById())
+                        .mediaUrls(mediaMap.getOrDefault(p.getId(), List.of()))
+                        .build())
+                .collect(Collectors.toList());
+        return items;
+    }
+
+    //page response request
     private PageResponse<ConsignmentRequestListItemDTO> toPageResponse(Page<ConsignmentRequestProjection> pages) {
         List<ConsignmentRequestProjection> rows = pages.getContent();
 
@@ -452,6 +447,9 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                         .ownerExpectedPrice(p.getOwnerExpectedPrice())
                         .status(p.getStatus())
                         .createdAt(p.getCreatedAt())
+                        .cancelledAt(p.getCancelledAt())
+                        .cancelledReason(p.getCancelledReason())
+                        .cancelledById(p.getCancelledById())
                         .mediaUrls(mediaMap.getOrDefault(p.getId(), List.of()))
                         .build())
                 .collect(Collectors.toList());
@@ -477,4 +475,3 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     }
 
 }
-

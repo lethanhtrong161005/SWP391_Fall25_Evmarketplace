@@ -35,13 +35,17 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
-                   cr.createdAt            as createdAt
+                   cr.createdAt            as createdAt,
+                   cb.id                   as cancelledById,
+                   cr.cancelledAt          as cancelledAt,
+                   cr.cancelledReason      as cancelledReason
                  from ConsignmentRequest cr
                  join cr.category c
                  join cr.preferredBranch b
                  join cr.owner a
                  left join cr.staff s
                  left join a.profile p
+                 left join cr.cancelledBy cb
             """,
             countQuery = """
                        select count(cr.id) 
@@ -51,6 +55,8 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                         join cr.owner a
                         left join cr.staff s
                         left join a.profile p
+                        left join cr.cancelledBy cb
+                    
                     """
     )
     Page<ConsignmentRequestProjection> getAll(Pageable pageable);
@@ -108,21 +114,30 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
-                   cr.createdAt            as createdAt
+                   cr.createdAt            as createdAt,
+                   cb.id                   as cancelledById,
+                   cr.cancelledAt          as cancelledAt,
+                   cr.cancelledReason      as cancelledReason
                  from ConsignmentRequest cr
                  join cr.category c
                  join cr.preferredBranch b
                  join cr.owner a
                  join cr.staff s
                  left join a.profile p
+                 left join cr.cancelledBy cb
                  where s.id = :id
                  and cr.status in :statuses
             """,
             countQuery = """
-                    select count(cr.id) from ConsignmentRequest cr
-                        join cr.staff s
-                        where s.id = :id
-                        and cr.status in :statuses
+                       select count(cr.id) from ConsignmentRequest cr
+                           join cr.category c
+                            join cr.preferredBranch b
+                            join cr.owner a
+                            join cr.staff s
+                            left join a.profile p
+                            left join cr.cancelledBy cb
+                           where s.id = :id
+                           and cr.status in :statuses
                     """
     )
     Page<ConsignmentRequestProjection> getAllByStaffId(@Param("id") Long id,
@@ -148,13 +163,18 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
-                   cr.createdAt            as createdAt
+                   cr.createdAt            as createdAt,
+                   cb.id                   as cancelledById,
+                   cr.cancelledAt          as cancelledAt,
+                   cr.cancelledReason      as cancelledReason
+                   
                  from ConsignmentRequest cr
                  join cr.category c
                  join cr.preferredBranch b
                  join cr.owner a
                  left join cr.staff s
                  left join a.profile p
+                 left join cr.cancelledBy cb
                  where b.id = :id
                  and cr.status = SUBMITTED
                  order by cr.createdAt desc, cr.id asc
@@ -180,13 +200,17 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
-                   cr.createdAt            as createdAt
+                   cr.createdAt            as createdAt,
+                   cb.id                   as cancelledById,
+                   cr.cancelledAt          as cancelledAt,
+                   cr.cancelledReason      as cancelledReason
                  from ConsignmentRequest cr
                  join cr.category c
                  join cr.preferredBranch b
                  join cr.owner a
                  left join cr.staff s
                  left join a.profile p
+                 left join cr.cancelledBy cb
                  where b.id = :id
                  and not (cr.status = SUBMITTED)
                  order by cr.createdAt desc, cr.id asc
@@ -202,14 +226,10 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
     @Transactional
     @Query(value = """
             UPDATE consignment_request cr
-            LEFT JOIN inspection_schedule i
-                ON i.request_id = cr.id
-                AND i.status IN ('SCHEDULED', 'CHECK_IN', 'CANCELLED')
             SET cr.status = 'EXPIRED',
                 cr.status_changed_at = NOW()
             WHERE cr.status = 'SCHEDULING'
                 AND cr.status_changed_at < (NOW() - INTERVAL 7 DAY)
-                AND i.id IS NULL
             """, nativeQuery = true)
     int expiredApprovedWithoutSchedule();
 
@@ -219,7 +239,7 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
     @Query(value = """
             UPDATE consignment_request cr
             SET cr.status = 'EXPIRED',
-                cr.status_change_At = NOW()
+                cr.status_changed_at = NOW()
             WHERE cr.status = 'REQUEST_REJECTED'
             AND cr.status_changed_at < (NOW() - INTERVAL 7 DAY)
             """, nativeQuery = true)

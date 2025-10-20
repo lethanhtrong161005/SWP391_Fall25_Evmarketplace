@@ -2,10 +2,9 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums;
 
 public enum InspectionScheduleStatus {
     SCHEDULED,
-    CHECK_IN,
-    IN_PROGRESS,
-    COMPLETED,
-    CANCELLED,
+    CHECKED_IN,
+    //quá hẹn không check in
     NO_SHOW,
-    RESCHEDULED
+    //hủy trước giờ hẹn
+    CANCELLED
 }

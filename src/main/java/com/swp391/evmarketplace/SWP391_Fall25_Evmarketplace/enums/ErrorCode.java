@@ -70,8 +70,10 @@ public enum ErrorCode {
 
     //category
     CATEGORY_NOT_FOUND,
-    CATEGORY_INACTIVE;
+    CATEGORY_INACTIVE,
 
+    //shift
+    SHIFT_TEMPLATE_NOT_FOUND;
 
 }
 

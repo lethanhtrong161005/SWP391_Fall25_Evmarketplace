@@ -33,4 +33,7 @@ public class ConsignmentRequestListItemDTO {
     private ConsignmentRequestStatus status;
     private LocalDateTime createdAt;
     private List<String> mediaUrls;
+    private Long cancelledById;
+    private LocalDateTime cancelledAt;
+    private String cancelledReason;
 }

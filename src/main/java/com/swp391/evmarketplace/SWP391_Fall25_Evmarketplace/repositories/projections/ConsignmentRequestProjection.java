@@ -23,4 +23,7 @@ public interface ConsignmentRequestProjection {
     BigDecimal getOwnerExpectedPrice();
     ConsignmentRequestStatus getStatus();
     LocalDateTime getCreatedAt();
+    Long getCancelledById();
+    LocalDateTime getCancelledAt();
+    String getCancelledReason();
 }

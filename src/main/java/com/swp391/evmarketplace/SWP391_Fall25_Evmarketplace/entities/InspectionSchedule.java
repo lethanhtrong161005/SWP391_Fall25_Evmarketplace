@@ -19,12 +19,13 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "inspection_schedule",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uq_inspector_day_shift", columnNames = {"inspector_id", "schedule_date", "shift_id"}),
-                @UniqueConstraint(name = "uq_schedule_request", columnNames = {"request_id"})
+                @UniqueConstraint(name = "uq_staff_day_shift",
+                        columnNames = {"staff_id","schedule_date","shift_id"}),
+                @UniqueConstraint(name = "uq_schedule_request",
+                        columnNames = {"request_id"}) // 1 request chỉ có 1 lịch đang hiệu lực
         },
         indexes = {
                 @Index(name = "idx_is_request", columnList = "request_id"),
-                @Index(name = "idx_is_inspector", columnList = "inspector_id"),
                 @Index(name = "idx_is_branch", columnList = "branch_id"),
                 @Index(name = "idx_is_date", columnList = "schedule_date"),
                 @Index(name = "idx_is_shift", columnList = "shift_id")
@@ -40,12 +41,6 @@ public class InspectionSchedule {
     @JoinColumn(name = "request_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_is_request"))
     private ConsignmentRequest request;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "inspector_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_is_inspector"))
-    private Account inspector;
-
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "staff_id", nullable = false,
