@@ -1,7 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -33,7 +32,10 @@ import java.util.List;
 @Order(Ordered.HIGHEST_PRECEDENCE + 99)
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-    private final JwtUtil jwtUtil;
+
+    private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
+    private final UserHandshakeHandle userHandshakeHandler;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -45,7 +47,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*", "http://127.0.0.1:5500")
+                .addInterceptors(jwtHandshakeInterceptor)
+                .setHandshakeHandler(userHandshakeHandler)
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
 
@@ -56,13 +60,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public boolean configureMessageConverters(List<MessageConverter> messageConverters) {
-        DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();
+        var resolver = new DefaultContentTypeResolver();
         resolver.setDefaultMimeType(MimeTypeUtils.APPLICATION_JSON);
-
-        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
-        converter.setObjectMapper(new ObjectMapper());
+        var converter = new MappingJackson2MessageConverter();
+        converter.setObjectMapper(objectMapper);
         converter.setContentTypeResolver(resolver);
-
         messageConverters.add(converter);
         return false;
     }
@@ -72,26 +74,33 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                var accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+                if (accessor == null) return message;
+
+                // fallback: nếu CONNECT không có user
+                if (StompCommand.CONNECT.equals(accessor.getCommand()) && accessor.getUser() == null) {
                     String auth = accessor.getFirstNativeHeader("Authorization");
                     if (auth != null && auth.startsWith("Bearer ")) {
                         String token = auth.substring(7);
-                        try {
-                            if (jwtUtil.validateToken(token)) {
-                                String accountId = jwtUtil.extractClaim(token, io.jsonwebtoken.Claims::getId);
-                                if (accountId != null && !accountId.isBlank()) {
-                                    var authn = new UsernamePasswordAuthenticationToken(
-                                            accountId, null, Collections.emptyList());
-                                    accessor.setUser(authn);
-                                }
+                        if (token != null) {
+                            String uid = new JwtHandshakeInterceptor(null).extractAccountIdAsString(token);
+                            if (uid != null) {
+                                accessor.setUser(new UsernamePasswordAuthenticationToken(uid, null, Collections.emptyList()));
+                                System.out.println("[WS] CONNECT fallback userId=" + uid);
                             }
-                        } catch (Exception e) {
                         }
                     }
                 }
+
+                if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+                    var p = accessor.getUser();
+                    System.out.println("[WS] SUBSCRIBE user=" + (p != null ? p.getName() : "null")
+                            + " dest=" + accessor.getDestination());
+                }
+
                 return message;
             }
         });
     }
+
 }
