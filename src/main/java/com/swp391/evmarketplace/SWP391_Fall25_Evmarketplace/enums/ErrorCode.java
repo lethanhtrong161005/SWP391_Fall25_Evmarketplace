@@ -73,7 +73,10 @@ public enum ErrorCode {
     CATEGORY_INACTIVE,
 
     //shift
-    SHIFT_TEMPLATE_NOT_FOUND;
+    SHIFT_TEMPLATE_NOT_FOUND,
+
+    //schedule
+    NOT_FOUND_SCHEDULE;
 
 }
 

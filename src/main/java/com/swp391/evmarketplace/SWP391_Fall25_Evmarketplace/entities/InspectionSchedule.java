@@ -86,9 +86,6 @@ public class InspectionSchedule {
     @Column(name = "note", columnDefinition = "TEXT")
     private String note;
 
-    @Column(name = "reschedule_count", nullable = false)
-    private int rescheduleCount = 0;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
