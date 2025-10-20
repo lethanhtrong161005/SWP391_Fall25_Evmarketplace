@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignmen
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.inspectionSchedule.CreateInspectionScheduleDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDayDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentRequestStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
@@ -133,7 +134,7 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
     );
 
     //lấy danh sách ca làm trống
-    public BaseResponse<List<ShiftAvailabilityDTO>> getAvailability(Long staffId, Long branchId, ItemType itemType, LocalDate date) {
+    public BaseResponse<ShiftAvailabilityDayDTO> getAvailability(Long staffId, Long branchId, ItemType itemType, LocalDate date) {
         if (branchId == null || itemType == null || date == null || staffId == null) {
             throw new CustomBusinessException("MISSING_PARAMS");
         }
@@ -173,14 +174,17 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
                             .build();
                 }).toList();
 
-        BaseResponse<List<ShiftAvailabilityDTO>> response = new BaseResponse<>();
+        ShiftAvailabilityDayDTO shiftAvailabilityDayDTO = new ShiftAvailabilityDayDTO(date, items);
+
+        BaseResponse<ShiftAvailabilityDayDTO> response = new BaseResponse<>();
         response.setMessage("OK");
         response.setSuccess(true);
         response.setStatus(200);
-        response.setData(items);
-
+        response.setData(shiftAvailabilityDayDTO);
         return response;
     }
+
+
 
 
 }
