@@ -8,5 +8,4 @@ public class AcceptedConsignmentRequestDTO {
     @NotNull
     Long id;
 }
-
-//test test
+//fix err
