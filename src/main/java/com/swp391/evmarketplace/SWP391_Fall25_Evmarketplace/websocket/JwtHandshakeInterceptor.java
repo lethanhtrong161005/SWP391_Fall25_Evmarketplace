@@ -24,7 +24,6 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
         String token = null;
 
-        // 1. Lấy token từ query ?token=
         var params = UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
         token = params.getFirst("token");
 
@@ -47,8 +46,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
         } else {
             System.out.println("[WS] HANDSHAKE FAIL: invalid or missing token");
         }
-
-        return true; // vẫn cho phép connect (có thể kiểm soát thêm)
+        return attributes.containsKey("principalId");
     }
 
     @Override
@@ -57,19 +55,14 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                                WebSocketHandler wsHandler, Exception exception) {
     }
 
-    /**
-     * Ưu tiên lấy uid (claim), fallback jti nếu cần
-     */
     public String extractAccountIdAsString(String token) {
         try {
-            // uid là accountId bạn set khi sinh token
             String uid = jwtUtil.extractClaim(token, c -> {
                 Object v = c.get("uid");
                 return v != null ? String.valueOf(v) : null;
             });
             if (uid != null && uid.matches("\\d+")) return uid;
 
-            // fallback jti (id)
             String jti = jwtUtil.extractClaim(token, Claims::getId);
             if (jti != null && jti.matches("\\d+")) return jti;
 
@@ -78,4 +71,5 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
             return null;
         }
     }
+
 }

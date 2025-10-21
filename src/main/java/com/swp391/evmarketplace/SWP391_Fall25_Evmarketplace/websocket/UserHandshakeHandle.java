@@ -16,7 +16,7 @@ public class UserHandshakeHandle extends DefaultHandshakeHandler {
                                       Map<String, Object> attributes) {
         Object pid = attributes.get("principalId");
         if (pid != null) {
-            final String name = pid.toString(); // e.g. "1", "2"
+            final String name = pid.toString();
             return () -> name;
         }
         return super.determineUser(request, wsHandler, attributes);

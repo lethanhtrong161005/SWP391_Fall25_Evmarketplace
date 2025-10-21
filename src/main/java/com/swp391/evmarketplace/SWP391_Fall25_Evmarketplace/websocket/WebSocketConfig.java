@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -36,6 +37,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
     private final UserHandshakeHandle userHandshakeHandler;
     private final ObjectMapper objectMapper;
+    private final List<String> allowedOrigins;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -49,7 +51,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .addInterceptors(jwtHandshakeInterceptor)
                 .setHandshakeHandler(userHandshakeHandler)
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(allowedOrigins.toArray(new String[0]))
                 .withSockJS();
     }
 
@@ -77,13 +79,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 var accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
                 if (accessor == null) return message;
 
-                // fallback: nếu CONNECT không có user
                 if (StompCommand.CONNECT.equals(accessor.getCommand()) && accessor.getUser() == null) {
                     String auth = accessor.getFirstNativeHeader("Authorization");
                     if (auth != null && auth.startsWith("Bearer ")) {
                         String token = auth.substring(7);
                         if (token != null) {
-                            String uid = new JwtHandshakeInterceptor(null).extractAccountIdAsString(token);
+                            String uid = jwtHandshakeInterceptor.extractAccountIdAsString(token);
                             if (uid != null) {
                                 accessor.setUser(new UsernamePasswordAuthenticationToken(uid, null, Collections.emptyList()));
                                 System.out.println("[WS] CONNECT fallback userId=" + uid);
