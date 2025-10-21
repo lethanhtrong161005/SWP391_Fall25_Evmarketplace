@@ -3,9 +3,11 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.InspectionSchedule;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.InspectionScheduleStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -45,6 +47,23 @@ public interface InspectionScheduleRepository extends JpaRepository<InspectionSc
     boolean existsByStaff_IdAndShift_IdAndScheduleDateAndStatusIn(
             Long staffId, Long shiftId, LocalDate date,
             Collection<InspectionScheduleStatus> statuses);
+
+    //=======================schedule=======================
+
+    //bùng ca
+    @Modifying
+    @Transactional
+    @Query(value = """
+            UPDATE inspection_schedule s
+            JOIN shift_template st ON st.id = s.shift_id
+            JOIN consignment_request cr ON cr.id = s.request_id
+            SET s.status = 'NO_SHOW',
+                cr.status= 'RESCHEDULED'
+            WHERE s.status = 'SCHEDULED'
+                AND s.checkin_at IS NULL
+                AND TIMESTAMP(s.schedule_date, st.end_time) < (NOW() - INTERVAL :grace MINUTE)
+            """, nativeQuery = true)
+    int markNoShow(@Param("grace") int graceMinutes);
 
 
 }

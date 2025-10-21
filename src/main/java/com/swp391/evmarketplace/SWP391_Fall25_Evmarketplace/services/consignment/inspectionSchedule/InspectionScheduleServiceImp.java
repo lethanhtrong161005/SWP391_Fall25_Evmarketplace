@@ -171,6 +171,7 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
         return response;
     }
 
+    @Transactional
     @Override
     public BaseResponse<Void> cancelSchedule(Long scheduleID, CancelScheduleDTO dto) {
         Account account = authUtil.getCurrentAccount();
@@ -195,7 +196,14 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
         s.setCancelledAt(LocalDateTime.now());
         s.setCancelledReason(dto.getReason().trim());
         s.setCancelledBy(account);
+
+        //request
+        ConsignmentRequest request = s.getRequest();
+        request.setStatus(ConsignmentRequestStatus.RESCHEDULED);
+
+        //save
         inspectionScheduleRepository.saveAndFlush(s);
+        consignmentRequestRepository.save(request);
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setStatus(200);
@@ -222,7 +230,12 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
         }
 
         s.setStatus(InspectionScheduleStatus.CHECKED_IN);
+        ConsignmentRequest request = s.getRequest();
+        request.setStatus(ConsignmentRequestStatus.INSPECTING);
         s.setCheckinAt(LocalDateTime.now());
+
+        inspectionScheduleRepository.save(s);
+        consignmentRequestRepository.save(request);
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setStatus(200);

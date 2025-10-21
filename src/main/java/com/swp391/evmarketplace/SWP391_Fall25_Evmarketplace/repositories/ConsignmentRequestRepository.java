@@ -221,27 +221,20 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
     Optional<ConsignmentRequest> findByIdAndOwnerId(Long id, Long ownerId);
 
 
-    //approve quá 7 ngày không đặt lịch -> EXPIRED
+    //=======================schedule=======================
+    //ngâm request quá 7 ngày không đặt lịch -> EXPIRED
+    //SCHEDULING, REJECT, RESCHEDULE
     @Modifying
     @Transactional
     @Query(value = """
             UPDATE consignment_request cr
             SET cr.status = 'EXPIRED',
                 cr.status_changed_at = NOW()
-            WHERE cr.status = 'SCHEDULING'
+            WHERE crs.status in :statuses
                 AND cr.status_changed_at < (NOW() - INTERVAL 7 DAY)
             """, nativeQuery = true)
-    int expiredApprovedWithoutSchedule();
+    int expiredRequest(
+            @Param("statuses") Collection<ConsignmentRequestStatus> statuses);
 
-    // reject quá 7 ngày không gửi lại form để duyệt -> EXPIRED
-    @Modifying
-    @Transactional
-    @Query(value = """
-            UPDATE consignment_request cr
-            SET cr.status = 'EXPIRED',
-                cr.status_changed_at = NOW()
-            WHERE cr.status = 'REQUEST_REJECTED'
-            AND cr.status_changed_at < (NOW() - INTERVAL 7 DAY)
-            """, nativeQuery = true)
-    int expiredRejectedWithoutResubmit();
+
 }

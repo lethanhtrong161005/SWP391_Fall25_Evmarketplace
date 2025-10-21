@@ -81,6 +81,12 @@ jobs:
     enabled: true
     days: 30
     cron: "0 * * * * *"
+  no_show:
+    cron: "0 */1 * * * *"    # mỗi 5 phút
+    grace_minutes: 30
+  expired:
+    cron: "0 */1 0 * * *"      # mỗi 00:30 sáng
+
 
 
 file-upload:
