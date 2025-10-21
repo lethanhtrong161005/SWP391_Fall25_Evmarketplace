@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -33,6 +34,18 @@ public class ListingCleanup {
                     deleted, candidates, retentionDays);
         } catch (Exception ex) {
             log.error("[ListingCleanupJob] Failed: {}", ex.getMessage(), ex);
+        }
+    }
+
+    @Scheduled(
+            fixedDelayString = "${moderation.lock.reaper.fixed-delay-ms:30000}",
+            initialDelayString = "${moderation.lock.reaper.initial-delay-ms:15000}"
+    )
+    @Transactional
+    public void releaseExpiredLocks() {
+        int freed = listingRepository.releaseExpiredModerationLocks();
+        if (freed > 0) {
+            log.info("Released {} expired moderation locks", freed);
         }
     }
 

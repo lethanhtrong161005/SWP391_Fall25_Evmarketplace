@@ -30,10 +30,10 @@ public class JwtUtil {
     }
 
     public String generateToken(Account account, Profile profile) {
-
         return Jwts.builder()
                 .id(account.getId().toString())
                 .subject(getIdentifier(account))
+                .claim("uid", account.getId())
                 .claim("fullName", profile != null ? profile.getFullName() : null)
                 .claim("avatar", profile != null ? profile.getAvatarUrl() : null)
                 .claim("phoneVerified", account.isPhoneVerified())
@@ -58,7 +58,6 @@ public class JwtUtil {
     }
 
     public String generateRefreshToken(Account account) {
-
         return Jwts.builder()
                 .id(account.getId().toString())
                 .subject(getIdentifier(account))

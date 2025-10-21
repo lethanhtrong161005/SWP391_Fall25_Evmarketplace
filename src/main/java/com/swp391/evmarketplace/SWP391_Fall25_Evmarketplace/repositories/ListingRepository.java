@@ -293,4 +293,19 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     List<Listing> findByModerationLockedBy_IdAndTitleContainingIgnoreCaseOrderByModerationLockedAtDesc(
             Long accountId, String title
     );
+
+    //Dọn Claim hết hạn
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+        UPDATE listing
+           SET moderation_locked_by = NULL,
+               moderation_locked_at = NULL,
+               moderator_id         = NULL,
+               updated_at           = NOW()
+         WHERE status = 'PENDING'
+           AND moderation_locked_by IS NOT NULL
+           AND moderation_locked_at IS NOT NULL
+           AND TIMESTAMPDIFF(SECOND, moderation_locked_at, NOW()) >= moderation_lock_ttl_secs
+        """, nativeQuery = true)
+    int releaseExpiredModerationLocks();
 }
