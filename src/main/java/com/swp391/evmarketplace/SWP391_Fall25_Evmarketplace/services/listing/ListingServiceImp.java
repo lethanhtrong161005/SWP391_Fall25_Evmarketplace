@@ -71,6 +71,75 @@ public class ListingServiceImp implements ListingService {
     private NotificationService notificationService;
 
 
+    @Override
+    @Transactional(readOnly = true)
+    public BaseResponse<?> getByType(String type,
+                                     String status,
+                                     int page, int size, String sort, String dir) {
+        String t = type == null ? "" : type.trim().toUpperCase();
+        if (!t.equals("VEHICLE") && !t.equals("BATTERY")) {
+            throw new CustomBusinessException("Invalid listing type");
+        }
+
+        Set<String> allowedSortFields = Set.of(
+                "createdAt", "updatedAt", "price", "expiresAt", "promotedUntil", "batteryCapacityKwh"
+        );
+        String sortField = (sort == null || sort.isBlank()) ? "createdAt" : sort.trim();
+        if (!allowedSortFields.contains(sortField)) sortField = "createdAt";
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(
+                Math.max(0, page),
+                Math.min(Math.max(1, size), 50),
+                Sort.by(direction, sortField).and(Sort.by(Sort.Direction.DESC, "id"))
+        );
+
+        var statuses = parseStatusesOrDefault(status); // mặc định ACTIVE
+        Long currentId = authUtil.getCurrentAccountIdOrNull();
+
+        Page<ListingListProjection> p = t.equals("VEHICLE")
+                ? listingRepository.findVehicles(currentId, statuses, pageable)
+                : listingRepository.findBatteries(currentId, statuses, pageable);
+        BaseResponse<PageResponse<ListingListProjection>> response = new BaseResponse<>();
+        PageResponse<ListingListProjection> pr = new PageResponse<>(
+                p.getTotalElements(), p.getTotalPages(),
+                p.hasNext(), p.hasPrevious(), p.getNumber(), p.getSize(),
+                p.getContent()
+        );
+        response.setData(pr);
+        response.setStatus(200);
+        response.setMessage("Success");
+        response.setSuccess(true);
+        return response;
+    }
+
+    /** Parse "ACTIVE,APPROVED" -> Collection<ListingStatus>, mặc định ACTIVE, không bao giờ rỗng */
+    private Collection<ListingStatus>
+    parseStatusesOrDefault(String statusStr) {
+        var EnumType = ListingStatus.class;
+
+        if (statusStr == null || statusStr.isBlank()) {
+            return EnumSet.of(ListingStatus.ACTIVE);
+        }
+
+        EnumSet<ListingStatus> set =
+                EnumSet.noneOf(EnumType);
+
+        for (String raw : statusStr.split(",")) {
+            String token = raw.trim();
+            if (token.isEmpty()) continue;
+            try {
+                set.add(Enum.valueOf(EnumType, token.toUpperCase()));
+            } catch (IllegalArgumentException ex) {
+                throw new CustomBusinessException("Invalid status: " + token);
+            }
+        }
+        if (set.isEmpty()) {
+            set.add(ListingStatus.ACTIVE);
+        }
+        return set;
+    }
+
 
     @Transactional
     @Override
