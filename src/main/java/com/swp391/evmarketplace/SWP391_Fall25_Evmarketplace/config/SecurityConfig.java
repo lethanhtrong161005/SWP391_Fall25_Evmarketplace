@@ -80,7 +80,9 @@ public class SecurityConfig {
                     ).authenticated();
 
                     //staff
-                    auth.requestMatchers("api/staff/**").hasRole("STAFF");
+                    auth.requestMatchers("api/staff/**",
+                            "/api/inspection_schedule/**/check_in"
+                    ).hasRole("STAFF");
 
 
                     //moderator

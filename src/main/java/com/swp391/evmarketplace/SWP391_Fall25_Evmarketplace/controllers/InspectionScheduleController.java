@@ -19,7 +19,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api/inspection_schedule/")
+@RequestMapping("/api/inspection_schedule")
 public class InspectionScheduleController {
     @Autowired
     InspectionScheduleService inspectionScheduleService;
