@@ -43,11 +43,15 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
     @Override
     public BaseResponse<Void> createSchedule(CreateInspectionScheduleDTO dto) {
         Account account = authUtil.getCurrentAccount();
-
         validateDate(dto.getDate());
-
         ConsignmentRequest request = consignmentRequestRepository.findById(dto.getRequestId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
+
+        var actives = inspectionScheduleRepository.lockActives(request.getId(), ACTIVE);
+
+        if (!actives.isEmpty()){
+            throw new CustomBusinessException("REQUEST_ALREADY_HAS_ACTIVE_SCHEDULE");
+        }
 
         //check owner của request
         if (!request.getOwner().getId().equals(account.getId()))
@@ -85,8 +89,8 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
                         List.of(InspectionScheduleStatus.SCHEDULED, InspectionScheduleStatus.CHECKED_IN));
         if (busy) throw new CustomBusinessException("STAFF_BUSY_THIS_SLOT");
 
-        boolean hasActive = inspectionScheduleRepository.existsByRequest_IdAndStatusIn(request.getId(), OCCUPIED);
-        if (hasActive) throw new CustomBusinessException("REQUEST_ALREADY_HAS_ACTIVE_SCHEDULE");
+//        boolean hasActive = inspectionScheduleRepository.existsByRequest_IdAndStatusIn(request.getId(), OCCUPIED);
+//        if (hasActive) throw new CustomBusinessException("REQUEST_ALREADY_HAS_ACTIVE_SCHEDULE");
 
         //check if book today
         validateShiftTimingForToday(dto.getDate(), template);
@@ -246,6 +250,9 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
 
 
     //    ================HELPER================
+    private static final List<InspectionScheduleStatus> ACTIVE =
+            List.of(InspectionScheduleStatus.SCHEDULED, InspectionScheduleStatus.CHECKED_IN);
+
     //kiểm tra ca này giờ này có thể book không
     private boolean isShiftSelectableToday(LocalDate date, LocalTime start, LocalTime end) {
         if (!date.isEqual(LocalDate.now())) return true;

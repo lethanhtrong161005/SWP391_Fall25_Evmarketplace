@@ -12,16 +12,17 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class NoShowScheduler {
 
-//    private final InspectionScheduleRepository repo;
-//
-//    @Value("${jobs.no_show.grace_minutes:30}")
-//    private int graceMinutes;
-//
-//    // chạy mỗi 5 phút
-//    @Scheduled(cron = "${jobs.no_show.cron:0 */1 * * * *}")
-//    public void run(){
-//        int affected = repo.markNoShow(graceMinutes);
-//    }
+    private final InspectionScheduleRepository repo;
+
+    @Value("${jobs.no_show.grace_minutes:30}")
+    private int graceMinutes;
+
+    // sau khi kết thúc ca hẹn vẫn không checkin -> no_show
+    // chạy mỗi 5 phút
+    @Scheduled(cron = "${jobs.no_show.cron:0 */5 * * * *}")
+    public void run(){
+        int affected = repo.markNoShow(graceMinutes);
+    }
 
 
 }

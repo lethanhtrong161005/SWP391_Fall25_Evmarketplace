@@ -2,7 +2,9 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.InspectionSchedule;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.InspectionScheduleStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -47,6 +49,17 @@ public interface InspectionScheduleRepository extends JpaRepository<InspectionSc
     boolean existsByStaff_IdAndShift_IdAndScheduleDateAndStatusIn(
             Long staffId, Long shiftId, LocalDate date,
             Collection<InspectionScheduleStatus> statuses);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE) // -> SELECT ... FOR UPDATE
+    @Query("""
+    select s from InspectionSchedule s
+    where s.request.id = :requestId
+      and s.status in (:activeStatuses)
+  """)
+    List<InspectionSchedule> lockActives(
+            @Param("requestId") Long requestId,
+            @Param("activeStatuses") Collection<InspectionScheduleStatus> activeStatuses);
+
 
     //=======================schedule=======================
 

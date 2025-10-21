@@ -5,7 +5,6 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentReq
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -48,7 +47,7 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                  left join cr.cancelledBy cb
             """,
             countQuery = """
-                       select count(cr.id) 
+                       select count(cr.id)
                        from ConsignmentRequest cr
                        join cr.category c
                         join cr.preferredBranch b
@@ -167,7 +166,6 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    cb.id                   as cancelledById,
                    cr.cancelledAt          as cancelledAt,
                    cr.cancelledReason      as cancelledReason
-                   
                  from ConsignmentRequest cr
                  join cr.category c
                  join cr.preferredBranch b
@@ -230,11 +228,9 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
             UPDATE consignment_request cr
             SET cr.status = 'EXPIRED',
                 cr.status_changed_at = NOW()
-            WHERE crs.status in :statuses
+            WHERE cr.status in :statuses
                 AND cr.status_changed_at < (NOW() - INTERVAL 7 DAY)
             """, nativeQuery = true)
     int expiredRequest(
-            @Param("statuses") Collection<ConsignmentRequestStatus> statuses);
-
-
+            @Param("statuses") Collection<String> statuses);
 }

@@ -9,22 +9,34 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
+import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ConsignmentExpiryJob {
 
-//    private final ConsignmentRequestRepository consignmentRequestRepository;
-////    sau 7 ngày được duyệt nhưng không đá động -> hết hạn
-//    @Transactional
-//    @Scheduled(cron = "${jobs.expired.cron: 0 */1 0 * * *}", zone = "Asia/Ho_Chi_Minh")
-//    public void runDailyExpiry() {
-//        int requestExpired = consignmentRequestRepository.expiredRequest(
-//                EnumSet.of(ConsignmentRequestStatus.REQUEST_REJECTED,
-//                        ConsignmentRequestStatus.RESCHEDULED,
-//                        ConsignmentRequestStatus.SCHEDULING));
-////        log.info("[ConsignmentExpiryJob] expiredRequest={}",requestExpired);
-//    }
+    private final ConsignmentRequestRepository consignmentRequestRepository;
+
+    //    sau 7 ngày được duyệt nhưng không đá động -> hết hạn
+    @Transactional
+    @Scheduled(cron = "${jobs.expired.cron: 0 30 0 * * *}", zone = "Asia/Ho_Chi_Minh")
+    public void runDailyExpiry() {
+        EnumSet<ConsignmentRequestStatus> statuses = EnumSet.of(
+                ConsignmentRequestStatus.REQUEST_REJECTED,
+                ConsignmentRequestStatus.RESCHEDULED,
+                ConsignmentRequestStatus.SCHEDULING
+        );
+
+        // Convert enum to string for native query
+        List<String> statusStrings = statuses.stream()
+                .map(Enum::name)
+                .toList();
+
+        int requestExpired = consignmentRequestRepository.expiredRequest(statusStrings);
+        log.info("Statuses to expire: {}", statuses);
+        log.info("Expired {} requests", requestExpired);
+
+    }
 
 }
