@@ -54,6 +54,7 @@ public class ListingController {
             @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = "desc") String dir
     ) {
+        status = status != null ? status : ListingStatus.ACTIVE;
         var res = listingService.getByType(type, status.name(), page, size, sort, dir);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
