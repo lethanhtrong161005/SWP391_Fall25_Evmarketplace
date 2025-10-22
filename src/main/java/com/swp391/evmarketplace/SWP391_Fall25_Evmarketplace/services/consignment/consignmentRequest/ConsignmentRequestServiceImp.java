@@ -1,9 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.AcceptedConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.RejectedConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.UpdateConsignmentRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -281,12 +278,25 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         return response;
     }
 
-    //lất tất cả danh sách có staff
+    //lất tất cả danh sách có staff bỏ submitted
+    private static final Set<ConsignmentRequestStatus> SHOWWITHOUTSUBMITTED = EnumSet.of(
+            REQUEST_REJECTED,
+            SCHEDULING,
+            SCHEDULED,
+            RESCHEDULED,
+            INSPECTING,
+            INSPECTED_PASS,
+            INSPECTED_FAIL,
+            CANCELLED,
+            FINISHED,
+            EXPIRED
+    );
+
     @Override
     public BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffId(int page, int size, String dir, String sort) {
         Account account = authUtil.getCurrentAccount();
         Pageable pageable = PageableUtils.buildPageable(page, size, sort, dir);
-        Page<ConsignmentRequestProjection> pages = consignmentRequestRepository.getAllByStaffId(account.getId(), EnumSet.allOf(ConsignmentRequestStatus.class), pageable);
+        Page<ConsignmentRequestProjection> pages = consignmentRequestRepository.getAllByStaffId(account.getId(), SHOWWITHOUTSUBMITTED, pageable);
         PageResponse<ConsignmentRequestListItemDTO> body = toPageResponse(pages);
         return ok(body, pages.isEmpty(), ErrorCode.CONSIGNMENT_REQUEST_LIST_NOT_FOUND.name());
     }
@@ -306,31 +316,28 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     //user hủy request
 
     private static final Set<ConsignmentRequestStatus> CANCELLABLE_BEFORE_INSPECTING = EnumSet.of(
-            SUBMITTED, SCHEDULING, SCHEDULED, RESCHEDULED
+            SUBMITTED, SCHEDULING, RESCHEDULED, REQUEST_REJECTED
     );
 
     @Override
-    public BaseResponse<Void> UserCancelRequest(Long requestId) {
-        if (requestId == null) {
-            throw new CustomBusinessException("consignment request id is required");
-        }
-
+    public BaseResponse<Void> UserCancelRequest(CancelConsignmentRequestDTO dto) {
         Account current = authUtil.getCurrentAccount();
+
         ConsignmentRequest request = consignmentRequestRepository
-                .findByIdAndOwnerId(requestId, current.getId())
+                .findByIdAndOwnerId(dto.getRequestId(), current.getId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
 
-        if (!(current.getRole().equals(AccountRole.MEMBER)) || request.getStatus() == INSPECTING) {
-            throw new CustomBusinessException("cannot cancel this state");
+        if (!(request.getOwner().getId().equals(current.getId()))) {
+            throw new CustomBusinessException("you don't have permission");
         }
 
         if (CANCELLABLE_BEFORE_INSPECTING.contains(request.getStatus())) {
             request.setStatus(ConsignmentRequestStatus.CANCELLED);
-            // cancel by, at, reason
-            // cancel scheduled
+            request.setCancelledAt(LocalDateTime.now());
+            request.setCancelledBy(current);
+            request.setCancelledReason(dto.getCancelledReason());
             consignmentRequestRepository.save(request);
-        }
-
+        } else throw new CustomBusinessException("Can not cancel");
 
         BaseResponse<Void> res = new BaseResponse<>();
         res.setSuccess(true);
@@ -340,30 +347,178 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
 
     }
 
-    //owner update their request
-//    @Override
-//    public BaseResponse<Void> updateRequest(Long requestId, UpdateConsignmentRequestDTO dto) {
-//        ConsignmentRequest request = consignmentRequestRepository.findById(requestId)
-//                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
-//
-//        if(!EnumSet.of(SUBMITTED, RESCHEDULED).contains(request.getStatus())){
-//            throw new CustomBusinessException("request is can not eligible to update");
-//        }
-//
-//        Category category = categoryRepository.findById(dto.getId())
-//                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CATEGORY_NOT_FOUND.name()));
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//    }
+
+    //    owner update their request
+    @Transactional
+    @Override
+    public BaseResponse<Void> userUpdateRequest(Long requestId, UpdateConsignmentRequestDTO dto, List<MultipartFile> newImages, List<MultipartFile> newVideos) {
+
+        Account account = authUtil.getCurrentAccount();
+
+        ConsignmentRequest request = consignmentRequestRepository.findById(requestId)
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
+
+        //kiểm tra quyền
+        if (!request.getOwner().getId().equals(account.getId()))
+            throw new CustomBusinessException("you don't have permission");
+
+        //kiểm tra trạng thái cho phép update
+        if (!EnumSet.of(SUBMITTED, REQUEST_REJECTED).contains(request.getStatus())) {
+            throw new CustomBusinessException("request is can not eligible to update");
+        }
+
+
+        Category targetCate = request.getCategory();
+        if (dto.getCategoryId() != null) {
+            targetCate = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.CATEGORY_NOT_FOUND.name()));
+            if (targetCate.getStatus() != CategoryStatus.ACTIVE)
+                throw new CustomBusinessException(ErrorCode.CATEGORY_INACTIVE.name());
+        }
+
+        Branch targetBranch = request.getPreferredBranch();
+        if (dto.getPreferredBranchId() != null) {
+            targetBranch = branchRepository.findById(dto.getPreferredBranchId())
+                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRANCH_NOT_FOUND.name()));
+            if (targetBranch.getStatus() != BranchStatus.ACTIVE)
+                throw new CustomBusinessException(ErrorCode.BRANCH_INACTIVE.name());
+        }
+
+        ItemType targetItemType = (dto.getItemType() != null) ? dto.getItemType() : request.getItemType();
+
+        String targetBrandName = request.getBrand();
+        String targetModelName = request.getModel();
+
+        Model targetModel = null;
+
+        if (dto.getModelId() != null) {
+            targetModel = modelRepository.findById(dto.getModelId())
+                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.MODEL_NOT_FOUND.name() + ": " + dto.getModelId()));
+
+            // Nếu có categoryId mới thì model phải thuộc category đó
+            if (dto.getCategoryId() != null && !targetModel.getCategory().getId().equals(dto.getCategoryId())) {
+                throw new CustomBusinessException(ErrorCode.MODEL_NOT_BELONG_TO_CATEGORY.name());
+            }
+            // Nếu có brandId mới thì model phải thuộc brand đó
+            if (dto.getBrandId() != null && !targetModel.getBrand().getId().equals(dto.getBrandId())) {
+                throw new CustomBusinessException(ErrorCode.MODEL_NOT_BELONG_TO_BRAND.name() + ": " + dto.getBrandId());
+            }
+
+            targetBrandName = targetModel.getBrand().getName();
+            targetModelName = targetModel.getName();
+
+        } else if (dto.getBrandId() != null) {
+            // Khi đổi brandId (không đổi modelId), đảm bảo brand thuộc category hiện hành (mới hoặc cũ)
+            Long catIdToCheck = (dto.getCategoryId() != null) ? dto.getCategoryId() : targetCate.getId();
+            boolean ok = categoryBrandRepository.existsByCategory_IdAndBrand_Id(catIdToCheck, dto.getBrandId());
+            if (!ok) throw new CustomBusinessException(ErrorCode.MODEL_NOT_BELONG_TO_BRAND.name());
+
+            targetBrandName = brandRepository.findById(dto.getBrandId())
+                    .map(Brand::getName)
+                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRAND_NOT_IN_CATEGORY.name()));
+        }
+
+        // Cho phép override tên hiển thị nếu người dùng nhập text brand/model
+        if (dto.getBrand() != null && !dto.getBrand().isBlank()) {
+            targetBrandName = dto.getBrand().trim();
+        }
+        if (dto.getModel() != null && !dto.getModel().isBlank()) {
+            targetModelName = dto.getModel().trim();
+        }
+
+        // (Tuỳ chọn) Suy ra ItemType nếu không gửi itemType nhưng có modelId mới
+        // Ví dụ: nếu category của model là "BATTERY" => ItemType.BATTERY
+        if (dto.getItemType() == null && targetModel != null) {
+            String catNameOfModel = targetModel.getCategory().getName();
+            if ("BATTERY".equalsIgnoreCase(catNameOfModel)) {
+                targetItemType = ItemType.BATTERY;
+            } else {
+                targetItemType = ItemType.VEHICLE;
+            }
+        }
+
+        // 6) Ràng buộc ItemType ↔ Category "BATTERY"
+        // (nếu bạn có CategoryCode enum thì nên dùng code thay vì name)
+        if (targetItemType == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(targetCate.getName())) {
+            throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
+        }
+        if (targetItemType == ItemType.VEHICLE && "BATTERY".equalsIgnoreCase(targetCate.getName())) {
+            throw new CustomBusinessException("categoryCode must not be BATTERY for itemType=VEHICLE");
+        }
+
+        // 7) Gán các thuộc tính cơ bản nếu có trong dto (partial)
+        if (dto.getYear() != null) request.setYear(dto.getYear());
+        if (dto.getBatteryCapacityKwh() != null) request.setBatteryCapacityKwh(dto.getBatteryCapacityKwh());
+        if (dto.getSohPercent() != null) request.setSohPercent(dto.getSohPercent());
+        if (dto.getMileageKm() != null) request.setMileageKm(dto.getMileageKm());
+        if (dto.getOwnerExpectedPrice() != null) request.setOwnerExpectedPrice(dto.getOwnerExpectedPrice());
+        if (dto.getNote() != null) request.setNote(dto.getNote());
+
+        // 8) Gán các thuộc tính phụ thuộc
+        request.setItemType(targetItemType);
+        request.setCategory(targetCate);
+        request.setPreferredBranch(targetBranch);
+        request.setBrand(targetBrandName);
+        request.setModel(targetModelName);
+        request.setStatus(SUBMITTED);
+
+        // 9) Xoá media (nếu có)
+        if (dto.getDeleteMediaIds() != null && !dto.getDeleteMediaIds().isEmpty()) {
+            List<ConsignmentRequestMedia> toRemove =
+                    consignmentRequestMediaRepository.findAllByIdInAndRequest_Id(dto.getDeleteMediaIds(), request.getId());
+
+            // Đảm bảo tất cả id yêu cầu xoá đều thuộc request (tránh id “lạ”)
+            if (toRemove.size() != dto.getDeleteMediaIds().size()) {
+                throw new CustomBusinessException("Some media ids do not belong to this request");
+            }
+            // Xoá file vật lý (tuỳ chính sách hệ thống)
+            for (ConsignmentRequestMedia m : toRemove) {
+                try { fileService.deleteImage(m.getMediaUrl()); } catch (Exception ignore) {}
+                try { fileService.deleteVideo(m.getMediaUrl()); } catch (Exception ignore) {}
+            }
+            consignmentRequestMediaRepository.deleteAll(toRemove);
+            request.getMediaList().removeAll(toRemove);
+        }
+
+        // 10) Thêm media mới
+        try {
+            if (newImages != null) {
+                for (MultipartFile img : newImages) {
+                    if (img == null || img.isEmpty()) continue;
+                    var stored = fileService.storeImage(img);
+                    ConsignmentRequestMedia media = new ConsignmentRequestMedia();
+                    media.setRequest(request);
+                    media.setMediaUrl(stored.getStoredName());
+                    media.setMediaType(MediaType.IMAGE);
+                    request.addMedia(media);
+                }
+            }
+            if (newVideos != null) {
+                for (MultipartFile v : newVideos) {
+                    if (v == null || v.isEmpty()) continue;
+                    var stored = fileService.storeVideo(v);
+                    ConsignmentRequestMedia media = new ConsignmentRequestMedia();
+                    media.setRequest(request);
+                    media.setMediaUrl(stored.getStoredName());
+                    media.setMediaType(MediaType.VIDEO);
+                    request.addMedia(media);
+                }
+            }
+        } catch (IOException e) {
+            throw new CustomBusinessException("Upload media failed: " + e.getMessage());
+        }
+
+        // 11) Lưu
+        consignmentRequestRepository.save(request);
+
+        BaseResponse<Void> res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Consignment request updated");
+        return res;
+
+
+    }
 
 
     //=========================HELPER============================

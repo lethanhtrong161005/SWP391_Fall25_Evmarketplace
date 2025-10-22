@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateConsignmentRequestDTO {
-    @NotNull(message = "categoryId is required")
+    @NotNull(message = "itemType is required")
     private ItemType itemType;  // VEHICLE/BATTERY
 
     @NotNull(message = "categoryId is required")

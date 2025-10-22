@@ -1,9 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.AcceptedConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.RejectedConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.UpdateConsignmentRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -26,7 +23,7 @@ public interface ConsignmentRequestService {
     //lấy tất cả request staff nhưng chưa xem xét
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffIdAndNotConsider(int page, int size, String dir, String sort);
 
-    BaseResponse<Void> UserCancelRequest(Long requestId);
+    BaseResponse<Void> UserCancelRequest(CancelConsignmentRequestDTO dto);
 
-//    BaseResponse<Void> updateRequest(Long requestId, UpdateConsignmentRequestDTO updateConsignmentRequestDTO);
+    BaseResponse<Void> userUpdateRequest(Long requestId, UpdateConsignmentRequestDTO dto, List<MultipartFile> newImages, List<MultipartFile> newVideos);
 }

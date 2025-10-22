@@ -1,12 +1,15 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CancelConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.UpdateConsignmentRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest.ConsignmentRequestService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/consignments")
-public class ConsignmentController {
+@RequestMapping("/api/consignments_request")
+public class ConsignmentRequestController {
 
     @Autowired
     private ConsignmentRequestService consignmentRequestService;
@@ -27,17 +30,16 @@ public class ConsignmentController {
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> create(
             @RequestPart("payload") String payload,
-            @RequestPart(value="images", required=false) List<MultipartFile> images,
-            @RequestPart(value="videos", required=false) List<MultipartFile> videos
-    ){
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "videos", required = false) List<MultipartFile> videos
+    ) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             CreateConsignmentRequestDTO req = objectMapper.readValue(payload, CreateConsignmentRequestDTO.class);
 
             var res = consignmentRequestService.createConsignmentRequest(req, images, videos);
             return ResponseEntity.status(res.getStatus()).body(res);
-        } catch (Exception e){
-            e.printStackTrace();
+        } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
@@ -48,16 +50,36 @@ public class ConsignmentController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String dir
-    ){
+    ) {
         Long id = authUtil.getCurrentAccount().getId();
-        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getListByOwnerId( id, page, size, dir, sort);
+        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getListByOwnerId(id, page, size, dir, sort);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PutMapping("/{id}/cancel")
-    public ResponseEntity<BaseResponse<Void>> cancelRequest(@PathVariable("id") Long id) {
-        BaseResponse<Void> res = consignmentRequestService.UserCancelRequest(id);
+    @PutMapping("/cancel")
+    public ResponseEntity<BaseResponse<Void>> userCancelRequest(@Valid @RequestBody CancelConsignmentRequestDTO dto) {
+        BaseResponse<Void> res = consignmentRequestService.UserCancelRequest(dto);
         return ResponseEntity.ok(res);
     }
+
+    @PutMapping(value = "/update/{requestId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateConsignmentRequest
+            (
+                    @PathVariable Long requestId,
+                    @RequestPart("payload") String payload,
+                    @RequestPart(value = "images", required = false) List<MultipartFile> images,
+                    @RequestPart(value = "videos", required = false) List<MultipartFile> videos
+            ){
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            UpdateConsignmentRequestDTO req = objectMapper.readValue(payload, UpdateConsignmentRequestDTO.class);
+
+            var res = consignmentRequestService.userUpdateRequest(requestId, req, images, videos);
+            return ResponseEntity.status(res.getStatus()).body(res);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
 
 }

@@ -75,8 +75,8 @@ public class SecurityConfig {
                             "/api/accounts/update-avatar",
                             "/api/accounts/listing",
                             "/api/config/boosted",
-                            "/api/consignments/**",
-                            "/api/inspection_schedule/**"
+                            "/api/inspection_schedule/**",
+                            "/api/consignments_request/**"
                     ).authenticated();
 
                     //staff
