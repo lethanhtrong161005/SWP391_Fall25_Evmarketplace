@@ -23,9 +23,10 @@ public interface ListingService {
   BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
   BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(ListingStatus status, String q, Integer page, Integer size);
   Map<ListingStatus, Long> getMyCounts(Long sellerId);
+  BaseResponse<?> getByType(String type, String status, int page, int size, String sort, String dir);
    //cho phép sort theo thời gian tạo
    BaseResponse<Map<String, Object>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir);
-  BaseResponse<Map<String, Object>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir);
+   BaseResponse<Map<String, Object>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir);
    BaseResponse<Map<String, Object>> getAllListForModerator(int page, int size, String sort, String dir);
    BaseResponse<Map<String, Object>> getAllListingsPublic(int page, int size, String sort, String dir);
 

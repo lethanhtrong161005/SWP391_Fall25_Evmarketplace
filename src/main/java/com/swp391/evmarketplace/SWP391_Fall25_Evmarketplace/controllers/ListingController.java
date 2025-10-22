@@ -44,6 +44,21 @@ public class ListingController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    //TYPE: VEHICLE, BATTERY
+    @GetMapping
+    public ResponseEntity<?> getByType(
+            @RequestParam String type,
+            @RequestParam(required = false) ListingStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "desc") String dir
+    ) {
+        status = status != null ? status : ListingStatus.ACTIVE;
+        var res = listingService.getByType(type, status.name(), page, size, sort, dir);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
     @PostMapping(value="/post",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
