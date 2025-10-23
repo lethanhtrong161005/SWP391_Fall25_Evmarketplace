@@ -1,6 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.request.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;

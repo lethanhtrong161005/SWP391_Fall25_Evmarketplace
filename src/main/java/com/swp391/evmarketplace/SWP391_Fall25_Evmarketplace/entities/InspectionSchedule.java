@@ -75,7 +75,7 @@ public class InspectionSchedule {
     private Account scheduledBy;
 
     @Column(name = "checkin_at")
-    private LocalDateTime checkinAt;
+    private LocalDateTime checkedInAt;
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;

@@ -76,7 +76,8 @@ public class SecurityConfig {
                             "/api/accounts/listing",
                             "/api/config/boosted",
                             "/api/inspection_schedule/**",
-                            "/api/consignments_request/**"
+                            "/api/consignments_request/**",
+                            "/api/branchs/**"
                     ).authenticated();
 
                     //staff

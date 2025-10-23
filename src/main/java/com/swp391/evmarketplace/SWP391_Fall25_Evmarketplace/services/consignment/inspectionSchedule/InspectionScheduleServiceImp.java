@@ -236,7 +236,7 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
         s.setStatus(InspectionScheduleStatus.CHECKED_IN);
         ConsignmentRequest request = s.getRequest();
         request.setStatus(ConsignmentRequestStatus.INSPECTING);
-        s.setCheckinAt(LocalDateTime.now());
+        s.setCheckedInAt(LocalDateTime.now());
 
         inspectionScheduleRepository.save(s);
         consignmentRequestRepository.save(request);

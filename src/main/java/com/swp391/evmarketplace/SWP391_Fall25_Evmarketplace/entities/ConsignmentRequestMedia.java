@@ -1,7 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestMediaResponseDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingMediaDto;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.request.ConsignmentRequestMediaResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.MediaType;
 import jakarta.persistence.*;
 import lombok.*;
