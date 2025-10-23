@@ -6,7 +6,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignm
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDayDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.InspectionScheduleStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.InspectionScheduleDetailProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.StaffScheduleRow;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.inspectionSchedule.InspectionScheduleService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -52,4 +57,16 @@ public class InspectionScheduleController {
         BaseResponse<Void> response = inspectionScheduleService.checkin(id);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+
+
+    @GetMapping("/inspection_schedule/{requestId}")
+    public ResponseEntity<BaseResponse<List<InspectionScheduleDetailProjection>>> getDetailByScheduleId(
+            @PathVariable Long requestId,
+            @RequestParam(required = false) List<InspectionScheduleStatus> statuses
+    ) {
+        BaseResponse<List<InspectionScheduleDetailProjection>> response = inspectionScheduleService.getScheduleByRequestId(requestId, statuses);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+
 }

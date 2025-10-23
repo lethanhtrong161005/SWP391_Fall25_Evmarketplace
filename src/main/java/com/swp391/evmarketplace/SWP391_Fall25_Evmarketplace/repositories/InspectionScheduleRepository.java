@@ -87,10 +87,14 @@ public interface InspectionScheduleRepository extends JpaRepository<InspectionSc
                 left join sb.profile sbProf
                 left join s.cancelledBy cb
                 left join cb.profile cbProf
-              where s.id = :scheduleId
+              where r.id = :requestId
+              and s.scheduledBy.id = :ownerId
+              and s.status in :statuses
             """)
-    InspectionScheduleDetailProjection getScheduleDetailByRequestIdAndOwnerId(
-            @Param("requestId") Long requestId
+    List<InspectionScheduleDetailProjection> getScheduleDetailByRequestId(
+            @Param("requestId") Long requestId,
+            @Param("ownerId") Long ownerId,
+            @Param("statuses") Collection<InspectionScheduleStatus> statuses
     );
 
 
@@ -111,12 +115,14 @@ public interface InspectionScheduleRepository extends JpaRepository<InspectionSc
                 left join sb.profile sbProf
               where s.staff.id = :staffId
                 and s.scheduleDate = :date
+                and s.status in :statuses
               order by sh.startTime asc
             """
     )
     List<StaffScheduleRow> getListScheduleByDate(
             @Param("staffId") Long staffId,
-            @Param("date") LocalDate date);
+            @Param("date") LocalDate date,
+            @Param("statuses") Collection<InspectionScheduleStatus> statuses);
 
     //=======================schedule=======================
 

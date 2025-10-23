@@ -6,12 +6,11 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDayDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.*;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentRequestStatus;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.InspectionScheduleStatus;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.InspectionScheduleDetailProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.StaffScheduleRow;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -21,6 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 
 @Service
@@ -49,7 +51,7 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
 
         var actives = inspectionScheduleRepository.lockActives(request.getId(), ACTIVE);
 
-        if (!actives.isEmpty()){
+        if (!actives.isEmpty()) {
             throw new CustomBusinessException("REQUEST_ALREADY_HAS_ACTIVE_SCHEDULE");
         }
 
@@ -244,6 +246,44 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
         BaseResponse<Void> response = new BaseResponse<>();
         response.setStatus(200);
         response.setMessage("OK");
+        response.setSuccess(true);
+        return response;
+    }
+
+    @Override
+    public BaseResponse<List<InspectionScheduleDetailProjection>> getScheduleByRequestId(Long requestId, Collection<InspectionScheduleStatus> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            statuses = EnumSet.allOf(InspectionScheduleStatus.class);
+        }
+
+        Account account = authUtil.getCurrentAccount();
+
+        List<InspectionScheduleDetailProjection> item = inspectionScheduleRepository.getScheduleDetailByRequestId(requestId, account.getId(), statuses);
+
+        BaseResponse<List<InspectionScheduleDetailProjection>> response = new BaseResponse<>();
+        response.setData(item);
+        response.setStatus(200);
+        response.setMessage("OK");
+        response.setSuccess(true);
+        return response;
+    }
+
+    @Override
+    public BaseResponse<List<StaffScheduleRow>> getListScheduleByDate(LocalDate date, Collection<InspectionScheduleStatus> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            statuses = EnumSet.allOf(InspectionScheduleStatus.class);
+        }
+
+        Account account = authUtil.getCurrentAccount();
+        if (!account.getRole().equals(AccountRole.STAFF))
+            throw new CustomBusinessException("you don't have permission");
+
+        List<StaffScheduleRow> list = inspectionScheduleRepository.getListScheduleByDate(account.getId(), date, statuses);
+
+        BaseResponse<List<StaffScheduleRow>> response = new BaseResponse<>();
+        response.setData(list);
+        response.setStatus(200);
+        response.setMessage(list.isEmpty() ? "Empty" : "OK");
         response.setSuccess(true);
         return response;
     }
