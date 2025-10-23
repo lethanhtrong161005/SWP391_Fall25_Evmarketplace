@@ -216,6 +216,40 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
     )
     Page<ConsignmentRequestProjection> getAllByBranchIdIgnoreSubmitted(@Param("id") Long branchId, Pageable pageable);
 
+    @Query(value = """
+                 select
+                   cr.id                   as id,
+                   a.phoneNumber           as accountPhone,
+                   p.fullName              as accountName,
+                   s.id                    as staffId,
+                   cr.rejectedReason       as rejectedReason,
+                   cr.itemType             as itemType,
+                   c.name                  as category,
+                   cr.brand                as brand,
+                   cr.model                as model,
+                   cr.year                 as year,
+                   cr.batteryCapacityKwh   as batteryCapacityKwh,
+                   cr.sohPercent           as sohPercent,
+                   cr.mileageKm            as mileageKm,
+                   b.name                  as preferredBranchName,
+                   cr.ownerExpectedPrice   as ownerExpectedPrice,
+                   cr.status               as status,
+                   cr.createdAt            as createdAt,
+                   cb.id                   as cancelledById,
+                   cr.cancelledAt          as cancelledAt,
+                   cr.cancelledReason      as cancelledReason
+                 from ConsignmentRequest cr
+                 join cr.category c
+                 join cr.preferredBranch b
+                 join cr.owner a
+                 left join cr.staff s
+                 left join a.profile p
+                 left join cr.cancelledBy cb
+                 where cr.id = :id
+            """
+    )
+    Optional<ConsignmentRequestProjection> getRequestById(@Param("id") Long id);
+
     Optional<ConsignmentRequest> findByIdAndOwnerId(Long id, Long ownerId);
 
 

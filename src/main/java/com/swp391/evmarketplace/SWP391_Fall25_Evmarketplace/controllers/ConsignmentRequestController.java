@@ -69,7 +69,7 @@ public class ConsignmentRequestController {
                     @RequestPart("payload") String payload,
                     @RequestPart(value = "images", required = false) List<MultipartFile> images,
                     @RequestPart(value = "videos", required = false) List<MultipartFile> videos
-            ){
+            ) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             UpdateConsignmentRequestDTO req = objectMapper.readValue(payload, UpdateConsignmentRequestDTO.class);
@@ -79,6 +79,12 @@ public class ConsignmentRequestController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse<ConsignmentRequestListItemDTO>> getRequestById(@PathVariable("id") Long id) {
+        BaseResponse<ConsignmentRequestListItemDTO> response = consignmentRequestService.getRequestById(id);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
 

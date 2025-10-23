@@ -22,8 +22,7 @@ public interface ConsignmentRequestService {
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffId(int page, int size, String dir, String sort);
     //lấy tất cả request staff nhưng chưa xem xét
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffIdAndNotConsider(int page, int size, String dir, String sort);
-
     BaseResponse<Void> UserCancelRequest(CancelConsignmentRequestDTO dto);
-
     BaseResponse<Void> userUpdateRequest(Long requestId, UpdateConsignmentRequestDTO dto, List<MultipartFile> newImages, List<MultipartFile> newVideos);
+    BaseResponse<ConsignmentRequestListItemDTO> getRequestById(Long requestId);
 }

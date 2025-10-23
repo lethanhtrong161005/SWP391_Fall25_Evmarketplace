@@ -110,6 +110,7 @@ public interface InspectionScheduleRepository extends JpaRepository<InspectionSc
                 join s.scheduledBy sb
                 left join sb.profile sbProf
               where s.staff.id = :staffId
+                and s.scheduleDate = :date
               order by sh.startTime asc
             """
     )

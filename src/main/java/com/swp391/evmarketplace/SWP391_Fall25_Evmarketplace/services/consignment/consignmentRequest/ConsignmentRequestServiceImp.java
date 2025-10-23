@@ -473,8 +473,14 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
             }
             // Xoá file vật lý (tuỳ chính sách hệ thống)
             for (ConsignmentRequestMedia m : toRemove) {
-                try { fileService.deleteImage(m.getMediaUrl()); } catch (Exception ignore) {}
-                try { fileService.deleteVideo(m.getMediaUrl()); } catch (Exception ignore) {}
+                try {
+                    fileService.deleteImage(m.getMediaUrl());
+                } catch (Exception ignore) {
+                }
+                try {
+                    fileService.deleteVideo(m.getMediaUrl());
+                } catch (Exception ignore) {
+                }
             }
             consignmentRequestMediaRepository.deleteAll(toRemove);
             request.getMediaList().removeAll(toRemove);
@@ -520,8 +526,64 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
 
     }
 
+    public BaseResponse<ConsignmentRequestListItemDTO> getRequestById(Long requestId) {
+        if (requestId == null) throw new CustomBusinessException("request id is required");
+
+        ConsignmentRequestProjection p = consignmentRequestRepository.getRequestById(requestId)
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
+
+        List<String> urls = getAllImageUrlsOfRequest(requestId);
+        ConsignmentRequestListItemDTO c = ConsignmentRequestListItemDTO.builder()
+                .id(p.getId())
+                .accountPhone(p.getAccountPhone())
+                .accountName(p.getAccountName())
+                .staffId(p.getStaffId())
+                .rejectedReason(p.getRejectedReason())
+                .itemType(p.getItemType())
+                .category(p.getCategory())
+                .brand(p.getBrand())
+                .model(p.getModel())
+                .year(p.getYear())
+                .batteryCapacityKwh(p.getBatteryCapacityKwh())
+                .sohPercent(p.getSohPercent())
+                .mileageKm(p.getMileageKm())
+                .preferredBranchName(p.getPreferredBranchName())
+                .ownerExpectedPrice(p.getOwnerExpectedPrice())
+                .status(p.getStatus())
+                .createdAt(p.getCreatedAt())
+                .cancelledAt(p.getCancelledAt())
+                .cancelledReason(p.getCancelledReason())
+                .cancelledById(p.getCancelledById())
+                .mediaUrls(urls)
+                .build();
+
+        BaseResponse<ConsignmentRequestListItemDTO> res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Cancelled");
+        res.setData(c);
+        return res;
+
+    }
 
     //=========================HELPER============================
+
+    private List<String> getAllImageUrlsOfRequest(Long requestId) {
+        List<Object[]> rows = consignmentRequestMediaRepository.findAllMediaUrlsByRequestId(requestId);
+        if (rows.isEmpty()) return Collections.emptyList();
+
+        List<String> urls = new ArrayList<>();
+        for (Object[] row : rows) {
+            String url = (String) row[0];
+            MediaType type = (MediaType) row[1];
+
+            if (type == MediaType.IMAGE) {
+                urls.add(MedialUtils.converMediaNametoMedialUrl(url, type.name(), serverUrl));
+            }
+        }
+        return urls;
+    }
+
 
     //media url
     private Map<Long, List<String>> enrichMedia(List<Long> requestIds) {
@@ -575,6 +637,7 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                 .collect(Collectors.toList());
         return items;
     }
+
 
     //page response request
     private PageResponse<ConsignmentRequestListItemDTO> toPageResponse(Page<ConsignmentRequestProjection> pages) {
