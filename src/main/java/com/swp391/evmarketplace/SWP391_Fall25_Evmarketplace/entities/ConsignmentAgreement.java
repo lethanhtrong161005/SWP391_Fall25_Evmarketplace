@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentAgreementStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -65,4 +66,16 @@ public class ConsignmentAgreement {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToOne(mappedBy = "consignmentAgreement")
+    @JsonIgnore
+    private Listing listing;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "staff_id",
+            foreignKey = @ForeignKey(name = "fk_cagr_staff")
+    )
+    private Account staff;
+
 }

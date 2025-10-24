@@ -111,6 +111,35 @@ public class Account {
     @ToString.Exclude
     private Branch managedBranch;
 
+    @OneToMany(mappedBy = "responsibleStaff", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<Listing> responsibleStaffListings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "staff", fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    private List<ConsignmentAgreement> consignmentAgreements = new ArrayList<>();
+
+    @OneToMany(mappedBy="buyer")
+    @JsonIgnore
+    @ToString.Exclude
+    private List<SaleOrder> ordersBought  = new ArrayList<>();
+
+    @OneToMany(mappedBy="seller")
+    @JsonIgnore
+    @ToString.Exclude
+    private List<SaleOrder> ordersSold    = new ArrayList<>();
+
+    @OneToMany(mappedBy="createdBy")
+    @JsonIgnore
+    @ToString.Exclude
+    private List<SaleOrder> ordersCreated = new ArrayList<>();
+
+    @OneToMany(mappedBy = "recordedBy")
+    private List<SalePayment> cashPaymentsRecorded =  new ArrayList<>();
+
+
 
     @PrePersist
     protected void onCreate() {

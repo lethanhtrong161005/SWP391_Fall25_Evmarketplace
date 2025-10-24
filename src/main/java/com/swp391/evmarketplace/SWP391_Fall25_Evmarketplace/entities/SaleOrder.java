@@ -4,6 +4,8 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Generated;
+import org.hibernate.annotations.GenerationTime;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
@@ -23,7 +25,7 @@ public class SaleOrder {
     private Long id;
 
 
-    @OneToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "listing_id", nullable = false)
     private Listing listing;
 
@@ -53,6 +55,13 @@ public class SaleOrder {
     @Column(name = "reserved_until")
     private LocalDateTime reservedUntil;
 
+    @ManyToOne
+    @JoinColumn(
+            name = "created_by",
+            foreignKey =  @ForeignKey(name = "fk_so_created_by")
+    )
+    private Account createdBy;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -60,4 +69,19 @@ public class SaleOrder {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "is_open", insertable = false, updatable = false)
+    @Generated(GenerationTime.ALWAYS)
+    private Boolean isOpen;
+
+    @Column(name = "paid_amount", precision = 12, scale = 2, nullable = false)
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+
+    @OneToOne(mappedBy = "order")
+    private Contract contract;
+
+    @Transient
+    public boolean isOpenFlag() {
+        return Boolean.TRUE.equals(isOpen);
+    }
 }

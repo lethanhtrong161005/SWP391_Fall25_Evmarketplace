@@ -59,4 +59,20 @@ public class SalePayment {
     @CreationTimestamp
     @Column(name="created_at", updatable=false)
     private LocalDateTime createdAt;
+
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
+    @Column(name = "reference_no", length = 64)
+    private String referenceNo;
+
+    @ManyToOne
+    @JoinColumn(name = "recorded_by",
+            foreignKey = @ForeignKey(name = "fk_pay_recorded_by"))
+    private Account recordedBy;
+
+    @Column(name = "note", length = 255)
+    private String note;
+
+
 }
