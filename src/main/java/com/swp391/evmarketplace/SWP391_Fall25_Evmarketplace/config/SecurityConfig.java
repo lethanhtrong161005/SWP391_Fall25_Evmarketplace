@@ -73,16 +73,19 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/accounts/change-password",
                             "/api/accounts/update-profile",
                             "/api/accounts/update-avatar",
+//                            "/api/accounts/current",
                             "/api/accounts/listing",
                             "/api/config/boosted",
                             "/api/inspection_schedule/**",
                             "/api/consignments_request/**",
-                            "/api/branchs/**"
+                            "/api/branchs/**",
+                            "/api/inspections/request/{requestId}"
                     ).authenticated();
 
                     //staff
-                    auth.requestMatchers("api/staff/**",
-                            "/api/inspection_schedule/**/check_in"
+                    auth.requestMatchers("/api/staff/**",
+                            "/api/inspection_schedule/**/check_in",
+                            "/api/inspections/**"
                     ).hasRole("STAFF");
 
 

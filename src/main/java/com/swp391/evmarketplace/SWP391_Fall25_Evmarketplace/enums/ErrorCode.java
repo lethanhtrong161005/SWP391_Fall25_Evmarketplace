@@ -76,7 +76,10 @@ public enum ErrorCode {
     SHIFT_TEMPLATE_NOT_FOUND,
 
     //schedule
-    NOT_FOUND_SCHEDULE;
+    NOT_FOUND_SCHEDULE,
+
+    //inspection
+    INSPECTION_NOT_FOUND;
 
 }
 

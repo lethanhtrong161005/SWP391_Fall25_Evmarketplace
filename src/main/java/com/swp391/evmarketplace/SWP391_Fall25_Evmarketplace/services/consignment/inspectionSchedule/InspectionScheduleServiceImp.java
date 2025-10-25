@@ -91,9 +91,6 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
                         List.of(InspectionScheduleStatus.SCHEDULED, InspectionScheduleStatus.CHECKED_IN));
         if (busy) throw new CustomBusinessException("STAFF_BUSY_THIS_SLOT");
 
-//        boolean hasActive = inspectionScheduleRepository.existsByRequest_IdAndStatusIn(request.getId(), OCCUPIED);
-//        if (hasActive) throw new CustomBusinessException("REQUEST_ALREADY_HAS_ACTIVE_SCHEDULE");
-
         //check if book today
         validateShiftTimingForToday(dto.getDate(), template);
 

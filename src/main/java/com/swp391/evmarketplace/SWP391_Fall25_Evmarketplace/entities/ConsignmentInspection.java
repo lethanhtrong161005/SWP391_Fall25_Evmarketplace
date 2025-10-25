@@ -24,31 +24,29 @@ public class ConsignmentInspection {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(optional = false)
+    @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id", nullable = false, unique = true,
             foreignKey = @ForeignKey(name = "fk_ci_req"))
     private ConsignmentRequest request;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_ci_branch"))
     private Branch branch;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "inspector_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_ci_inspector"))
-    private Account inspector;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "result", nullable = false, length = 16)
     private ConsignmentInspectionResult result;
 
     @Lob
-    @Column(name = "defect_summary", columnDefinition = "text")
-    private String defectSummary;
+    @Column(name = "inspection_summary", columnDefinition = "text")
+    private String inspectionSummary;
 
     @Column(name = "suggested_price", precision = 12, scale = 2)
     private BigDecimal suggestedPrice;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
