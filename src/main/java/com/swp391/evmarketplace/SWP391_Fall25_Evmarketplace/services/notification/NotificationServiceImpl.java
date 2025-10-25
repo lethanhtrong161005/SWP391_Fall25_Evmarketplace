@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.message.NotificationDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
@@ -29,15 +30,15 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final AccountRepository accountRepository;
 
-    /** Lưu DB + push tới /user/queue/notifications */
+
     @Override
     @Transactional
     public NotificationDto sendToAccount(Long accountId, String type, String message, Long referenceId) {
-        // 1) Lấy account
+
         Account acc = accountRepository.findById(accountId)
                 .orElseThrow(() -> new CustomBusinessException("Account not found: " + accountId));
 
-        // 2) Lưu DB
+
         Notification n = new Notification();
         n.setType(type);
         n.setMessage(message);
@@ -60,7 +61,7 @@ public class NotificationServiceImpl implements NotificationService {
         log.debug("Pushed WS-only notification to user {} -> {}", userId, payload.getType());
     }
 
-    /** Trang thông báo (Slice) */
+
     @Override
     @Transactional(readOnly = true)
     public Slice<NotificationDto> listByAccount(Long accountId, int page, int size) {
@@ -85,6 +86,25 @@ public class NotificationServiceImpl implements NotificationService {
                 }
             }
         });
+    }
+
+    @Override
+    public BaseResponse<?> update(Long id, Long accountId) {
+        Notification n =  notificationRepository.findById(id)
+                .orElseThrow(() -> new CustomBusinessException("Notification not found: " + id));
+        if(!n.getAccount().getId().equals(accountId)){
+            throw new CustomBusinessException("Notification account not found: " + accountId);
+        }
+        if(n.getIsRead()){
+            throw new CustomBusinessException("Notification is already read");
+        }
+        n.setIsRead(true);
+        notificationRepository.save(n);
+        BaseResponse<?> response = new BaseResponse();
+        response.setMessage("Notification updated");
+        response.setSuccess(true);
+        response.setStatus(200);
+        return response;
     }
 
 }

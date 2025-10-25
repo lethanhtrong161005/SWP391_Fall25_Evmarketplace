@@ -7,10 +7,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notificatio
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
@@ -48,6 +45,14 @@ public class NotificationController {
         res.setData(body);
         res.setMessage("Get Notifications Success");
         return ResponseEntity.ok(res);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateNotification(
+            @PathVariable Long id
+    ){
+        var res = notificationService.update(id, authUtil.getCurrentAccountIdOrNull());
+        return ResponseEntity.status(res.getStatus()).body(res);
     }
 
 }

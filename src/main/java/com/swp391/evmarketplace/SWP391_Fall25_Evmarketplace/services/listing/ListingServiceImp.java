@@ -71,6 +71,75 @@ public class ListingServiceImp implements ListingService {
     private NotificationService notificationService;
 
 
+    @Override
+    @Transactional(readOnly = true)
+    public BaseResponse<?> getByType(String type,
+                                     String status,
+                                     int page, int size, String sort, String dir) {
+        String t = type == null ? "" : type.trim().toUpperCase();
+        if (!t.equals("VEHICLE") && !t.equals("BATTERY")) {
+            throw new CustomBusinessException("Invalid listing type");
+        }
+
+        Set<String> allowedSortFields = Set.of(
+                "createdAt", "updatedAt", "price", "expiresAt", "promotedUntil", "batteryCapacityKwh"
+        );
+        String sortField = (sort == null || sort.isBlank()) ? "createdAt" : sort.trim();
+        if (!allowedSortFields.contains(sortField)) sortField = "createdAt";
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(
+                Math.max(0, page),
+                Math.min(Math.max(1, size), 50),
+                Sort.by(direction, sortField).and(Sort.by(Sort.Direction.DESC, "id"))
+        );
+
+        var statuses = parseStatusesOrDefault(status); // mặc định ACTIVE
+        Long currentId = authUtil.getCurrentAccountIdOrNull();
+
+        Page<ListingListProjection> p = t.equals("VEHICLE")
+                ? listingRepository.findVehicles(currentId, statuses, pageable)
+                : listingRepository.findBatteries(currentId, statuses, pageable);
+        BaseResponse<PageResponse<ListingListProjection>> response = new BaseResponse<>();
+        PageResponse<ListingListProjection> pr = new PageResponse<>(
+                p.getTotalElements(), p.getTotalPages(),
+                p.hasNext(), p.hasPrevious(), p.getNumber(), p.getSize(),
+                p.getContent()
+        );
+        response.setData(pr);
+        response.setStatus(200);
+        response.setMessage("Success");
+        response.setSuccess(true);
+        return response;
+    }
+
+    /** Parse "ACTIVE,APPROVED" -> Collection<ListingStatus>, mặc định ACTIVE, không bao giờ rỗng */
+    private Collection<ListingStatus>
+    parseStatusesOrDefault(String statusStr) {
+        var EnumType = ListingStatus.class;
+
+        if (statusStr == null || statusStr.isBlank()) {
+            return EnumSet.of(ListingStatus.ACTIVE);
+        }
+
+        EnumSet<ListingStatus> set =
+                EnumSet.noneOf(EnumType);
+
+        for (String raw : statusStr.split(",")) {
+            String token = raw.trim();
+            if (token.isEmpty()) continue;
+            try {
+                set.add(Enum.valueOf(EnumType, token.toUpperCase()));
+            } catch (IllegalArgumentException ex) {
+                throw new CustomBusinessException("Invalid status: " + token);
+            }
+        }
+        if (set.isEmpty()) {
+            set.add(ListingStatus.ACTIVE);
+        }
+        return set;
+    }
+
 
     @Transactional
     @Override
@@ -154,9 +223,7 @@ public class ListingServiceImp implements ListingService {
 
                 }
             }
-
             listingRepository.save(listing);
-
             // 6) Media
             try {
                 if (images != null) {
@@ -197,6 +264,7 @@ public class ListingServiceImp implements ListingService {
             res.setMessage("Listing created");
             return res;
         } catch (Exception e) {
+
             throw new CustomBusinessException(e.getMessage());
         }
     }
@@ -1270,6 +1338,8 @@ public class ListingServiceImp implements ListingService {
         }
         l.setModerationLockedBy(null);
         l.setModerationLockedAt(null);
+        l.setModerator(null);
+        listingRepository.save(l);
         BaseResponse<Map<String, Object>> res = new BaseResponse<>();
         res.setSuccess(true);
         res.setStatus(200);
@@ -1382,18 +1452,15 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<?> approve(Long listingId, Long actorId, boolean force) {
         Listing l = listingRepository.findByIdForUpdate(listingId)
                 .orElseThrow(() -> new CustomBusinessException("Listing not found"));
-        Account actor = accountRepository.findById(actorId)
-                .orElseThrow(() -> new CustomBusinessException("Actor not found"));
-        if(l.getStatus() != ListingStatus.PENDING) {
+        if (l.getStatus() != ListingStatus.PENDING) {
             throw new CustomBusinessException("You are not allowed to approve this listing");
         }
+
         LocalDateTime now = LocalDateTime.now();
-        if (isLockActive(l, now)) {
-            Long ownerId = l.getModerationLockedBy().getId();
-            if (!ownerId.equals(actorId) && !force) {
-                throw new CustomBusinessException("Locked by another moderator");
-            }
-        }
+        ensureActiveLockOwnedOrForce(l, actorId, force, now);
+
+        Account actor = accountRepository.findById(actorId)
+                .orElseThrow(() -> new CustomBusinessException("Actor not found"));
 
         ListingStatus from = l.getStatus();
         if (from == ListingStatus.REJECTED || from == ListingStatus.SOLD || from == ListingStatus.EXPIRED) {
@@ -1405,18 +1472,17 @@ public class ListingServiceImp implements ListingService {
         l.setRejectedAt(null);
         l.setModerator(actor);
 
-        pushHistory(l, actor, from, ListingStatus.APPROVED, "APPROVED", "");
-
+        // clear lock (DB trigger ở dưới cũng clear thêm cho chắc)
         l.setModerationLockedBy(null);
         l.setModerationLockedAt(null);
 
-        String msg = "Tin \"" + l.getTitle() + "\" đã được duyệt.";
-        notificationService.notifySellerAfterCommit(l, "LISTING_APPROVED", msg);
+        pushHistory(l, actor, from, ListingStatus.APPROVED, "APPROVED", "");
 
-        BaseResponse<?> res = new BaseResponse<>();
-        res.setSuccess(true);
-        res.setStatus(200);
-        res.setMessage("Approved listing");
+        notificationService.notifySellerAfterCommit(l, "LISTING_APPROVED",
+                "Tin \"" + l.getTitle() + "\" đã được duyệt.");
+
+        var res = new BaseResponse<>();
+        res.setSuccess(true); res.setStatus(200); res.setMessage("Approved listing");
         return res;
     }
 
@@ -1425,25 +1491,19 @@ public class ListingServiceImp implements ListingService {
         if (reason == null || reason.isBlank()) {
             throw new CustomBusinessException("Rejected reason is required");
         }
-
         Listing l = listingRepository.findByIdForUpdate(listingId)
                 .orElseThrow(() -> new CustomBusinessException("Listing not found"));
-        Account actor = accountRepository.findById(actorId)
-                .orElseThrow(() -> new CustomBusinessException("Actor not found"));
-        if(l.getStatus() != ListingStatus.PENDING) {
+        if (l.getStatus() != ListingStatus.PENDING) {
             throw new CustomBusinessException("You are not allowed to reject this listing");
         }
 
         LocalDateTime now = LocalDateTime.now();
-        if (isLockActive(l, now)) {
-            Long ownerId = l.getModerationLockedBy().getId();
-            if (!ownerId.equals(actorId) && !force) {
-                throw new CustomBusinessException("Locked by another moderator");
-            }
-        }
+        ensureActiveLockOwnedOrForce(l, actorId, force, now);
+
+        Account actor = accountRepository.findById(actorId)
+                .orElseThrow(() -> new CustomBusinessException("Actor not found"));
 
         ListingStatus from = l.getStatus();
-
         l.setStatus(ListingStatus.REJECTED);
         l.setRejectedReason(reason);
         l.setRejectedAt(LocalDateTime.now());
@@ -1454,16 +1514,41 @@ public class ListingServiceImp implements ListingService {
         l.setModerationLockedBy(null);
         l.setModerationLockedAt(null);
 
-        String msg = "Tin \"" + l.getTitle() + "\" bị từ chối: " + reason;
-        notificationService.notifySellerAfterCommit(l, "LISTING_REJECTED", msg);
+        notificationService.notifySellerAfterCommit(l, "LISTING_REJECTED",
+                "Tin \"" + l.getTitle() + "\" bị từ chối: " + reason);
 
-
-        BaseResponse<?> res = new BaseResponse<>();
-        res.setSuccess(true);
-        res.setStatus(200);
-        res.setMessage("Rejected listing");
+        var res = new BaseResponse<>();
+        res.setSuccess(true); res.setStatus(200); res.setMessage("Rejected listing");
         return res;
     }
+
+    private void assertCanForce(Long actorId) {
+        var a = accountRepository.findById(actorId)
+                .orElseThrow(() -> new CustomBusinessException("Actor not found"));
+        var can = a.getRole() == AccountRole.ADMIN || a.getRole() == AccountRole.MANAGER;
+        if (!can) throw new CustomBusinessException("Force is not allowed for your role");
+    }
+
+    private void ensureActiveLockOwnedOrForce(Listing l, Long actorId, boolean force, LocalDateTime now) {
+        if (isLockActive(l, now) && l.getModerationLockedBy() != null) {
+            if (!l.getModerationLockedBy().getId().equals(actorId)) {
+                if (!force) throw new CustomBusinessException("Locked by another moderator");
+                // force nhưng lock đang active của người khác → phải force-claim
+                assertCanForce(actorId);
+            }
+            return; // ok: đang có lock và chủ lock là actor
+        }
+
+        // Không có lock hoặc lock hết hạn
+        if (!force) throw new CustomBusinessException("You must CLAIM the listing before approving/rejecting");
+
+        // force: chiếm lock trước rồi mới tiếp tục
+        assertCanForce(actorId);
+        // tái sử dụng luồng claim dưới DB lock
+        // (có thể tách core để không tự tạo BaseResponse)
+        claim(l.getId(), actorId, true);
+    }
+
 
 
     @Transactional(readOnly = true)

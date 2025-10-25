@@ -53,6 +53,8 @@ public class SecurityConfig {
                             "/api/accounts/avatar",
                             "/ws/**"
                     ).permitAll();
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+
                     auth.requestMatchers(HttpMethod.GET,
                             "/api/files/**",
                             "/api/category/**",

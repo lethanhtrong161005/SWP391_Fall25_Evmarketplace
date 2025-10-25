@@ -293,4 +293,116 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     List<Listing> findByModerationLockedBy_IdAndTitleContainingIgnoreCaseOrderByModerationLockedAtDesc(
             Long accountId, String title
     );
+
+    //Dọn Claim hết hạn
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+        UPDATE listing
+           SET moderation_locked_by = NULL,
+               moderation_locked_at = NULL,
+               moderator_id         = NULL,
+               updated_at           = NOW()
+         WHERE status = 'PENDING'
+           AND moderation_locked_by IS NOT NULL
+           AND moderation_locked_at IS NOT NULL
+           AND TIMESTAMPDIFF(SECOND, moderation_locked_at, NOW()) >= moderation_lock_ttl_secs
+        """, nativeQuery = true)
+    int releaseExpiredModerationLocks();
+
+    @Query(value = """
+        select
+           l.id as id,
+           l.category.id as categoryId,
+           l.title as title,
+           coalesce(bb.name, l.brand) as brand,
+           coalesce(mm.name, l.model) as model,
+           l.year as year,
+           coalesce(p.fullName, l.seller.phoneNumber) as sellerName,
+           l.price as price,
+           l.province as province,
+           l.batteryCapacityKwh as batteryCapacityKwh,
+           l.sohPercent as sohPercent,
+           concat(l.mileageKm, '') as mileageKm,
+           l.createdAt as createdAt,
+           concat(l.status, '') as status,
+           concat(l.visibility, '') as visibility,
+           l.consigned as isConsigned,
+           l.updatedAt as updatedAt,
+           l.expiresAt as expiresAt,
+           l.promotedUntil as promotedUntil,
+           l.hiddenAt as hiddenAt,
+           l.deletedAt as deletedAt,
+           (select count(f) from Favorite f where f.listing.id = l.id) as favoriteCount,
+           case when :currentAccountId is not null and exists
+                (select 1 from Favorite f2
+                  where f2.listing.id = l.id
+                    and f2.account.id = :currentAccountId)
+                then true else false end as likedByCurrentUser
+        from Listing l
+        left join Profile p on p.account.id = l.seller.id
+        left join Brand   bb on bb.id = l.brandId
+        left join Model   mm on mm.id = l.modelId
+        where l.deletedAt is null
+          and l.status in :statuses
+          and l.category.name <> 'BATTERY'
+        """,
+            countQuery = """
+        select count(l.id)
+        from Listing l
+        where l.deletedAt is null
+          and l.status in :statuses
+          and l.category.name <> 'BATTERY'
+        """)
+    Page<ListingListProjection> findVehicles(@Param("currentAccountId") Long currentAccountId,
+                                             @Param("statuses") java.util.Collection<com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus> statuses,
+                                             Pageable pageable);
+
+    @Query(value = """
+        select
+           l.id as id,
+           l.category.id as categoryId,
+           l.title as title,
+           coalesce(bb.name, l.brand) as brand,
+           coalesce(mm.name, l.model) as model,
+           l.year as year,
+           coalesce(p.fullName, l.seller.phoneNumber) as sellerName,
+           l.price as price,
+           l.province as province,
+           l.batteryCapacityKwh as batteryCapacityKwh,
+           l.sohPercent as sohPercent,
+           concat(l.mileageKm, '') as mileageKm,
+           l.createdAt as createdAt,
+           concat(l.status, '') as status,
+           concat(l.visibility, '') as visibility,
+           l.consigned as isConsigned,
+           l.updatedAt as updatedAt,
+           l.expiresAt as expiresAt,
+           l.promotedUntil as promotedUntil,
+           l.hiddenAt as hiddenAt,
+           l.deletedAt as deletedAt,
+           (select count(f) from Favorite f where f.listing.id = l.id) as favoriteCount,
+           case when :currentAccountId is not null and exists
+                (select 1 from Favorite f2
+                  where f2.listing.id = l.id
+                    and f2.account.id = :currentAccountId)
+                then true else false end as likedByCurrentUser
+        from Listing l
+        left join Profile p on p.account.id = l.seller.id
+        left join Brand   bb on bb.id = l.brandId
+        left join Model   mm on mm.id = l.modelId
+        where l.deletedAt is null
+          and l.status in :statuses
+          and l.category.name = 'BATTERY'
+        """,
+            countQuery = """
+        select count(l.id)
+        from Listing l
+        where l.deletedAt is null
+          and l.status in :statuses
+          and l.category.name = 'BATTERY'
+        """)
+    Page<ListingListProjection> findBatteries(@Param("currentAccountId") Long currentAccountId,
+                                              @Param("statuses") java.util.Collection<com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus> statuses,
+                                              Pageable pageable);
+
 }
