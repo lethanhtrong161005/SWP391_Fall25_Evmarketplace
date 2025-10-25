@@ -47,9 +47,11 @@ public class ConsignmentInspectionServiceImp implements ConsignmentInspectionSer
                 ConsignmentRequestStatus.INSPECTED_FAIL,
                 ConsignmentRequestStatus.INSPECTED_PASS);
 
+        //check request có đủ điều kiện để tạo inspection
         if (!(ALLOWED_STATUSES_FOR_INSPECTION.contains(request.getStatus())))
             throw new CustomBusinessException("this request can not create inspection's form");
 
+        //check có inspection nào đang hoạt động không
         boolean isExist = consignmentInspectionRepository.existsByRequestIdAndIsActiveTrue(request.getId());
         if (isExist) throw new CustomBusinessException("the request had inspection is active");
 
@@ -85,9 +87,11 @@ public class ConsignmentInspectionServiceImp implements ConsignmentInspectionSer
     @Override
     public BaseResponse<Void> inactiveInspection(Long inspectionId) {
 
+        //inspection
         ConsignmentInspection inspection = consignmentInspectionRepository.findById(inspectionId)
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.INSPECTION_NOT_FOUND.name()));
 
+        //request
         ConsignmentRequest request = consignmentRequestRepository.findById(inspection.getRequest().getId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
 

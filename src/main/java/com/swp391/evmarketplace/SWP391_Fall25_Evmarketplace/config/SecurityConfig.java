@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.config;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.JwtAuthenticationFilter;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.security.handlers.CustomSecurityHandlers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +76,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/accounts/change-password",
                             "/api/accounts/update-profile",
                             "/api/accounts/update-avatar",
-//                            "/api/accounts/current",
+                            "/api/accounts/current",
                             "/api/accounts/listing",
                             "/api/config/boosted",
                             "/api/inspection_schedule/**",
@@ -85,36 +86,50 @@ public class SecurityConfig {
                     ).authenticated();
 
                     //staff
-                    auth.requestMatchers("/api/staff/**",
-                            "/api/inspection_schedule/**/check_in",
-                            "/api/inspections/**"
-                    ).hasRole("STAFF");
+//                    auth.requestMatchers("/api/staff/**",
+//                            "/api/inspection_schedule/**/check_in",
+//                            "/api/inspections/**"
+//                    ).hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.POST, "/api/inspections/add").hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/**").hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.PUT, "/api/inspections/{inspectionId}/inactive").hasRole(AccountRole.STAFF.name());
 
 
                     //moderator
                     auth.requestMatchers("/api/moderator/listing/**").hasAnyRole("MODERATOR", "ADMIN", "MANAGER");
 
                     //manager
-                    auth.requestMatchers("/api/shifts/templates/**",
-                            "api/manager/**"
-                            ).hasRole("MANAGER");
+//                    auth.requestMatchers(
+//                            "/api/shifts/templates/**",
+//                            "api/manager/**"
+//                            ).hasRole(AccountRole.MANAGER.name());
 
+                    auth.requestMatchers(HttpMethod.GET,
+//                            "/api/shifts/templates/**",
+                                    "/api/manager/consignment-request",
+                                    "/api/manager/branches/{branchId}/accounts/staff",
+                                    "/api/manager/consignment-request",
+                                    "/api/manager/branches/{branchId}/consignment-request/ignore-submitted",
+                                    "/api/manager/branches/{branchId}/consignment-requests/assign")
+                            .hasRole("MANAGER");
+                    auth.requestMatchers(HttpMethod.PUT, "/api/manager/consignment-requests/{requestId}/assign/{staffId}")
+                            .hasRole(AccountRole.MANAGER.name());
 
                     //admin
-                    auth.requestMatchers("api/admin/accounts/**").hasRole("ADMIN");
+                    auth.requestMatchers("/api/admin/accounts/**").hasRole("ADMIN");
                     auth.requestMatchers(HttpMethod.POST,
                                     "/api/category/add",
                                     "/api/brand/add",
                                     "/api/model/add",
                                     "/api/product/vehicle/add",
                                     "/api/product/battery/add")
-                            .hasAnyRole("ADMIN","STAFF");
+                            .hasAnyRole("ADMIN", "STAFF");
 
                     auth.requestMatchers(HttpMethod.DELETE,
                                     "/api/category/delete/**",
                                     "/api/brand/delete/**",
                                     "/api/model/delete/**")
-                            .hasAnyRole("ADMIN","STAFF");
+                            .hasAnyRole("ADMIN", "STAFF");
 
                     auth.requestMatchers(HttpMethod.PUT,
                                     "/api/category/update/**",
@@ -122,7 +137,7 @@ public class SecurityConfig {
                                     "/api/model/update/**",
                                     "/api/product/vehicle/update/**",
                                     "/api/product/battery/update/**")
-                            .hasAnyRole("ADMIN","STAFF");
+                            .hasAnyRole("ADMIN", "STAFF");
 
                     auth.requestMatchers("api/admin/**").hasRole("ADMIN");
 
