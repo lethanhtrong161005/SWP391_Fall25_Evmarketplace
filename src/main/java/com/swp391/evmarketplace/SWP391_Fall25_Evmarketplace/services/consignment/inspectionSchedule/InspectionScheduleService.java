@@ -16,7 +16,7 @@ import java.util.List;
 
 public interface InspectionScheduleService {
     BaseResponse<Void> createSchedule(CreateInspectionScheduleDTO dto);
-    BaseResponse<ShiftAvailabilityDayDTO> getAvailability(Long staffId, Long branchId, ItemType itemType, LocalDate date);
+    BaseResponse<ShiftAvailabilityDayDTO> getAvailability(Long requestId, LocalDate date);
     BaseResponse<Void> cancelSchedule(Long scheduleId,CancelScheduleDTO dto);
     BaseResponse<Void> checkin(Long scheduleId);
 

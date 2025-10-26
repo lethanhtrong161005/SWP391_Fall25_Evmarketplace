@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ConsignmentInspectionServiceImp implements ConsignmentInspectionService {
@@ -73,8 +74,9 @@ public class ConsignmentInspectionServiceImp implements ConsignmentInspectionSer
                 ? ConsignmentRequestStatus.INSPECTED_PASS
                 : ConsignmentRequestStatus.INSPECTED_FAIL);
 
-        consignmentInspectionRepository.save(inspection);
         consignmentRequestRepository.save(request);
+        consignmentInspectionRepository.save(inspection);
+
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setSuccess(true);

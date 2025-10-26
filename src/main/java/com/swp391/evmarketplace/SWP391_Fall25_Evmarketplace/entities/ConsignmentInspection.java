@@ -24,9 +24,6 @@ public class ConsignmentInspection {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //    @OneToOne(optional = false, fetch = FetchType.LAZY)
-//    @JoinColumn(name = "request_id", nullable = false, unique = true,
-//            foreignKey = @ForeignKey(name = "fk_ci_req"))
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
     @JoinColumn(
             name = "request_id",

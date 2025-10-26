@@ -31,12 +31,10 @@ public class InspectionScheduleController {
 
     @GetMapping("/availability")
     public ResponseEntity<BaseResponse<ShiftAvailabilityDayDTO>> getAvailability(
-            @RequestParam Long staffId,
-            @RequestParam Long branchId,
-            @RequestParam ItemType itemType,
+            @RequestParam Long requestId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        var res = inspectionScheduleService.getAvailability(staffId, branchId, itemType, date);
+        var res = inspectionScheduleService.getAvailability(requestId, date);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 

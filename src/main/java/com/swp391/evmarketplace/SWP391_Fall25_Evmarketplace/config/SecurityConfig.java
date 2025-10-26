@@ -86,13 +86,11 @@ public class SecurityConfig {
                     ).authenticated();
 
                     //staff
-//                    auth.requestMatchers("/api/staff/**",
-//                            "/api/inspection_schedule/**/check_in",
-//                            "/api/inspections/**"
-//                    ).hasRole(AccountRole.STAFF.name());
-                    auth.requestMatchers(HttpMethod.POST, "/api/inspections/add").hasRole(AccountRole.STAFF.name());
-                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/**").hasRole(AccountRole.STAFF.name());
-                    auth.requestMatchers(HttpMethod.PUT, "/api/inspections/{inspectionId}/inactive").hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers("/api/staff/**").hasRole(AccountRole.STAFF.name())
+                            .requestMatchers("/api/inspections/**").hasRole(AccountRole.STAFF.name());
+//                    auth.requestMatchers(HttpMethod.POST, "/api/inspections/add").hasRole(AccountRole.STAFF.name());
+//                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/**").hasRole(AccountRole.STAFF.name());
+//                    auth.requestMatchers(HttpMethod.PUT, "/api/inspections/{inspectionId}/inactive").hasRole(AccountRole.STAFF.name());
 
 
                     //moderator

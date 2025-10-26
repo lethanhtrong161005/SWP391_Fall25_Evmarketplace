@@ -108,8 +108,13 @@ public class ConsignmentRequest {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToOne(mappedBy = "request")
-    private ConsignmentInspection inspection;
+        // A request can have multiple inspections over time (only one may be active at once).
+        // The previous mapping used OneToOne which caused Hibernate to join eagerly and assert duplicates
+        // when multiple inspection rows existed for the same request. Switch to OneToMany LAZY to avoid
+        // duplicate row assertion on simple findById and reflect correct cardinality.
+        @OneToMany(mappedBy = "request", fetch = FetchType.LAZY)
+        @JsonIgnore
+        private List<ConsignmentInspection> inspections = new ArrayList<>();
 
     @OneToOne(mappedBy = "request")
     private ConsignmentAgreement agreement;

@@ -124,10 +124,13 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
 
     //lấy danh sách ca làm trống
     @Override
-    public BaseResponse<ShiftAvailabilityDayDTO> getAvailability(Long staffId, Long branchId, ItemType itemType, LocalDate date) {
-        if (branchId == null || itemType == null || date == null || staffId == null) {
+    public BaseResponse<ShiftAvailabilityDayDTO> getAvailability(Long requestId, LocalDate date) {
+        if (requestId == null || date == null) {
             throw new CustomBusinessException("MISSING_PARAMS");
         }
+
+        ConsignmentRequest request = consignmentRequestRepository.findById(requestId)
+                .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
 
         // validate date: not in the past and not over 10 days ahead
         LocalDate today = LocalDate.now();
@@ -135,14 +138,16 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
         //đặt lịch không hơn 10 ngày kể từ ngày đặt
         if (date.isAfter(today.plusDays(10))) throw new CustomBusinessException("DATE_EXCEEDS_10_DAYS_LIMIT");
 
-        var shifts = shiftTemplateRepository.findByBranch_IdAndItemTypeAndIsActiveTrue(branchId, itemType);
+        var shifts = shiftTemplateRepository.findByBranch_IdAndItemTypeAndIsActiveTrue(
+                request.getPreferredBranch().getId(), request.getItemType());
         var items = shifts.stream()
                 .map(s -> {
-                    // ca trong ngày hôm đó có còn không
+                    //kiểm tra ca này giờ này có thể book không
                     boolean selectable = isShiftSelectableToday(date, s.getStartTime(), s.getEndTime());
                     //staff có bận không
                     boolean isBusy = selectable && inspectionScheduleRepository
-                            .existsByStaffIdAndShiftIdAndScheduleDateAndStatusIn(staffId, s.getId(), date, OCCUPIED);
+                            .existsByStaffIdAndShiftIdAndScheduleDateAndStatusIn(request.getStaff().getId(),
+                                    s.getId(), date, OCCUPIED);
 
                     boolean disable = !selectable || isBusy;
                     String reason = !selectable
