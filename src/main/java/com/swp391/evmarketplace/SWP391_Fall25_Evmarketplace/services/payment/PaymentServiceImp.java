@@ -130,7 +130,7 @@ public class PaymentServiceImp implements PaymentService {
         }
 
         if (order.getReservedUntil() != null && LocalDateTime.now().isAfter(order.getReservedUntil()))
-            throw new CustomBusinessException("Reservation expired. Please create a new order");
+            throw new CustomBusinessException("Reservation expired");
 
         BigDecimal total   = order.getAmount();
         BigDecimal paid    = order.getPaidAmount() == null ? BigDecimal.ZERO : order.getPaidAmount();
@@ -250,6 +250,12 @@ public class PaymentServiceImp implements PaymentService {
         }
 
         BigDecimal payAmt = BigDecimal.valueOf(wantVnd);
+
+        if(referenceNo != null){
+            if(salePaymentRepository.existsByMethodAndReferenceNo(PaymentMethod.CASH, referenceNo)){
+                throw new CustomBusinessException("Reference No already exists");
+            }
+        }
 
 
         var pay = new SalePayment();

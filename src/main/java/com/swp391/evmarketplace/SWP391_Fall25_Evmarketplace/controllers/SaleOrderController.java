@@ -29,8 +29,9 @@ public class SaleOrderController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @GetMapping
-    public ResponseEntity<?> getAllOrdersByStaffId(
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> getAllOrdersByUserId(
+            @PathVariable Long userId,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "desc") String dir,
@@ -42,10 +43,17 @@ public class SaleOrderController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
             ){
-        var res = saleOrderSerivce.getAllOrdersByStaffId(
-                authUtil.getCurrentAccountIdOrNull(), orderNo, status, size, page, sort, orderNo, start, end
+        var res = saleOrderSerivce.getAllOrdersByUserId(
+                userId, orderNo, status, size, page, sort, orderNo, start, end
         );
         return ResponseEntity.status(res.getStatus()).body(res);
     }
+
+    @PutMapping("/cancel/{id}")
+    public ResponseEntity<?> cancelOrder(@PathVariable Long id){
+        var res =  saleOrderSerivce.cancelOrder(id);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
 
 }

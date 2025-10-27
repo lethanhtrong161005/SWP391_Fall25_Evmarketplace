@@ -1,5 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.order.SaleOrderDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OrderStatus;
 import jakarta.persistence.*;
@@ -82,7 +84,8 @@ public class SaleOrder {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "is_open", insertable = false, updatable = false)
+    @JsonIgnore
+    @Column(name = "is_open", insertable = false, updatable = false, nullable = true)
     @Generated(GenerationTime.ALWAYS)
     private Boolean isOpen;
 
@@ -101,6 +104,7 @@ public class SaleOrder {
     private String orderNo;
 
     @Transient
+    @JsonProperty("isOpen")
     public boolean isOpenFlag() {
         return Boolean.TRUE.equals(isOpen);
     }

@@ -1,9 +1,11 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.order;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.order.CreateOrderBuyRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.order.OrderSearchRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.order.SaleOrderDto;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.SaleOrder;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
@@ -24,9 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.jpa.domain.Specification;
 
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -43,54 +48,107 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
     private EntityManager entityManager;
 
     @Override
-    public BaseResponse<?> getAllOrdersByStaffId(Long staffId, String orderNo, OrderStatus status, int size, int page, String sort, String dir, LocalDateTime start, LocalDateTime end) {
+    @Transactional
+    public BaseResponse<?> cancelOrder(Long orderId) {
+        var order = saleOrderRepository.findById(orderId).orElseThrow(() -> new CustomBusinessException("Order Not Found"));
 
-        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        String sortField = switch (sort) {
-            case  "amount", "paidAmount", "status", "updatedAt", "createdAt" -> sort;
+        if(order.getStatus() != OrderStatus.INITIATED && order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new CustomBusinessException("Can't cancel Order");
+        }
+
+        if(order.getPaidAmount() != null &&  order.getPaidAmount().compareTo(BigDecimal.ZERO) > 0){
+            throw new CustomBusinessException("Order has payment in progress or captured");
+        }
+
+        Account log = authUtil.getCurrentAccount();
+        if(log.getRole() == AccountRole.MEMBER){
+            if(!log.getId().equals(order.getBuyer().getId())) {
+                throw new CustomBusinessException("You are not the owner of this order");
+            }
+        }
+
+        order.setStatus(OrderStatus.CANCELED);
+        Listing l = order.getListing();
+        if(l.getStatus() == ListingStatus.RESERVED){
+            l.setStatus(ListingStatus.ACTIVE);
+            listingRepository.save(l);
+        }
+        saleOrderRepository.save(order);
+        saleOrderRepository.flush();
+
+        BaseResponse<?> res = new  BaseResponse<>();
+        res.setMessage("Order Cancelled");
+        res.setSuccess(true);
+        res.setStatus(200);
+        return res;
+    }
+
+    @Override
+    public BaseResponse<?> getAllOrdersByUserId(
+            Long userId, String orderNo, OrderStatus status,
+            int size, int page, String sort, String dir,
+            LocalDateTime start, LocalDateTime end) {
+
+        Account user = accountRepository.findById(userId)
+                .orElseThrow(() -> new CustomBusinessException("User not found"));
+
+        OrderSearchRequest c = new OrderSearchRequest(orderNo, status, size, page, sort, dir, start, end);
+
+        return switch (user.getRole()) {
+            case STAFF  -> getAllOrdersByStaffId(userId, c);
+            case MEMBER -> getAllOrdersByMemberId(userId, c);
+            default     -> throw new CustomBusinessException("User not authorized");
+        };
+    }
+
+    private BaseResponse<?> getAllOrdersByStaffId(Long staffId, OrderSearchRequest c) {
+        return searchOrders(SaleOrderSpecs.ofStaff(staffId), c);
+    }
+
+    private BaseResponse<?> getAllOrdersByMemberId(Long memberId, OrderSearchRequest c) {
+        return searchOrders(SaleOrderSpecs.ofBuyer(memberId), c);
+    }
+
+    private Pageable buildPageable(OrderSearchRequest c) {
+        Sort.Direction direction = "asc".equalsIgnoreCase(c.getDir()) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String sortField = switch (String.valueOf(c.getSort())) {
+            case "amount", "paidAmount", "status", "updatedAt", "createdAt" -> c.getSort();
             default -> "createdAt";
         };
+        int page = c.getPage() != null ? Math.max(c.getPage(), 0) : 0;
+        int size = c.getSize() != null ? Math.max(c.getSize(), 1) : 10;
+        return PageRequest.of(page, size, Sort.by(direction, sortField));
+    }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+    private <D> BaseResponse<PageResponse<D>> okPage(Page<D> page) {
+        PageResponse<D> pr = new PageResponse<>();
+        pr.setItems(page.getContent());
+        pr.setTotalElements(page.getTotalElements());
+        pr.setTotalPages(page.getTotalPages());
+        pr.setSize(page.getSize());
+        pr.setPage(page.getNumber());
+        pr.setHasNext(page.hasNext());
+        pr.setHasPrevious(page.hasPrevious());
 
-        if (start != null && end != null && start.isAfter(end)) {
-            LocalDateTime t = start;
-            start = end;
-            end = t;
-        }
-        Page<SaleOrder> entityPage;
-
-        if(orderNo != null && !orderNo.isEmpty()) {
-            entityPage = saleOrderRepository.findByOrderNoAndListing_ResponsibleStaff_Id(orderNo.trim(), staffId, pageable);
-        }else{
-            Specification<SaleOrder> spec = Specification.allOf(
-                    SaleOrderSpecs.ofStaff(staffId),
-                    SaleOrderSpecs.hasStatus(status),
-                    SaleOrderSpecs.createdFrom(start),
-                    SaleOrderSpecs.createdTo(end),
-                    SaleOrderSpecs.orderNoLike(orderNo)
-            );
-            entityPage = saleOrderRepository.findAll(spec, pageable);
-        }
-
-        List<SaleOrderDto> items = entityPage.map(i -> i.toDto(i)).getContent();
-
-        PageResponse<SaleOrderDto> pageRes = new PageResponse<>();
-        pageRes.setItems(items);
-        pageRes.setTotalElements(entityPage.getTotalElements());
-        pageRes.setTotalPages(entityPage.getTotalPages());
-        pageRes.setSize(entityPage.getSize());
-        pageRes.setPage(entityPage.getNumber());
-        pageRes.setHasNext(entityPage.hasNext());
-        pageRes.setHasPrevious(entityPage.hasPrevious());
-
-        BaseResponse res = new BaseResponse();
-        res.setData(pageRes);
+        BaseResponse<PageResponse<D>> res = new BaseResponse<>();
+        res.setData(pr);
         res.setMessage("Get Order Success");
         res.setStatus(200);
         res.setSuccess(true);
-
         return res;
+    }
+
+    private BaseResponse<?> searchOrders(Specification<SaleOrder> actorSpec, OrderSearchRequest c) {
+        Specification<SaleOrder> spec = Specification.allOf(
+                actorSpec,
+                SaleOrderSpecs.hasStatus(c.getStatus()),
+                SaleOrderSpecs.orderNoLike(c.getOrderNo()),
+                SaleOrderSpecs.createdBetween(c.getStart(), c.getEnd())
+        );
+
+        Page<SaleOrder> entityPage = saleOrderRepository.findAll(spec, buildPageable(c));
+        Page<SaleOrderDto> dtoPage = entityPage.map(e -> e.toDto(e));
+        return okPage(dtoPage);
     }
 
     @Override
@@ -135,8 +193,15 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
             }
         }
 
-        if(saleOrderRepository.existsByListing_IdAndIsOpenTrue(listing.getId())){
-            throw new CustomBusinessException("Listing already has an open order ");
+        Set<OrderStatus> OPEN_STATUSES = EnumSet.of(
+                OrderStatus.INITIATED,
+                OrderStatus.PENDING_PAYMENT,
+                OrderStatus.PAID,
+                OrderStatus.CONTRACT_SIGNED
+        );
+
+        if (saleOrderRepository.existsByListing_IdAndStatusIn(listing.getId(), OPEN_STATUSES)) {
+            throw new CustomBusinessException("Listing already has an open order");
         }
 
         try{

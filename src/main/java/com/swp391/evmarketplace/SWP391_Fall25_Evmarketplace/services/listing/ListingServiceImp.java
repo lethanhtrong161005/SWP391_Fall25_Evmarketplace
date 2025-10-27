@@ -1472,14 +1472,13 @@ public class ListingServiceImp implements ListingService {
         l.setRejectedAt(null);
         l.setModerator(actor);
 
-        // clear lock (DB trigger ở dưới cũng clear thêm cho chắc)
         l.setModerationLockedBy(null);
         l.setModerationLockedAt(null);
 
         pushHistory(l, actor, from, ListingStatus.APPROVED, "APPROVED", "");
 
         notificationService.notifySellerAfterCommit(l, "LISTING_APPROVED",
-                "Tin \"" + l.getTitle() + "\" đã được duyệt.");
+                l.getTitle(), "Đã được duyệt");
 
         var res = new BaseResponse<>();
         res.setSuccess(true); res.setStatus(200); res.setMessage("Approved listing");
@@ -1515,7 +1514,7 @@ public class ListingServiceImp implements ListingService {
         l.setModerationLockedAt(null);
 
         notificationService.notifySellerAfterCommit(l, "LISTING_REJECTED",
-                "Tin \"" + l.getTitle() + "\" bị từ chối: " + reason);
+                l.getTitle(), reason);
 
         var res = new BaseResponse<>();
         res.setSuccess(true); res.setStatus(200); res.setMessage("Rejected listing");
@@ -1533,19 +1532,17 @@ public class ListingServiceImp implements ListingService {
         if (isLockActive(l, now) && l.getModerationLockedBy() != null) {
             if (!l.getModerationLockedBy().getId().equals(actorId)) {
                 if (!force) throw new CustomBusinessException("Locked by another moderator");
-                // force nhưng lock đang active của người khác → phải force-claim
                 assertCanForce(actorId);
             }
-            return; // ok: đang có lock và chủ lock là actor
+            return;
         }
 
-        // Không có lock hoặc lock hết hạn
+
         if (!force) throw new CustomBusinessException("You must CLAIM the listing before approving/rejecting");
 
-        // force: chiếm lock trước rồi mới tiếp tục
+
         assertCanForce(actorId);
-        // tái sử dụng luồng claim dưới DB lock
-        // (có thể tách core để không tự tạo BaseResponse)
+
         claim(l.getId(), actorId, true);
     }
 

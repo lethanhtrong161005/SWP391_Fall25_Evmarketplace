@@ -55,6 +55,8 @@ public class SecurityConfig {
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
 
+                    auth.requestMatchers(HttpMethod.GET, "/api/files/contract/**").authenticated();
+
                     auth.requestMatchers(HttpMethod.GET,
                             "/api/files/**",
                             "/api/category/**",
@@ -79,6 +81,7 @@ public class SecurityConfig {
                             "/api/config/boosted",
                             "/api/consignments/**"
                     ).authenticated();
+
 
                     //staff
                     auth.requestMatchers("api/staff/**").hasRole("STAFF");

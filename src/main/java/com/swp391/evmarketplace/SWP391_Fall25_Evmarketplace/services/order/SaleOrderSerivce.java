@@ -10,8 +10,8 @@ public interface SaleOrderSerivce {
     BaseResponse<?> createOrder(CreateOrderBuyRequest req);
 
 
-    BaseResponse<?> getAllOrdersByStaffId(
-            Long staffId,
+    BaseResponse<?> getAllOrdersByUserId(
+            Long userId,
             String orderNo,
             OrderStatus status,
             int size,
@@ -21,6 +21,10 @@ public interface SaleOrderSerivce {
             LocalDateTime start,
             LocalDateTime end
     );
+
+
+    BaseResponse<?> cancelOrder(Long orderId);
+
 
 
 }

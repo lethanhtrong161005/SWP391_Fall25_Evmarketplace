@@ -75,7 +75,7 @@ public class ContractServiceImpl implements ContractService {
 
         Contract contract = new Contract();
         contract.setOrder(order);
-        contract.setFileUrl(contractFile.getOriginalFilename());
+        contract.setFileUrl(upload.getFileName());
         contract.setSignMethod(ContractSignMethod.PAPER);
         contract.setSignedAt(null);
         contract.setEffectiveFrom(reqDto.getEffectiveFrom());

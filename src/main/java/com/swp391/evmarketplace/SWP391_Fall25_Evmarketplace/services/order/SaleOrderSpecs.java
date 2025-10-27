@@ -21,21 +21,33 @@ public final class SaleOrderSpecs {
         };
     }
 
+    public static Specification<SaleOrder> ofBuyer(Long buyerId) {
+        return (root, q, cb) -> (buyerId == null) ? null
+                : cb.equal(root.get("buyer").get("id"), buyerId);
+    }
+
+    public static Specification<SaleOrder> createdBetween(LocalDateTime start, LocalDateTime end) {
+        final LocalDateTime from = (start != null && end != null && end.isBefore(start)) ? end : start;
+        final LocalDateTime to = (start != null && end != null && end.isBefore(start)) ? start : end;
+
+        return (root, q, cb) -> {
+            if (from == null && to == null) return null;
+            if (from != null && to != null) return cb.between(root.get("createdAt"), from, to);
+            return (from != null)
+                    ? cb.greaterThanOrEqualTo(root.get("createdAt"), from)
+                    : cb.lessThanOrEqualTo(root.get("createdAt"), to);
+        };
+    }
+
     public static Specification<SaleOrder> hasStatus(OrderStatus status) {
         return (root, q, cb) -> (status == null) ? null : cb.equal(root.get("status"), status);
     }
 
-    public static Specification<SaleOrder> createdFrom(LocalDateTime start) {
-        return (root, q, cb) -> (start == null) ? null : cb.greaterThanOrEqualTo(root.get("createdAt"), start);
-    }
-
-    public static Specification<SaleOrder> createdTo(LocalDateTime end) {
-        return (root, q, cb) -> (end == null) ? null : cb.lessThanOrEqualTo(root.get("createdAt"), end);
-    }
-
-    public static Specification<SaleOrder> orderNoEquals(String orderNo) {
-        return (root, q, cb) ->
-                (orderNo == null || orderNo.isBlank()) ? null : cb.equal(root.get("orderNo"), orderNo.trim());
+    public static Specification<SaleOrder> orderNoEqualsIgnoreCase(String orderNo) {
+        return (root, q, cb) -> {
+            if (orderNo == null || orderNo.isBlank()) return null;
+            return cb.equal(cb.lower(root.get("orderNo")), orderNo.trim().toLowerCase());
+        };
     }
 
     public static Specification<SaleOrder> orderNoLike(String orderNo) {
@@ -44,5 +56,6 @@ public final class SaleOrderSpecs {
                         ? null
                         : cb.like(cb.lower(root.get("orderNo")), "%" + orderNo.trim().toLowerCase() + "%");
     }
+
 
 }
