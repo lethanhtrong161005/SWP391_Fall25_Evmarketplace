@@ -4,11 +4,16 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.shift.Cr
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.shift.UpdateShiftTemplateDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftAvailabilityDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.shift.ShiftTemplateResponseDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Branch;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ShiftTemplate;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ErrorCode;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.InspectionScheduleStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ItemType;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.BranchRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.InspectionScheduleRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ShiftTemplateRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +36,7 @@ public class ShiftTemplateServiceImp implements ShiftTemplateService {
     @Autowired
     private BranchRepository branchRepository;
     @Autowired
-    private ShiftAvailabilityService shiftAvailabilityService;
+    private InspectionScheduleRepository inspectionScheduleRepository;
 
     private ShiftTemplateResponseDTO toDto(ShiftTemplate e) {
         ShiftTemplateResponseDTO dto = new ShiftTemplateResponseDTO();
@@ -154,99 +160,99 @@ public class ShiftTemplateServiceImp implements ShiftTemplateService {
         return res;
     }
 
-    @Transactional
-    @Override
-    public BaseResponse<ShiftTemplateResponseDTO> update(Long id, UpdateShiftTemplateDTO dto) {
-        BaseResponse<ShiftTemplateResponseDTO> res = new BaseResponse<>();
-        Optional<ShiftTemplate> op = shiftTemplateRepository.findById(id);
-        if (op.isEmpty()) {
-            res.setStatus(404);
-            res.setSuccess(false);
-            res.setMessage("SHIFT_TEMPLATE_NOT_FOUND");
-            return res;
-        }
-        ShiftTemplate e = op.get();
-        if (dto.getName() != null) e.setName(dto.getName());
-        if (dto.getItemType() != null) e.setItemType(dto.getItemType());
-        LocalTime newStart = dto.getStartTime() != null ? dto.getStartTime() : e.getStartTime();
-        LocalTime newEnd   = dto.getEndTime()   != null ? dto.getEndTime()   : e.getEndTime();
-        String timeErr = validateTimeWindow(newStart, newEnd);
-        if (timeErr != null) {
-            res.setStatus(400);
-            res.setSuccess(false);
-            res.setMessage(timeErr);
-            return res;
-        }
-        if (dto.getStartTime() != null) e.setStartTime(dto.getStartTime());
-        if (dto.getEndTime() != null) e.setEndTime(dto.getEndTime());
-        
-        // không thể set inactive khi đang được sử dụng
-        if (dto.getIsActive() != null) {
-            boolean targetActive = dto.getIsActive();
-            if (!targetActive && isTemplateInUse(e.getId())) {
-                res.setStatus(400);
-                res.setSuccess(false);
-                res.setMessage("SHIFT_TEMPLATE_IN_USE");
-                return res;
-            }
-            e.setIsActive(targetActive);
-        }
-
-        if (dto.getBranchId() != null) {
-            Branch b = branchRepository.findById(dto.getBranchId()).orElse(null);
-            e.setBranch(b);
-        }
-
-        // Overlap re-check after applying changes
-        Long branchId = e.getBranch() != null ? e.getBranch().getId() : null;
-        var overlaps = shiftTemplateRepository.findOverlaps(branchId, e.getItemType(),
-                e.getStartTime(), e.getEndTime(), e.getId());
-        if (!overlaps.isEmpty()) {
-            res.setStatus(409);
-            res.setSuccess(false);
-            res.setMessage("SHIFT_TEMPLATE_OVERLAP");
-            return res;
-        }
-
-        ShiftTemplate saved = shiftTemplateRepository.save(e);
-        res.setStatus(200);
-        res.setSuccess(true);
-        res.setMessage("UPDATED");
-        res.setData(toDto(saved));
-        return res;
-    }
-
-    @Transactional
-    @Override
-    public BaseResponse<?> delete(Long id) {
-        BaseResponse<?> res = new BaseResponse<>();
-        Optional<ShiftTemplate> op = shiftTemplateRepository.findById(id);
-        if (op.isEmpty()) {
-            res.setStatus(404);
-            res.setSuccess(false);
-            res.setMessage("SHIFT_TEMPLATE_NOT_FOUND");
-            return res;
-        }
-        ShiftTemplate e = op.get();
-        // Soft delete = set inactive, but forbid if in use
-        if (isTemplateInUse(e.getId())) {
-            res.setStatus(400);
-            res.setSuccess(false);
-            res.setMessage("SHIFT_TEMPLATE_IN_USE");
-            return res;
-        }
-        e.setIsActive(false);
-        shiftTemplateRepository.save(e);
-        res.setStatus(200);
-        res.setSuccess(true);
-        res.setMessage("INACTIVATED");
-        return res;
-    }
+//    @Transactional
+//    @Override
+//    public BaseResponse<ShiftTemplateResponseDTO> update(Long id, UpdateShiftTemplateDTO dto) {
+//        BaseResponse<ShiftTemplateResponseDTO> res = new BaseResponse<>();
+//        Optional<ShiftTemplate> op = shiftTemplateRepository.findById(id);
+//        if (op.isEmpty()) {
+//            res.setStatus(404);
+//            res.setSuccess(false);
+//            res.setMessage("SHIFT_TEMPLATE_NOT_FOUND");
+//            return res;
+//        }
+//        ShiftTemplate e = op.get();
+//        if (dto.getName() != null) e.setName(dto.getName());
+//        if (dto.getItemType() != null) e.setItemType(dto.getItemType());
+//        LocalTime newStart = dto.getStartTime() != null ? dto.getStartTime() : e.getStartTime();
+//        LocalTime newEnd   = dto.getEndTime()   != null ? dto.getEndTime()   : e.getEndTime();
+//        String timeErr = validateTimeWindow(newStart, newEnd);
+//        if (timeErr != null) {
+//            res.setStatus(400);
+//            res.setSuccess(false);
+//            res.setMessage(timeErr);
+//            return res;
+//        }
+//        if (dto.getStartTime() != null) e.setStartTime(dto.getStartTime());
+//        if (dto.getEndTime() != null) e.setEndTime(dto.getEndTime());
+//
+//        // không thể set inactive khi đang được sử dụng
+//        if (dto.getIsActive() != null) {
+//            boolean targetActive = dto.getIsActive();
+//            if (!targetActive && isTemplateInUse(e.getId())) {
+//                res.setStatus(400);
+//                res.setSuccess(false);
+//                res.setMessage("SHIFT_TEMPLATE_IN_USE");
+//                return res;
+//            }
+//            e.setIsActive(targetActive);
+//        }
+//
+//        if (dto.getBranchId() != null) {
+//            Branch b = branchRepository.findById(dto.getBranchId()).orElse(null);
+//            e.setBranch(b);
+//        }
+//
+//        // Overlap re-check after applying changes
+//        Long branchId = e.getBranch() != null ? e.getBranch().getId() : null;
+//        var overlaps = shiftTemplateRepository.findOverlaps(branchId, e.getItemType(),
+//                e.getStartTime(), e.getEndTime(), e.getId());
+//        if (!overlaps.isEmpty()) {
+//            res.setStatus(409);
+//            res.setSuccess(false);
+//            res.setMessage("SHIFT_TEMPLATE_OVERLAP");
+//            return res;
+//        }
+//
+//        ShiftTemplate saved = shiftTemplateRepository.save(e);
+//        res.setStatus(200);
+//        res.setSuccess(true);
+//        res.setMessage("UPDATED");
+//        res.setData(toDto(saved));
+//        return res;
+//    }
+//
+//    @Transactional
+//    @Override
+//    public BaseResponse<?> delete(Long id) {
+//        BaseResponse<?> res = new BaseResponse<>();
+//        Optional<ShiftTemplate> op = shiftTemplateRepository.findById(id);
+//        if (op.isEmpty()) {
+//            res.setStatus(404);
+//            res.setSuccess(false);
+//            res.setMessage("SHIFT_TEMPLATE_NOT_FOUND");
+//            return res;
+//        }
+//        ShiftTemplate e = op.get();
+//        // Soft delete = set inactive, but forbid if in use
+//        if (isTemplateInUse(e.getId())) {
+//            res.setStatus(400);
+//            res.setSuccess(false);
+//            res.setMessage("SHIFT_TEMPLATE_IN_USE");
+//            return res;
+//        }
+//        e.setIsActive(false);
+//        shiftTemplateRepository.save(e);
+//        res.setStatus(200);
+//        res.setSuccess(true);
+//        res.setMessage("INACTIVATED");
+//        return res;
+//    }
 
 //
-    private boolean isTemplateInUse(Long templateId) {
-        return shiftAvailabilityService.isTemplateInUse(templateId);
-    }
+//    private boolean isTemplateInUse(Long templateId) {
+//        return shiftAvailabilityService.isTemplateInUse(templateId);
+//    }
 
     private String validateTimeWindow(LocalTime start, LocalTime end) {
         if (start == null || end == null) return "INVALID_TIME";

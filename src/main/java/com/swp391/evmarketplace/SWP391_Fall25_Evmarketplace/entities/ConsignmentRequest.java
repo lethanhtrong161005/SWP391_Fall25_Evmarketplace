@@ -23,12 +23,12 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(
-    name = "consignment_request",
-    indexes = {
-        @Index(name = "idx_cr_owner", columnList = "owner_id"),
-        @Index(name = "idx_cr_status", columnList = "status"),
-        @Index(name = "idx_cr_category", columnList = "category_id")
-    }
+        name = "consignment_request",
+        indexes = {
+                @Index(name = "idx_cr_owner", columnList = "owner_id"),
+                @Index(name = "idx_cr_status", columnList = "status"),
+                @Index(name = "idx_cr_category", columnList = "category_id")
+        }
 )
 public class ConsignmentRequest {
     @Id
@@ -37,12 +37,12 @@ public class ConsignmentRequest {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", nullable = false,
-        foreignKey = @ForeignKey(name = "fk_cr_owner"))
+            foreignKey = @ForeignKey(name = "fk_cr_owner"))
     private Account owner;
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id", nullable = true,
-        foreignKey = @ForeignKey(name = "fk_consignment_staff"))
+            foreignKey = @ForeignKey(name = "fk_consignment_staff"))
     private Account staff;
 
     @Lob
@@ -55,7 +55,7 @@ public class ConsignmentRequest {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "category_id",
-        foreignKey = @ForeignKey(name = "fk_cr_category"))
+            foreignKey = @ForeignKey(name = "fk_cr_category"))
     private Category category;
 
     @Column(name = "brand", length = 100, nullable = false)
@@ -78,10 +78,10 @@ public class ConsignmentRequest {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "preferred_branch_id", nullable = false,
-        foreignKey = @ForeignKey(name = "fk_cr_branch"))
+            foreignKey = @ForeignKey(name = "fk_cr_branch"))
     private Branch preferredBranch;
 
-    @OneToMany(mappedBy = "request",  fetch = FetchType.LAZY,
+    @OneToMany(mappedBy = "request", fetch = FetchType.LAZY,
             cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<ConsignmentRequestMedia> mediaList = new ArrayList<>();
@@ -108,11 +108,28 @@ public class ConsignmentRequest {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToOne(mappedBy = "request")
-    private ConsignmentInspection inspection;
+        // A request can have multiple inspections over time (only one may be active at once).
+        // The previous mapping used OneToOne which caused Hibernate to join eagerly and assert duplicates
+        // when multiple inspection rows existed for the same request. Switch to OneToMany LAZY to avoid
+        // duplicate row assertion on simple findById and reflect correct cardinality.
+        @OneToMany(mappedBy = "request", fetch = FetchType.LAZY)
+        @JsonIgnore
+        private List<ConsignmentInspection> inspections = new ArrayList<>();
 
     @OneToOne(mappedBy = "request")
     private ConsignmentAgreement agreement;
+
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancelled_by", nullable = true,
+            foreignKey = @ForeignKey(name = "fk_cr_cancelled_by"))
+    private Account cancelledBy;
+
+    @Column(name = "cancelled_at", nullable = true)
+    private LocalDateTime cancelledAt;
+
+    @Lob
+    @Column(name = "cancelled_reason", columnDefinition = "text", nullable = true)
+    private String cancelledReason;
 
     public void addMedia(ConsignmentRequestMedia media) {
         media.setRequest(this);

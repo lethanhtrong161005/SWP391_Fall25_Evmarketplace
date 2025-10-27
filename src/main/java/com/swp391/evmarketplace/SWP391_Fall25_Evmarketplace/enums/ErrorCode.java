@@ -69,8 +69,17 @@ public enum ErrorCode {
     MODEL_NOT_BELONG_TO_BRAND,
 
     //category
-    CATEGORY_NOT_FOUND;
+    CATEGORY_NOT_FOUND,
+    CATEGORY_INACTIVE,
 
+    //shift
+    SHIFT_TEMPLATE_NOT_FOUND,
+
+    //schedule
+    NOT_FOUND_SCHEDULE,
+
+    //inspection
+    INSPECTION_NOT_FOUND;
 
 }
 

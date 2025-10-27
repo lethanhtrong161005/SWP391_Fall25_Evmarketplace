@@ -18,4 +18,6 @@ public class ShiftAvailabilityDTO {
     private LocalTime startTime;
     private LocalTime endTime;
     private boolean booked; // true if already booked at given date
+    private boolean disable;
+    private String reason;
 }

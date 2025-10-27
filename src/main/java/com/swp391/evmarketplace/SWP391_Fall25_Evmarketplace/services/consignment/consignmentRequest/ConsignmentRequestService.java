@@ -1,9 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.AcceptedConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.CreateConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.RejectedConsignmentRequestDTO;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.ConsignmentRequestListItemDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.request.*;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.request.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,13 +14,15 @@ public interface ConsignmentRequestService {
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByOwnerId(Long id, int page, int size, String dir, String sort);
     BaseResponse<Void> RequestAccepted(AcceptedConsignmentRequestDTO requestDTO);
     BaseResponse<Void> RequestRejected(RejectedConsignmentRequestDTO requestDTO);
-    BaseResponse<List<ConsignmentRequestListItemDTO>> getListByBranchIdAndStaffIsNull(Long branchId);
+    BaseResponse<List<ConsignmentRequestListItemDTO>> getAllByBranchIdAndSubmitted(Long branchId);
+    BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getAllByBranchIdIgnoreSubmitted(Long branchId, int page, int size, String dir, String sort);
     BaseResponse<Void> setStaffForRequest(Long requestId, Long staffId);
 
     //lấy tất cả request có staff
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffId(int page, int size, String dir, String sort);
     //lấy tất cả request staff nhưng chưa xem xét
     BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> getListByStaffIdAndNotConsider(int page, int size, String dir, String sort);
-
-    BaseResponse<Void> UserCancelRequest(Long requestId);
+    BaseResponse<Void> UserCancelRequest(CancelConsignmentRequestDTO dto);
+    BaseResponse<Void> userUpdateRequest(Long requestId, UpdateConsignmentRequestDTO dto, List<MultipartFile> newImages, List<MultipartFile> newVideos);
+    BaseResponse<ConsignmentRequestListItemDTO> getRequestById(Long requestId);
 }
