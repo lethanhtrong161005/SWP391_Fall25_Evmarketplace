@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.order.SaleOrderDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,6 +10,7 @@ import org.hibernate.annotations.GenerationTime;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Getter
@@ -17,8 +19,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "sale_order"
+@Table(name = "sale_order",
+        indexes = {
+                @Index(name = "idx_sale_order_order_code", columnList = "order_code"),
+                @Index(name = "idx_sale_order_order_no",       columnList = "order_no"),
+
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uq_sale_order_order_no",   columnNames = "order_no"),
+                @UniqueConstraint(name = "uq_sale_order_order_code", columnNames = "order_code")
+        }
 )
+
 public class SaleOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -80,8 +92,83 @@ public class SaleOrder {
     @OneToOne(mappedBy = "order")
     private Contract contract;
 
+    @Column(name = "order_code", nullable = false, unique = true)
+    @Generated(GenerationTime.INSERT)
+    private BigInteger orderCode;
+
+    @Column(name = "order_no", length = 40, nullable = false, unique = true)
+    @Generated(GenerationTime.INSERT)
+    private String orderNo;
+
     @Transient
     public boolean isOpenFlag() {
         return Boolean.TRUE.equals(isOpen);
     }
+
+
+    public SaleOrderDto toDto(SaleOrder order) {
+        if (order == null) return null;
+
+        SaleOrderDto dto = new SaleOrderDto();
+
+        dto.setId(order.getId());
+
+        // Listing (required theo mapping của bạn)
+        if (order.getListing() != null) {
+            dto.setListingId(order.getListing().getId());
+            dto.setListingTitle(order.getListing().getTitle());
+        }
+
+        // Buyer
+        if (order.getBuyer() != null) {
+            dto.setBuyerId(order.getBuyer().getId());
+            dto.setBuyerName(order.getBuyer().getProfile() != null
+                    ? order.getBuyer().getProfile().getFullName() : null);
+            dto.setBuyerPhone(order.getBuyer().getPhoneNumber());
+        }
+
+        // Seller
+        if (order.getSeller() != null) {
+            dto.setSellerId(order.getSeller().getId());
+            dto.setSellerName(order.getSeller().getProfile() != null
+                    ? order.getSeller().getProfile().getFullName() : null);
+            dto.setSellerPhone(order.getSeller().getPhoneNumber());
+        }
+
+
+        dto.setOrderNo(order.getOrderNo());
+        dto.setOrderCode(order.getOrderCode() != null ? order.getOrderCode() : null);
+
+        dto.setConsignmentAgreementId(order.getConsignmentAgreement() != null
+                ? order.getConsignmentAgreement().getId() : null);
+        dto.setBranchId(order.getBranch() != null ? order.getBranch().getId() : null);
+        dto.setBranchName(order.getBranch() != null ? order.getBranch().getName() : null);
+
+        dto.setAmount(order.getAmount());
+        dto.setPaidAmount(order.getPaidAmount());
+        dto.setStatus(order.getStatus());
+        dto.setReservedUntil(order.getReservedUntil());
+        dto.setCreatedAt(order.getCreatedAt());
+        dto.setUpdatedAt(order.getUpdatedAt());
+        dto.setIsOpen(order.getIsOpen());
+
+        double percent = 0.0;
+        if (order.getAmount() != null
+                && order.getAmount().compareTo(java.math.BigDecimal.ZERO) > 0
+                && order.getPaidAmount() != null) {
+            percent = order.getPaidAmount()
+                    .multiply(java.math.BigDecimal.valueOf(100))
+                    .divide(order.getAmount(), 2, java.math.RoundingMode.HALF_UP)
+                    .doubleValue();
+        }
+        dto.setPaymentProcessPercent(percent);
+
+        dto.setIsReservedActive(order.getReservedUntil() != null
+                ? java.time.LocalDateTime.now().isBefore(order.getReservedUntil())
+                : null);
+
+        return dto;
+    }
+
+
 }

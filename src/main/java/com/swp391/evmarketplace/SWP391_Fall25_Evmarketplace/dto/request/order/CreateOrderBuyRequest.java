@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.order;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OrderStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.validation.ValidPhone;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,7 +19,8 @@ public class CreateOrderBuyRequest {
     @NotNull(message = "Listing ID is required")
     private Long listingId;
 
-    @NotNull(message = "Buyer ID is required")
-    private Long buyerId;
+    @NotNull(message = "Buyer phone number is required")
+    @ValidPhone
+    private String buyerPhoneNumber;
 
 }

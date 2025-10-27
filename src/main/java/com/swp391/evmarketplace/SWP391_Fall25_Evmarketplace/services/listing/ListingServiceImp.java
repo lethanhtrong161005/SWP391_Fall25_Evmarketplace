@@ -1607,5 +1607,8 @@ public class ListingServiceImp implements ListingService {
         return res;
     }
 
-
+    @Override
+    public BaseResponse<?> getListingAllByStaffId(Long staffId) {
+        return null;
+    }
 }

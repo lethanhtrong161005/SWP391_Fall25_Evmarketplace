@@ -2,12 +2,11 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.order;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.order.CreateOrderBuyRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.order.SaleOrderDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.SaleOrder;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountRole;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentAgreementStatus;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ListingRepository;
@@ -19,10 +18,14 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
+
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -38,6 +41,57 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Override
+    public BaseResponse<?> getAllOrdersByStaffId(Long staffId, String orderNo, OrderStatus status, int size, int page, String sort, String dir, LocalDateTime start, LocalDateTime end) {
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        String sortField = switch (sort) {
+            case  "amount", "paidAmount", "status", "updatedAt", "createdAt" -> sort;
+            default -> "createdAt";
+        };
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField));
+
+        if (start != null && end != null && start.isAfter(end)) {
+            LocalDateTime t = start;
+            start = end;
+            end = t;
+        }
+        Page<SaleOrder> entityPage;
+
+        if(orderNo != null && !orderNo.isEmpty()) {
+            entityPage = saleOrderRepository.findByOrderNoAndListing_ResponsibleStaff_Id(orderNo.trim(), staffId, pageable);
+        }else{
+            Specification<SaleOrder> spec = Specification.allOf(
+                    SaleOrderSpecs.ofStaff(staffId),
+                    SaleOrderSpecs.hasStatus(status),
+                    SaleOrderSpecs.createdFrom(start),
+                    SaleOrderSpecs.createdTo(end),
+                    SaleOrderSpecs.orderNoLike(orderNo)
+            );
+            entityPage = saleOrderRepository.findAll(spec, pageable);
+        }
+
+        List<SaleOrderDto> items = entityPage.map(i -> i.toDto(i)).getContent();
+
+        PageResponse<SaleOrderDto> pageRes = new PageResponse<>();
+        pageRes.setItems(items);
+        pageRes.setTotalElements(entityPage.getTotalElements());
+        pageRes.setTotalPages(entityPage.getTotalPages());
+        pageRes.setSize(entityPage.getSize());
+        pageRes.setPage(entityPage.getNumber());
+        pageRes.setHasNext(entityPage.hasNext());
+        pageRes.setHasPrevious(entityPage.hasPrevious());
+
+        BaseResponse res = new BaseResponse();
+        res.setData(pageRes);
+        res.setMessage("Get Order Success");
+        res.setStatus(200);
+        res.setSuccess(true);
+
+        return res;
+    }
 
     @Override
     @Transactional
@@ -62,7 +116,7 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
             throw new CustomBusinessException("You are not allowed to create an order");
         }
 
-        var buyer = accountRepository.findById(req.getBuyerId()).orElseThrow(() -> new CustomBusinessException("Buyer not found"));
+        var buyer = accountRepository.findByPhoneNumber(req.getBuyerPhoneNumber()).orElseThrow(() -> new CustomBusinessException("Buyer phone number not found"));
         if(buyer.getId().equals(listing.getSeller().getId())){
             throw new CustomBusinessException("Buyer cannot be the seller");
         }
