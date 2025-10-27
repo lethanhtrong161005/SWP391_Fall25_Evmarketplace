@@ -79,7 +79,9 @@ public enum ErrorCode {
     NOT_FOUND_SCHEDULE,
 
     //inspection
-    INSPECTION_NOT_FOUND;
+    INSPECTION_NOT_FOUND,
+
+    AGREEMENT_NOT_FOUND;
 
 }
 

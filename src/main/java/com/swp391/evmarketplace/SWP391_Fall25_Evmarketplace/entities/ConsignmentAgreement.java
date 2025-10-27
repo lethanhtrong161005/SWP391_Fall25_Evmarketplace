@@ -1,6 +1,8 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AgreementDuration;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentAgreementStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.DepositStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -33,6 +35,11 @@ public class ConsignmentAgreement {
     private ConsignmentRequest request;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "staff_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_cagr_staff"))
+    private Account staff;
+
+    @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_cagr_owner"))
     private Account owner;
@@ -48,9 +55,27 @@ public class ConsignmentAgreement {
     @Column(name = "acceptable_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal acceptablePrice;
 
+
+    // phần trăm cọc trên acceptablePrice. Ví dụ 2.00 nghĩa là 2%
+    @Column(name = "deposit_percent", precision = 5, scale = 2, nullable = false)
+    private BigDecimal depositPercent;
+
+    // số tiền cọc thực tế (acceptablePrice * depositPercent/100),
+    @Column(name = "deposit_amount", precision = 12, scale = 2, nullable = false)
+    private BigDecimal depositAmount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deposit_status", nullable = false, length = 16)
+    private DepositStatus depositStatus;
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
     private ConsignmentAgreementStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "duration", nullable = false, length = 16)
+    private AgreementDuration duration;
 
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
