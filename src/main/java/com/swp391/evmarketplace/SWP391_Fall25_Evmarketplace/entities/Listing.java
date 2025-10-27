@@ -187,7 +187,9 @@ public class Listing {
     @Column(name = "prev_expires_at")
     private LocalDateTime prevExpiresAt;
 
-
+    @OneToMany(mappedBy = "listing", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<SaleOrder> orders = new ArrayList<>();
 
 
     public void addMedia(ListingMedia media) {
@@ -221,6 +223,24 @@ public class Listing {
 
     @Column(name = "moderation_lock_ttl_secs", nullable = false)
     private Integer moderationLockTtlSecs = 600;
+
+    @ManyToOne
+    @JoinColumn(
+            name = "responsible_staff_id",
+            foreignKey = @ForeignKey(name = "fk_listing_resp_staff")
+    )
+    private Account responsibleStaff;
+
+    @OneToOne
+    @JoinColumn(
+            name = "consignment_agreement_id",
+            unique = true,
+            foreignKey = @ForeignKey(name = "consignment_agreement_id")
+    )
+    @JsonIgnore
+    private ConsignmentAgreement consignmentAgreement;
+
+
 
 
     @PrePersist

@@ -16,4 +16,8 @@ public interface PaymentService {
     // Xử lý return & ipn
     BaseResponse<Map<String,Object>> handleVnpReturn(org.springframework.util.MultiValueMap<String,String> queryParams);
     String handleVnpIpn(org.springframework.util.MultiValueMap<String,String> queryParams);
+
+    BaseResponse<?> createOrderPaymentUrl(Long orderId, Long amountVnd, HttpServletRequest request);
+    BaseResponse<?> recordCashPayment(Long orderId, Long amountVnd, String referenceNo, String note);
+
 }

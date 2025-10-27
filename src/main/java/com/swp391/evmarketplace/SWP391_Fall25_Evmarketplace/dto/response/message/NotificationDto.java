@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class NotificationDto {
     private Long id;
     private String type;
+    private String title;
     private String message;
     private Long referenceId;
     private LocalDateTime createdAt;

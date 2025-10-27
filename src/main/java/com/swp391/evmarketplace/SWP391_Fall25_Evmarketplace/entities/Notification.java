@@ -32,6 +32,9 @@ public class Notification {
     @Column(name = "reference_id")
     private Long referenceId;
 
+    @Column(name = "title")
+    private String title;
+
     @Column(name = "is_read", nullable = false)
     private Boolean isRead;
 
@@ -52,6 +55,7 @@ public class Notification {
         return new NotificationDto(
                 n.getId(),
                 n.getType(),
+                n.getTitle(),
                 n.getMessage(),
                 n.getReferenceId(),
                 n.getCreatedAt(),

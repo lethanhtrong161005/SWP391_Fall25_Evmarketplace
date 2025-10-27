@@ -28,13 +28,14 @@ public class VNPayService {
             String ipAddress,
             String txnRef,
             Map<String,String> returnParams,
-            boolean forceNCB
+            boolean forceNCB,
+            ZonedDateTime expireAt
     ) {
         String vnpAmount = BigDecimal.valueOf(amountVnd).setScale(0, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100)).toPlainString();
         ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
         ZonedDateTime now = ZonedDateTime.now(zone);
-        ZonedDateTime exp = now.plusMinutes(20);
+        ZonedDateTime exp = (expireAt != null ? expireAt.withZoneSameInstant(zone) : now.plusMinutes(20));
 
         Map<String, String> vnp = new HashMap<>();
         vnp.put("vnp_Version",   cfg.getVnp_Version());
@@ -72,14 +73,12 @@ public class VNPayService {
                 + "&vnp_SecureHash=" + secure;
     }
 
-    /** Dùng cho controller/service: không decode lại vì framework đã decode sẵn. */
     public Map<String,String> flatten(MultiValueMap<String,String> mv) {
         Map<String,String> m = new HashMap<>();
         mv.forEach((k, v) -> m.put(k, (v != null && !v.isEmpty()) ? v.get(0) : ""));
         return m;
     }
 
-    /** Verify theo chuẩn VNPay: chỉ tham số bắt đầu bằng vnp_, đã URL-encode lại trước khi HMAC. */
     public boolean verifySignature(Map<String, String> all) {
         String given = all.get("vnp_SecureHash");
         if (given == null || given.isBlank()) return false;

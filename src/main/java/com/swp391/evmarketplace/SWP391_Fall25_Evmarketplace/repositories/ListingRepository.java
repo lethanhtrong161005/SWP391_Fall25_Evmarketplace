@@ -405,4 +405,5 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                                               @Param("statuses") java.util.Collection<com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus> statuses,
                                               Pageable pageable);
 
+    Page<Listing> findAllByResponsibleStaff_Id(Long staffId, Pageable pageable);
 }

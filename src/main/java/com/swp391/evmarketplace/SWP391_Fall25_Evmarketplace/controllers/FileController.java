@@ -131,6 +131,19 @@ public class FileController {
         return MediaType.APPLICATION_OCTET_STREAM_VALUE;
     }
 
+    @GetMapping("/contract/{name}")
+    public ResponseEntity<Resource> getContract(
+            @PathVariable String name
+    ) throws IOException {
+        Resource resource = fileService.loadContractAsResource(name);
+        String contentType = guessContentType(resource);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDispositionInline(name))
+                .body(resource);
+    }
+
     private String contentDispositionInline(String filename) {
         return ContentDisposition.inline().filename(filename).build().toString();
     }
