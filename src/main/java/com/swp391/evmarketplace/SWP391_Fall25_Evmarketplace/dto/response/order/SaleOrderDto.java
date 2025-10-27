@@ -33,6 +33,7 @@ public class SaleOrderDto {
 
     private String orderNo;
     private BigInteger orderCode;
+    //
 
 
     private Long consignmentAgreementId;
