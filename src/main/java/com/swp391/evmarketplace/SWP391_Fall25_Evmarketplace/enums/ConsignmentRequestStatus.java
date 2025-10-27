@@ -9,6 +9,7 @@ public enum ConsignmentRequestStatus {
     INSPECTING,
     INSPECTED_PASS,
     INSPECTED_FAIL,
+    SIGNED,
     CANCELLED,
     FINISHED,
     EXPIRED

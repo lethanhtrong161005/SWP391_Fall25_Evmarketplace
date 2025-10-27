@@ -19,12 +19,13 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "inspection_schedule",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uq_inspector_day_shift", columnNames = {"inspector_id", "schedule_date", "shift_id"}),
-                @UniqueConstraint(name = "uq_schedule_request", columnNames = {"request_id"})
+                @UniqueConstraint(name = "uq_staff_day_shift",
+                        columnNames = {"staff_id","schedule_date","shift_id"}),
+                @UniqueConstraint(name = "uq_schedule_request",
+                        columnNames = {"request_id"}) // 1 request chỉ có 1 lịch đang hiệu lực
         },
         indexes = {
                 @Index(name = "idx_is_request", columnList = "request_id"),
-                @Index(name = "idx_is_inspector", columnList = "inspector_id"),
                 @Index(name = "idx_is_branch", columnList = "branch_id"),
                 @Index(name = "idx_is_date", columnList = "schedule_date"),
                 @Index(name = "idx_is_shift", columnList = "shift_id")
@@ -41,10 +42,10 @@ public class InspectionSchedule {
             foreignKey = @ForeignKey(name = "fk_is_request"))
     private ConsignmentRequest request;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "inspector_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_is_inspector"))
-    private Account inspector;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "staff_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_is_staff"))
+    private Account staff;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "branch_id", nullable = false,
@@ -74,7 +75,7 @@ public class InspectionSchedule {
     private Account scheduledBy;
 
     @Column(name = "checkin_at")
-    private LocalDateTime checkinAt;
+    private LocalDateTime checkedInAt;
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
@@ -84,9 +85,6 @@ public class InspectionSchedule {
 
     @Column(name = "note", columnDefinition = "TEXT")
     private String note;
-
-    @Column(name = "reschedule_count", nullable = false)
-    private int rescheduleCount = 0;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

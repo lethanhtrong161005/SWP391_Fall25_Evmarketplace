@@ -1,4 +1,4 @@
-package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment;
+package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.request;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentRequestStatus;
 import lombok.AllArgsConstructor;
@@ -33,4 +33,7 @@ public class ConsignmentRequestListItemDTO {
     private ConsignmentRequestStatus status;
     private LocalDateTime createdAt;
     private List<String> mediaUrls;
+    private Long cancelledById;
+    private LocalDateTime cancelledAt;
+    private String cancelledReason;
 }

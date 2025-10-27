@@ -13,6 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class ShiftAvailabilityDayDTO {
-    private LocalDate date;               // Ngày
-    private List<ShiftAvailabilityDTO> shifts; // Danh sách ca và trạng thái đã đặt hay chưa
+    private LocalDate date;
+    private List<ShiftAvailabilityDTO> shifts;
 }

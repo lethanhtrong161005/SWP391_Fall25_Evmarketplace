@@ -10,9 +10,13 @@ import java.util.List;
 
 @Repository
 public interface ConsignmentRequestMediaRepository extends JpaRepository<ConsignmentRequestMedia, Long> {
-    @Query("select m.mediaUrl from ConsignmentRequestMedia m where m.request.id = :requestId")
-    List<String> findAllMediaUrlsByRequestId(@Param("requestId") Long requestId);
+    @Query("select m.mediaUrl, m.mediaType from ConsignmentRequestMedia m where m.request.id = :requestId")
+    List<Object[]> findAllMediaUrlsByRequestId(@Param("requestId") Long requestId);
 
     @Query("select m.request.id, m.mediaUrl, m.mediaType from ConsignmentRequestMedia m where m.request.id in :requestIds")
     List<Object[]> findAllMediaUrlsByRequestIds(@Param("requestIds") List<Long> requestIds);
+
+
+    List<ConsignmentRequestMedia> findAllByIdInAndRequest_Id(List<Long> ids, Long requestId);
+
 }
