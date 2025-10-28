@@ -12,6 +12,7 @@ public interface ConsignmentAgreementProjection {
     BigDecimal getAcceptablePrice();
     String getStatus();
     String getDuration();
+    String getMedialUrl();
     LocalDateTime getStartAt();
     LocalDateTime getExpireAt();
     LocalDateTime getCreatedAt();

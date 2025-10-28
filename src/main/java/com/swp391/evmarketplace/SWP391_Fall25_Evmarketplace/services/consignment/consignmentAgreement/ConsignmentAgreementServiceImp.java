@@ -12,10 +12,12 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.Consign
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ConsignmentInspectionRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ConsignmentRequestRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentAgreementProjection;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,11 +32,13 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
     ConsignmentRequestRepository consignmentRequestRepository;
     @Autowired
     ConsignmentInspectionRepository consignmentInspectionRepository;
+    @Autowired
+    FileService fileService;
 
 
     @Transactional
     @Override
-    public BaseResponse<Void> createAgreement(CreateAgreementDTO dto) {
+    public BaseResponse<Void> createAgreement(CreateAgreementDTO dto, MultipartFile file) {
         Account account = authUtil.getCurrentAccount();
 
         ConsignmentRequest request = consignmentRequestRepository.findById(dto.getRequestId())
@@ -62,6 +66,9 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
         var startAt = dto.getStartAt();
         var months = dto.getDuration().getMonths();
         var expireAt = startAt.plusMonths(months);
+
+        //media
+
 
 
         ConsignmentAgreement agreement = new ConsignmentAgreement();

@@ -8,8 +8,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.project
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentAgreement.ConsignmentAgreementService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,11 +21,12 @@ public class ConsignmentAgreementController {
     @Autowired
     ConsignmentAgreementService agreementService;
 
-    @PostMapping("/add")
+    @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BaseResponse<Void>> createAgreement(
-            @Valid @RequestBody CreateAgreementDTO dto
+            @Valid @RequestBody CreateAgreementDTO dto,
+            @RequestPart(value = "file", required = false) MultipartFile file
     ) {
-        BaseResponse<Void> res = agreementService.createAgreement(dto);
+        BaseResponse<Void> res = agreementService.createAgreement(dto, file);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 

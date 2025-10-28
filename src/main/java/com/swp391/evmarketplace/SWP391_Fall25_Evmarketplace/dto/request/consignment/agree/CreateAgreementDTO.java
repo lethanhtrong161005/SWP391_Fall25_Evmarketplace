@@ -41,4 +41,6 @@ public class CreateAgreementDTO {
     BigDecimal depositPercent;
 
 
+
+
 }
