@@ -4,7 +4,9 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consign
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentAgreementProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account.AccountService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentAgreement.ConsignmentAgreementService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest.ConsignmentRequestService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,8 @@ public class ManagerController {
     ConsignmentRequestService consignmentRequestService;
     @Autowired
     AccountService accountService;
+    @Autowired
+    ConsignmentAgreementService consignmentAgreementService;
 
     //account
     @GetMapping("/branches/{branchId}/accounts/staff")
@@ -49,7 +53,7 @@ public class ManagerController {
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String dir
     ) {
-        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getAllByBranchIdIgnoreSubmitted( branchId, page, size, dir, sort);
+        BaseResponse<PageResponse<ConsignmentRequestListItemDTO>> response = consignmentRequestService.getAllByBranchIdIgnoreSubmitted(branchId, page, size, dir, sort);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
@@ -60,9 +64,18 @@ public class ManagerController {
     }
 
     @PutMapping("/consignment-requests/{requestId}/assign/{staffId}")
-    public ResponseEntity<BaseResponse<Void>> setStaffForRequest(@PathVariable Long requestId, @PathVariable Long staffId){
+    public ResponseEntity<BaseResponse<Void>> setStaffForRequest(@PathVariable Long requestId, @PathVariable Long staffId) {
         BaseResponse<Void> response = consignmentRequestService.setStaffForRequest(requestId, staffId);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+
+    //agreement
+    @GetMapping("/agreements/all")
+    public ResponseEntity<BaseResponse<List<ConsignmentAgreementProjection>>> getAll() {
+        BaseResponse<List<ConsignmentAgreementProjection>> res =
+                consignmentAgreementService.getAllAgreements();
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
 
 }

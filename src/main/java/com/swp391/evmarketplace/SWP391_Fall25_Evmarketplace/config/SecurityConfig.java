@@ -84,16 +84,25 @@ public class SecurityConfig {
                             "/api/inspection_schedule/**",
                             "/api/consignments_request/**",
                             "/api/branchs/**",
-                            "/api/inspections/request/{requestId}"
+                            "/api/inspections/request/{requestId}",
+                            "/api/agreements/request/{requestId}"
                     ).authenticated();
 
 
                     //staff
+                    auth.requestMatchers(HttpMethod.PATCH, "/api/inspection_schedule/{id}/check_in")
+                                    .hasRole(AccountRole.STAFF.name());
                     auth.requestMatchers("/api/staff/**").hasRole(AccountRole.STAFF.name())
                             .requestMatchers("/api/inspections/**").hasRole(AccountRole.STAFF.name());
 //                    auth.requestMatchers(HttpMethod.POST, "/api/inspections/add").hasRole(AccountRole.STAFF.name());
 //                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/**").hasRole(AccountRole.STAFF.name());
 //                    auth.requestMatchers(HttpMethod.PUT, "/api/inspections/{inspectionId}/inactive").hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.POST, "/api/agreements/add")
+                            .hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.GET, "/api/agreements/request/")
+                            .hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.PUT, "/api/agreements/**")
+                            .hasRole(AccountRole.STAFF.name());
 
 
                     //moderator
@@ -115,6 +124,9 @@ public class SecurityConfig {
                             .hasRole("MANAGER");
                     auth.requestMatchers(HttpMethod.PUT, "/api/manager/consignment-requests/{requestId}/assign/{staffId}")
                             .hasRole(AccountRole.MANAGER.name());
+                    auth.requestMatchers(HttpMethod.GET, "/api/manager/agreements/all")
+                            .hasRole(AccountRole.MANAGER.name());
+
 
                     //admin
                     auth.requestMatchers("/api/admin/accounts/**").hasRole("ADMIN");
