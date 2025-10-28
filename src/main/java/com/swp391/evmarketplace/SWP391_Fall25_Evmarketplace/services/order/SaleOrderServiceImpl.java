@@ -50,9 +50,6 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
 
     @Override
     public BaseResponse<?> getOrderDetails(Long orderId) {
-
-
-
         return null;
     }
 
