@@ -1,5 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.agree.CreateAgreementDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentAgreement;
@@ -20,12 +22,15 @@ import java.util.List;
 public class ConsignmentAgreementController {
     @Autowired
     ConsignmentAgreementService agreementService;
+    @Autowired
+    ObjectMapper objectMapper;
 
     @PostMapping(value = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BaseResponse<Void>> createAgreement(
-            @Valid @RequestBody CreateAgreementDTO dto,
-            @RequestPart(value = "file", required = false) MultipartFile file
-    ) {
+            @RequestPart("payload") String payload,
+            @RequestPart(value = "file") MultipartFile file
+    ) throws JsonProcessingException {
+        CreateAgreementDTO dto = objectMapper.readValue(payload, CreateAgreementDTO.class);
         BaseResponse<Void> res = agreementService.createAgreement(dto, file);
         return ResponseEntity.status(res.getStatus()).body(res);
     }

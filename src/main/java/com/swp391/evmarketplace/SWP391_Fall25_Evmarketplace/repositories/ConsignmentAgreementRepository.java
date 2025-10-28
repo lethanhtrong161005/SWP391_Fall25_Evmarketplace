@@ -17,6 +17,7 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
                     ca.id AS id,
                     ca.request.id AS requestId,
                     ca.owner.id AS ownerId,
+                    s.id AS staffId,
                     ca.branch.id AS branchId,
                     ca.commissionPercent AS commissionPercent,
                     ca.acceptablePrice AS acceptablePrice,
@@ -28,6 +29,7 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
                     ca.createdAt AS createdAt,
                     ca.updatedAt AS updatedAt
                 FROM ConsignmentAgreement ca
+                join ca.staff s
                 WHERE ca.request.id = :requestId
             """)
     Optional<ConsignmentAgreementProjection> findProjectionByRequestId(Long requestId);
@@ -37,6 +39,7 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
                     ca.id AS id,
                     ca.request.id AS requestId,
                     ca.owner.id AS ownerId,
+                    s.id AS staffId,
                     ca.branch.id AS branchId,
                     ca.commissionPercent AS commissionPercent,
                     ca.acceptablePrice AS acceptablePrice,
@@ -48,6 +51,7 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
                     ca.createdAt AS createdAt,
                     ca.updatedAt AS updatedAt
                 FROM ConsignmentAgreement ca
+                join ca.staff s
                 ORDER BY ca.createdAt DESC
             """)
     List<ConsignmentAgreementProjection> findAllProjections();

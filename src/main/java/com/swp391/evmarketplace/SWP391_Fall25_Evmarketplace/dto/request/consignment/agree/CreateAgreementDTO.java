@@ -34,13 +34,4 @@ public class CreateAgreementDTO {
 
     @NotNull
     AgreementDuration duration;
-
-    @NotNull
-    @Positive
-    @DecimalMin("0.0")
-    BigDecimal depositPercent;
-
-
-
-
 }

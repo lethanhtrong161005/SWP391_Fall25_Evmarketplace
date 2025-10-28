@@ -82,7 +82,7 @@ public class ConsignmentAgreement {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToOne(mappedBy = "consignmentAgreement")
-    @JsonIgnore
-    private Listing listing;
+//    @OneToOne(mappedBy = "consignmentAgreement")
+//    @JsonIgnore
+//    private Listing listing;
 }

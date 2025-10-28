@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignmen
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.agree.CreateAgreementDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StoredContractResult;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentAgreement;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentInspection;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -68,11 +70,18 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
         var expireAt = startAt.plusMonths(months);
 
         //media
-
-
+        StoredContractResult result;
+        try {
+             result = fileService.storedContract(file);
+        } catch (IOException e) {
+            throw new CustomBusinessException("Error while uploading file: " + e.getMessage());
+        }
 
         ConsignmentAgreement agreement = new ConsignmentAgreement();
         agreement.setRequest(request);
+
+        agreement.setMedialUrl(result.getFileName());
+
         agreement.setOwner(request.getOwner());
         agreement.setBranch(request.getPreferredBranch());
         agreement.setStaff(account);

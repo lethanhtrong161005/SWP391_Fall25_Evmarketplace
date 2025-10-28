@@ -7,6 +7,7 @@ public interface ConsignmentAgreementProjection {
     Long getId();
     Long getRequestId();
     Long getOwnerId();
+    Long getStaffId();
     Long getBranchId();
     BigDecimal getCommissionPercent();
     BigDecimal getAcceptablePrice();
