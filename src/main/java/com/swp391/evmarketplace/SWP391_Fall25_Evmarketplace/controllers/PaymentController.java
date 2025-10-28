@@ -71,4 +71,15 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.handleVnpIpn(q));
     }
 
+
+    @GetMapping
+    public ResponseEntity<?> getPaymentsByOrderId(
+            @RequestParam Long orderId,
+            @RequestParam(required = false) Long lastId, // ID cuối cùng của batch trước
+            @RequestParam(defaultValue = "4") int limit
+    ) {
+        var res = paymentService.getPaymentsByOrderId(orderId, lastId, limit);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
 }

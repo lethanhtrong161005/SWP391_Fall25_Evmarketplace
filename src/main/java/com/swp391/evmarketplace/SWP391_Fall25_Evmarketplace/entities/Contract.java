@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.contract.ContractDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ContractSignMethod;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ContractStatus;
 import jakarta.persistence.*;
@@ -59,5 +60,20 @@ public class Contract {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ContractStatus status = ContractStatus.UPLOADED;
+
+    public ContractDto toDto(Contract c){
+        ContractDto dto = new ContractDto();
+        dto.setId(c.getId());
+        dto.setFileUrl(c.getFileUrl());
+        dto.setSignMethod(c.getSignMethod());
+        dto.setStatus(c.getStatus());
+        dto.setOrderId(c.getOrder().getId());
+        dto.setSignAt(c.getSignedAt());
+        dto.setCreateAt(c.getCreatedAt());
+        dto.setEffectiveFrom(c.getEffectiveFrom());
+        dto.setEffectiveTo(c.getEffectiveTo());
+        dto.setUpdateAt(c.getUpdatedAt());
+        return dto;
+    }
 
 }

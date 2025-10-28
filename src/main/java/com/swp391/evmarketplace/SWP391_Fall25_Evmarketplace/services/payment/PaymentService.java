@@ -20,4 +20,6 @@ public interface PaymentService {
     BaseResponse<?> createOrderPaymentUrl(Long orderId, Long amountVnd, HttpServletRequest request);
     BaseResponse<?> recordCashPayment(Long orderId, Long amountVnd, String referenceNo, String note);
 
+
+    BaseResponse<?> getPaymentsByOrderId(Long orderId, Long lastId, int limit);
 }

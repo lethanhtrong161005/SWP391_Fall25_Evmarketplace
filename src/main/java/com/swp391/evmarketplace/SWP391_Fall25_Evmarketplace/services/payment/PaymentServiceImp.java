@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.payment;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.config.VNPayProperties;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.payment.SalePaymentDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.SalePayment;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
@@ -17,6 +18,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
@@ -26,7 +29,9 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -49,6 +54,43 @@ public class PaymentServiceImp implements PaymentService {
     @Autowired
     private EntityManager entityManager;
 
+
+    @Override
+    public BaseResponse<?> getPaymentsByOrderId(Long orderId, Long lastId, int limit) {
+        int pageSize = Math.max(1, Math.min(limit, 50));
+        Pageable pageable = PageRequest.of(0, pageSize);
+
+        List<SalePaymentDto> items = (lastId == null)
+                ? salePaymentRepository.findByOrderIdOrderByIdDesc(orderId, pageable)
+                .stream().map(p -> p.toDto(p)).toList()
+                : salePaymentRepository.findByOrderIdAndIdLessThanOrderByIdDesc(orderId, lastId, pageable)
+                .stream().map(p -> p.toDto(p)).toList();
+
+        // cursor cho trang tiếp theo (id nhỏ nhất của batch hiện tại)
+        Long nextCursor = (items.size() == pageSize)
+                ? items.get(items.size() - 1).getId()
+                : null;
+
+        // lastId thực tế của batch trả về (dù có hay không có next page)
+        Long lastIdOut = items.isEmpty() ? null : items.get(items.size() - 1).getId();
+        Long firstIdOut = items.isEmpty() ? null : items.get(0).getId();
+
+        Map<String,Object> payload = new HashMap<>();
+        payload.put("items", items);
+        payload.put("pageSize", pageSize);
+        payload.put("cursorIn", lastId);     // cursor FE đã gửi vào (để debug)
+        payload.put("firstId", firstIdOut);  // id lớn nhất của batch
+        payload.put("lastId", lastIdOut);    // id nhỏ nhất của batch (== nextCursor)
+        payload.put("nextCursor", nextCursor);
+        payload.put("hasMore", nextCursor != null);
+
+        BaseResponse<Object> res = new BaseResponse<>();
+        res.setStatus(200);
+        res.setSuccess(true);
+        res.setMessage("Payments fetched");
+        res.setData(payload);
+        return res;
+    }
 
     private long cfgLong(String key, long def) {
         return configRepository.findById(key)

@@ -78,4 +78,7 @@ public class ConsignmentAgreement {
     )
     private Account staff;
 
+    @Column(name = "media_url", length = 500)
+    private String medialUrl;
+
 }
