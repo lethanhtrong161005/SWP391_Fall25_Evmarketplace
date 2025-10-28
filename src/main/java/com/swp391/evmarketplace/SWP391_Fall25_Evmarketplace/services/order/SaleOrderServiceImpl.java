@@ -47,6 +47,15 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
     @PersistenceContext
     private EntityManager entityManager;
 
+
+    @Override
+    public BaseResponse<?> getOrderDetails(Long orderId) {
+
+
+
+        return null;
+    }
+
     @Override
     @Transactional
     public BaseResponse<?> cancelOrder(Long orderId) {

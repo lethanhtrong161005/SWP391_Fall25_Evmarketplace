@@ -26,5 +26,8 @@ public interface SaleOrderSerivce {
     BaseResponse<?> cancelOrder(Long orderId);
 
 
+    BaseResponse<?> getOrderDetails(Long orderId);
+
+
 
 }
