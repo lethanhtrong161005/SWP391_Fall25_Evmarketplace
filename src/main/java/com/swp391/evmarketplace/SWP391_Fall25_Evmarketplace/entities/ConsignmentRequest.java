@@ -61,8 +61,14 @@ public class ConsignmentRequest {
     @Column(name = "brand", length = 100, nullable = false)
     private String brand;
 
+    @Column(name = "brand_id")
+    private Long brandId;
+
     @Column(name = "model", length = 100, nullable = false)
     private String model;
+
+    @Column(name = "model_id")
+    private Long modelId;
 
     @Column(name = "year")
     private Integer year;

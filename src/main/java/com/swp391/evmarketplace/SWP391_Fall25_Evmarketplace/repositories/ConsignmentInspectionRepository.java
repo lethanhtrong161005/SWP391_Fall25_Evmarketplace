@@ -61,6 +61,26 @@ public interface ConsignmentInspectionRepository extends JpaRepository<Consignme
             @Param("statuses") Collection<ConsignmentInspectionResult> statuses,
             @Param("isActive") Boolean isActive);
 
+    @Query("""
+                SELECT 
+                    ci.id AS id,
+                    ci.request.id AS requestId,
+                    ci.branch.id AS branchId,
+                    ci.result AS result,
+                    ci.inspectionSummary AS inspectionSummary,
+                    ci.suggestedPrice AS suggestedPrice,
+                    ci.isActive AS isActive,
+                    ci.createdAt AS createdAt,
+                    ci.updatedAt AS updatedAt
+                FROM ConsignmentInspection ci 
+                WHERE 
+                    ci.request.staff.id = :staffId
+                    AND ci.isActive = true
+                ORDER BY ci.createdAt DESC
+            """)
+    List<ConsignmentInspectionProjection> findActiveViewByStaffId(
+            @Param("staffId") Long staffId);
+
 
     Optional<ConsignmentInspection> findByRequestIdAndIsActiveTrue(Long requestId);
 }

@@ -47,7 +47,7 @@ public class ConsignmentExpiryJob {
 
 
     @Transactional
-    @Scheduled(cron = "0 * * * * *") // chạy mỗi giờ một lần
+    @Scheduled(cron = "0 * * * * *") // chạy mỗi giây một lần
     public void autoExpireAgreements() {
         List<ConsignmentAgreement> expiredList = consignmentAgreementRepository.findExpiredAgreements();
 
@@ -61,7 +61,6 @@ public class ConsignmentExpiryJob {
         for (ConsignmentAgreement agreement : expiredList) {
             try {
                 agreement.setStatus(ConsignmentAgreementStatus.EXPIRED);
-                agreement.setDepositStatus(DepositStatus.REFUNDED);
 
                 // Cập nhật trạng thái request nếu bạn muốn (tùy logic)
                 ConsignmentRequest request = agreement.getRequest();

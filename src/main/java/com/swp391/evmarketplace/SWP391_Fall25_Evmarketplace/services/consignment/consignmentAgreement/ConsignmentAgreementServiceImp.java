@@ -63,12 +63,6 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
         var months = dto.getDuration().getMonths();
         var expireAt = startAt.plusMonths(months);
 
-        //agreement deposit
-        // depositAmount = acceptablePrice * (depositPercent / 100)
-        BigDecimal depositAmount = dto.getAcceptablePrice()
-                .multiply(dto.getDepositPercent())
-                .divide(new BigDecimal("100"));
-
 
         ConsignmentAgreement agreement = new ConsignmentAgreement();
         agreement.setRequest(request);
@@ -78,10 +72,6 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
 
         agreement.setCommissionPercent(dto.getCommissionPercent());
         agreement.setAcceptablePrice(dto.getAcceptablePrice());
-
-        agreement.setDepositPercent(dto.getDepositPercent());
-        agreement.setDepositAmount(depositAmount);
-        agreement.setDepositStatus(DepositStatus.PAID);
 
         agreement.setStartAt(startAt);
         agreement.setDuration(dto.getDuration());
@@ -140,7 +130,6 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
             throw new CustomBusinessException("No condition to cancel agreement");
 
         agreement.setStatus(ConsignmentAgreementStatus.CANCELLED);
-        agreement.setDepositStatus(DepositStatus.FORFEITED);
         consignmentAgreementRepository.save(agreement);
 
         //request

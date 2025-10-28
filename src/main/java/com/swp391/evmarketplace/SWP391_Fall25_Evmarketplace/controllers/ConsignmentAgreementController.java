@@ -50,6 +50,4 @@ public class ConsignmentAgreementController {
         BaseResponse<Void> res = agreementService.updateAgreement(id, duration);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-
-
 }

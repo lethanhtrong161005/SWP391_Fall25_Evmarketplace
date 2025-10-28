@@ -70,8 +70,6 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         if (category.getStatus() != CategoryStatus.ACTIVE)
             throw new CustomBusinessException(ErrorCode.CATEGORY_INACTIVE.name());
 
-        String brandName = requestDTO.getBrand();
-        String modelName = requestDTO.getModel();
         Integer year = requestDTO.getYear();
 
         Model model = null;
@@ -90,15 +88,6 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                     throw new CustomBusinessException(ErrorCode.MODEL_NOT_BELONG_TO_BRAND.name() + ": " + requestDTO.getBrandId());
                 }
             }
-
-            brandName = model.getBrand().getName();
-            modelName = model.getName();
-        } else if (requestDTO.getBrandId() != null) {
-            boolean ok = categoryBrandRepository.existsByCategory_IdAndBrand_Id(requestDTO.getCategoryId(), requestDTO.getBrandId());
-            if (!ok) throw new CustomBusinessException(ErrorCode.MODEL_NOT_BELONG_TO_BRAND.name());
-            brandName = brandRepository.findById(requestDTO.getBrandId())
-                    .map(Brand::getName)
-                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRAND_NOT_IN_CATEGORY.name()));
         }
 
         ItemType type = resolveItemType(requestDTO, model);
@@ -114,8 +103,12 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         consignmentRequest.setOwner(account);
         consignmentRequest.setItemType(type);
         consignmentRequest.setCategory(category);
-        consignmentRequest.setBrand(brandName);
-        consignmentRequest.setModel(modelName);
+
+        consignmentRequest.setBrandId(requestDTO.getBrandId());
+        consignmentRequest.setBrand(requestDTO.getBrand());
+        consignmentRequest.setModelId(requestDTO.getModelId());
+        consignmentRequest.setModel(requestDTO.getModel());
+
         consignmentRequest.setYear(year);
         consignmentRequest.setBatteryCapacityKwh(requestDTO.getBatteryCapacityKwh());
         consignmentRequest.setSohPercent(requestDTO.getSohPercent());
@@ -540,13 +533,22 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                 .staffId(p.getStaffId())
                 .rejectedReason(p.getRejectedReason())
                 .itemType(p.getItemType())
+
+                .categoryId(p.getCategoryId())
                 .category(p.getCategory())
+
+                .brandId(p.getBrandId())
                 .brand(p.getBrand())
+
+                .modelId(p.getModelId())
                 .model(p.getModel())
+
                 .year(p.getYear())
                 .batteryCapacityKwh(p.getBatteryCapacityKwh())
                 .sohPercent(p.getSohPercent())
                 .mileageKm(p.getMileageKm())
+
+                .preferredBranchId(p.getPreferredBranchId())
                 .preferredBranchName(p.getPreferredBranchName())
                 .ownerExpectedPrice(p.getOwnerExpectedPrice())
                 .status(p.getStatus())
@@ -618,13 +620,22 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                         .staffId(p.getStaffId())
                         .rejectedReason(p.getRejectedReason())
                         .itemType(p.getItemType())
+
+                        .categoryId(p.getCategoryId())
                         .category(p.getCategory())
+
+                        .brandId(p.getBrandId())
                         .brand(p.getBrand())
+
+                        .modelId(p.getModelId())
                         .model(p.getModel())
+
                         .year(p.getYear())
                         .batteryCapacityKwh(p.getBatteryCapacityKwh())
                         .sohPercent(p.getSohPercent())
                         .mileageKm(p.getMileageKm())
+
+                        .preferredBranchId(p.getPreferredBranchId())
                         .preferredBranchName(p.getPreferredBranchName())
                         .ownerExpectedPrice(p.getOwnerExpectedPrice())
                         .status(p.getStatus())
@@ -654,13 +665,22 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                         .staffId(p.getStaffId())
                         .rejectedReason(p.getRejectedReason())
                         .itemType(p.getItemType())
+
+                        .categoryId(p.getCategoryId())
                         .category(p.getCategory())
+
+                        .brandId(p.getBrandId())
                         .brand(p.getBrand())
+
+                        .modelId(p.getModelId())
                         .model(p.getModel())
+
                         .year(p.getYear())
                         .batteryCapacityKwh(p.getBatteryCapacityKwh())
                         .sohPercent(p.getSohPercent())
                         .mileageKm(p.getMileageKm())
+
+                        .preferredBranchId(p.getPreferredBranchId())
                         .preferredBranchName(p.getPreferredBranchName())
                         .ownerExpectedPrice(p.getOwnerExpectedPrice())
                         .status(p.getStatus())

@@ -39,6 +39,9 @@ public class ConsignmentAgreement {
             foreignKey = @ForeignKey(name = "fk_cagr_staff"))
     private Account staff;
 
+    @Column(name = "media_url", length = 500)
+    private String medialUrl;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_cagr_owner"))
@@ -55,18 +58,6 @@ public class ConsignmentAgreement {
     @Column(name = "acceptable_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal acceptablePrice;
 
-
-    // phần trăm cọc trên acceptablePrice. Ví dụ 2.00 nghĩa là 2%
-    @Column(name = "deposit_percent", precision = 5, scale = 2, nullable = false)
-    private BigDecimal depositPercent;
-
-    // số tiền cọc thực tế (acceptablePrice * depositPercent/100),
-    @Column(name = "deposit_amount", precision = 12, scale = 2, nullable = false)
-    private BigDecimal depositAmount;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "deposit_status", nullable = false, length = 16)
-    private DepositStatus depositStatus;
 
 
     @Enumerated(EnumType.STRING)

@@ -10,7 +10,6 @@ public interface ConsignmentAgreementProjection {
     Long getBranchId();
     BigDecimal getCommissionPercent();
     BigDecimal getAcceptablePrice();
-    BigDecimal getDepositAmount();
     String getStatus();
     String getDuration();
     LocalDateTime getStartAt();

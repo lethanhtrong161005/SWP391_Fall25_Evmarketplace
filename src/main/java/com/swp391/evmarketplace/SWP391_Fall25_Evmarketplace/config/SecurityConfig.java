@@ -88,12 +88,25 @@ public class SecurityConfig {
 
                     //staff
                     auth.requestMatchers(HttpMethod.PATCH, "/api/inspection_schedule/{id}/check_in")
+                            .hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers("/api/staff/**").hasRole(AccountRole.STAFF.name());
+//                    auth.requestMatchers("/api/inspections/**").hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.POST, "/api/inspections/**")
                                     .hasRole(AccountRole.STAFF.name());
-                    auth.requestMatchers("/api/staff/**").hasRole(AccountRole.STAFF.name())
-                            .requestMatchers("/api/inspections/**").hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.PUT, "/api/inspections/**")
+                                    .hasRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.GET,"/api/inspections/staff/{staffId}")
+                                    .hasRole(AccountRole.STAFF.name());
+
+
+
 //                    auth.requestMatchers(HttpMethod.POST, "/api/inspections/add").hasRole(AccountRole.STAFF.name());
 //                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/**").hasRole(AccountRole.STAFF.name());
 //                    auth.requestMatchers(HttpMethod.PUT, "/api/inspections/{inspectionId}/inactive").hasRole(AccountRole.STAFF.name());
+
+
+
+
                     auth.requestMatchers(HttpMethod.POST, "/api/agreements/add")
                             .hasRole(AccountRole.STAFF.name());
                     auth.requestMatchers(HttpMethod.GET, "/api/agreements/request/")
@@ -107,9 +120,7 @@ public class SecurityConfig {
 
                     //manager
 //                    auth.requestMatchers(
-//                            "/api/shifts/templates/**",
-//                            "api/manager/**"
-//                            ).hasRole(AccountRole.MANAGER.name());
+//                            "/api/shifts/templates/**").hasRole(AccountRole.MANAGER.name());
 
                     auth.requestMatchers(HttpMethod.GET,
 //                            "/api/shifts/templates/**",
@@ -120,6 +131,8 @@ public class SecurityConfig {
                                     "/api/manager/branches/{branchId}/consignment-requests/assign")
                             .hasRole("MANAGER");
                     auth.requestMatchers(HttpMethod.PUT, "/api/manager/consignment-requests/{requestId}/assign/{staffId}")
+                            .hasRole(AccountRole.MANAGER.name());
+                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/")
                             .hasRole(AccountRole.MANAGER.name());
                     auth.requestMatchers(HttpMethod.GET, "/api/manager/agreements/all")
                             .hasRole(AccountRole.MANAGER.name());
