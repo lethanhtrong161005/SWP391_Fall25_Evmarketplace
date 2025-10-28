@@ -95,4 +95,9 @@ public interface ListingService {
          Integer size
  );
 
+ /**
+  * Lấy bài đăng do staff quản lý
+  * **/
+ BaseResponse<?> getListingAllByStaffId(Long staffId);
+
 }

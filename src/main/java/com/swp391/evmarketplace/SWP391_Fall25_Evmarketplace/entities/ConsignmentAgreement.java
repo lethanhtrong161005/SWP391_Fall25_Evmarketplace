@@ -1,8 +1,8 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AgreementDuration;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentAgreementStatus;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.DepositStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -81,4 +81,8 @@ public class ConsignmentAgreement {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToOne(mappedBy = "consignmentAgreement")
+    @JsonIgnore
+    private Listing listing;
 }

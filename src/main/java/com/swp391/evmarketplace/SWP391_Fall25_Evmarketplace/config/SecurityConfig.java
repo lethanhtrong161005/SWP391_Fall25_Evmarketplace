@@ -56,6 +56,8 @@ public class SecurityConfig {
                     ).permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
 
+                    auth.requestMatchers(HttpMethod.GET, "/api/files/contract/**").authenticated();
+
                     auth.requestMatchers(HttpMethod.GET,
                             "/api/files/**",
                             "/api/category/**",
@@ -85,6 +87,7 @@ public class SecurityConfig {
                             "/api/inspections/request/{requestId}",
                             "/api/agreements/request/{requestId}"
                     ).authenticated();
+
 
                     //staff
                     auth.requestMatchers(HttpMethod.PATCH, "/api/inspection_schedule/{id}/check_in")

@@ -6,4 +6,5 @@ import lombok.Data;
 public class RootPath {
     private String images;
     private String video;
+    private String contract;
 }

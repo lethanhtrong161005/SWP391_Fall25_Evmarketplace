@@ -1,8 +1,9 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.config.VNPayProperties;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.CreatePaymentBody;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.payment.CreatePaymentBody;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.PaymentMethod;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.payment.PaymentService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.vnpay.VNPayService;
@@ -34,6 +35,29 @@ public class PaymentController {
         var res = paymentService.createPromotionPaymentUrl(listingId, request);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
+
+    @PostMapping("/{orderId}")
+    public ResponseEntity<?> createPayment(@PathVariable Long orderId,
+                                           @RequestBody(required = false) CreatePaymentBody body,
+                                           HttpServletRequest request) {
+        var method = (body == null || body.getMethod() == null) ? PaymentMethod.VNPAY : body.getMethod();
+        BaseResponse<?> res;
+        if (method == PaymentMethod.VNPAY) {
+            Long amount = (body != null ? body.getAmountVnd() : null);
+            res = paymentService.createOrderPaymentUrl(orderId, amount, request);
+        }else if (method == PaymentMethod.CASH) {
+            Long amount = (body != null ? body.getAmountVnd() : null);
+            res = paymentService.recordCashPayment(
+                    orderId, amount,
+                    body != null ? body.getReferenceNo() : null,
+                    body != null ? body.getNote() : null
+            );
+        } else {
+            throw new CustomBusinessException("Method not supported");
+        }
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
 
     @GetMapping("/vnpay/return")
     public ResponseEntity<BaseResponse<Map<String,Object>>> vnpReturn(

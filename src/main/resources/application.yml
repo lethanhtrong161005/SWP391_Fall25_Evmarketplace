@@ -93,6 +93,7 @@ file-upload:
   root-path:
     images: ${UPLOAD_IMAGES_PATH:upload/images}
     video: ${UPLOAD_VIDEO_PATH:upload/video}
+    contract: ${UPLOAD_CONTRACT_PATH:upload/contract}
 
 #VNPAY
 vnpay:

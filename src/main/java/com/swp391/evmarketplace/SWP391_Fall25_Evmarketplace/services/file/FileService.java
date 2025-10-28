@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StoredContractResult;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StoredFile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import jakarta.annotation.PostConstruct;
@@ -29,9 +30,11 @@ public class FileService {
 
     private Path imagesRoot;
     private Path videosRoot;
+    private Path contractRoot;
 
-    private static final long MAX_IMAGE_SIZE = 10L * 1024 * 1024;     // 10MB
-    private static final long MAX_VIDEO_SIZE = 200L * 1024 * 1024;    // 200MB
+    private static final long MAX_IMAGE_SIZE = 10L * 1024 * 1024;
+    private static final long MAX_VIDEO_SIZE = 200L * 1024 * 1024;
+    private static final long MAX_CONTRACT_SIZE = 20L * 1024 * 1024;
 
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
             MediaType.IMAGE_JPEG_VALUE,
@@ -47,25 +50,101 @@ public class FileService {
             "video/quicktime"
     );
 
+    private static final Set<String> ALLOWED_CONTRACT_TYPES = Set.of(
+      "application/pdf"
+    );
+
     @PostConstruct
     public void init() throws IOException {
         imagesRoot = Paths.get(props.getRootPath().getImages()).toAbsolutePath().normalize();
         videosRoot = Paths.get(props.getRootPath().getVideo()).toAbsolutePath().normalize();
+        contractRoot = Paths.get(props.getRootPath().getContract()).toAbsolutePath().normalize();
 
-        ensureDir(imagesRoot); // NEW
-        ensureDir(videosRoot); // NEW
+        ensureDir(imagesRoot);
+        ensureDir(videosRoot);
+        ensureDir(contractRoot);
 
         log.info("Image root: {}", imagesRoot);
         log.info("Video root: {}", videosRoot);
+        log.info("Contract root: {}", contractRoot);
     }
 
-    /* ===================== PUBLIC APIs ===================== */
 
-    /** IMAGES: always unique by suffix + atomic write (no overwrite) */
+    public StoredContractResult storedContract(MultipartFile file) throws IOException  {
+        validateFile(file, ALLOWED_CONTRACT_TYPES, MAX_CONTRACT_SIZE);
+
+        ensureDir(contractRoot);
+
+        String originalFilename = sanitizeFilename(requireFilename(file));
+        String ext = toExt(originalFilename);
+        if (!".pdf".equalsIgnoreCase(ext)) ext = ".pdf";
+
+        String base = FilenameUtils.getBaseName(originalFilename);
+
+        Path target = null;
+        String storedName = null;
+
+        final int MAX_RETRY = 5;
+        int attempt = 0;
+
+        while (attempt < MAX_RETRY) {
+            String suffix = "_" + java.util.UUID.randomUUID().toString().substring(0, 8);
+            storedName = base + suffix + ext;
+            target = contractRoot.resolve(storedName).normalize();
+
+            if (!target.startsWith(contractRoot)) {
+                throw new CustomBusinessException("Invalid file path (path traversal attempt detected)");
+            }
+
+            ensureDir(target.getParent());
+
+            try (InputStream in = file.getInputStream()) {
+                Files.copy(in, target);
+                break;
+            } catch (FileAlreadyExistsException e) {
+                attempt++;
+                target = null;
+            }
+        }
+
+        if (target == null) {
+            throw new CustomBusinessException("Failed to generate a unique filename for the contract");
+        }
+
+        String sha256 = sha256Of(target);
+
+        return new StoredContractResult(storedName, sha256, file.getSize());
+
+    }
+
+    private String sha256Of(Path file) {
+        try (InputStream in = Files.newInputStream(file);
+             java.security.DigestInputStream dis =
+                     new java.security.DigestInputStream(in, java.security.MessageDigest.getInstance("SHA-256"))) {
+            byte[] buf = new byte[8192];
+            while (dis.read(buf) != -1) {  }
+            byte[] dig = dis.getMessageDigest().digest();
+            StringBuilder sb = new StringBuilder(dig.length * 2);
+            for (byte b : dig) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            throw new CustomBusinessException("Cannot compute SHA-256: " + e.getMessage());
+        }
+    }
+
+    public Resource loadContractAsResource(String storedFilename){
+        ensureDir(contractRoot);
+        return loadAsResource(contractRoot, storedFilename);
+    }
+
+    public boolean deleteContract(String storedFilename) throws IOException {
+        ensureDir(contractRoot);
+        return delete(contractRoot, storedFilename);
+    }
+
     public StoredFile storeImage(MultipartFile file) throws IOException {
         validateFile(file, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE);
 
-        // NEW: đảm bảo thư mục tồn tại ngay trước khi ghi
         ensureDir(imagesRoot);
 
         String originalName = sanitizeFilename(requireFilename(file));
@@ -87,11 +166,10 @@ public class FileService {
                 throw new CustomBusinessException("Invalid file path (path traversal attempt detected)");
             }
 
-            // NEW: đảm bảo parent tồn tại (trong trường hợp sau này bạn tách theo ngày/tháng)
             ensureDir(target.getParent());
 
             try (InputStream in = file.getInputStream()) {
-                Files.copy(in, target); // không REPLACE_EXISTING để giữ uniqueness
+                Files.copy(in, target);
                 break;
             } catch (FileAlreadyExistsException e) {
                 attempt++;
@@ -109,7 +187,6 @@ public class FileService {
     public StoredFile storeVideo(MultipartFile file) throws IOException {
         validateFile(file, ALLOWED_VIDEO_TYPES, MAX_VIDEO_SIZE);
 
-        // NEW: đảm bảo thư mục tồn tại
         ensureDir(videosRoot);
 
         String originalName = sanitizeFilename(requireFilename(file));
