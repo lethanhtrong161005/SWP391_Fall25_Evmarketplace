@@ -10,6 +10,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusi
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.PageableUtils;
@@ -53,6 +54,8 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     private String serverUrl;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    NotificationService notificationService;
 
     @Transactional
     @Override
@@ -70,8 +73,6 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         if (category.getStatus() != CategoryStatus.ACTIVE)
             throw new CustomBusinessException(ErrorCode.CATEGORY_INACTIVE.name());
 
-        String brandName = requestDTO.getBrand();
-        String modelName = requestDTO.getModel();
         Integer year = requestDTO.getYear();
 
         Model model = null;
@@ -90,15 +91,6 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                     throw new CustomBusinessException(ErrorCode.MODEL_NOT_BELONG_TO_BRAND.name() + ": " + requestDTO.getBrandId());
                 }
             }
-
-            brandName = model.getBrand().getName();
-            modelName = model.getName();
-        } else if (requestDTO.getBrandId() != null) {
-            boolean ok = categoryBrandRepository.existsByCategory_IdAndBrand_Id(requestDTO.getCategoryId(), requestDTO.getBrandId());
-            if (!ok) throw new CustomBusinessException(ErrorCode.MODEL_NOT_BELONG_TO_BRAND.name());
-            brandName = brandRepository.findById(requestDTO.getBrandId())
-                    .map(Brand::getName)
-                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRAND_NOT_IN_CATEGORY.name()));
         }
 
         ItemType type = resolveItemType(requestDTO, model);
@@ -114,8 +106,12 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         consignmentRequest.setOwner(account);
         consignmentRequest.setItemType(type);
         consignmentRequest.setCategory(category);
-        consignmentRequest.setBrand(brandName);
-        consignmentRequest.setModel(modelName);
+
+        consignmentRequest.setBrandId(requestDTO.getBrandId());
+        consignmentRequest.setBrand(requestDTO.getBrand());
+        consignmentRequest.setModelId(requestDTO.getModelId());
+        consignmentRequest.setModel(requestDTO.getModel());
+
         consignmentRequest.setYear(year);
         consignmentRequest.setBatteryCapacityKwh(requestDTO.getBatteryCapacityKwh());
         consignmentRequest.setSohPercent(requestDTO.getSohPercent());
@@ -206,6 +202,15 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         request.setStatusChangeAt(LocalDateTime.now());
         consignmentRequestRepository.save(request);
 
+        notificationService.notifyUserAfterCommit(
+                request.getOwner().getId(),
+                request.getId(),
+                "USER_ACCEPTED_REQ",
+                "Yêu cầu kí gửi đã được thông qua",
+                "Yêu cầu kí gửi " + request.getId() + " đã được thông qua"
+        );
+
+
         BaseResponse<Void> response = new BaseResponse<>();
         response.setStatus(200);
         response.setMessage("OK");
@@ -230,6 +235,14 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         request.setRejectedReason(dto.getRejectedReason().trim());
         request.setStatusChangeAt(LocalDateTime.now());
         consignmentRequestRepository.save(request);
+
+        notificationService.notifyUserAfterCommit(
+                request.getOwner().getId(),
+                request.getId(),
+                "USER_REJECTED_REQ",
+                "Yêu cầu kí gửi đã b từ chối",
+                "Yêu cầu kí gửi " + request.getId() + " đã bị từ chối"
+        );
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setStatus(200);
@@ -264,17 +277,26 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         Account account = accountRepository.findById(staffId)
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name()));
 
+
+        if (!request.getStatus().equals(SUBMITTED))
+            throw new CustomBusinessException("No condition to set staff");
+
+        request.setStaff(account);
+        consignmentRequestRepository.save(request);
+
+        //notification
+        notificationService.notifyUserAfterCommit(
+                request.getStaff().getId(),
+                request.getId(),
+                "CONS_REQ_SET_STAFF",
+                "bạn có yêu cầu kí gửi mới",
+                "Yêu cầu kí gửi #" + request.getId() + " vừa được gửi bởi " + authUtil.getCurrentAccount().getProfile().getFullName()
+        );
+
         BaseResponse<Void> response = new BaseResponse<>();
-        if (request.getStatus().equals(SUBMITTED)) {
-            request.setStaff(account);
-            consignmentRequestRepository.save(request);
-
-            response.setStatus(200);
-            response.setSuccess(true);
-            response.setMessage("Ok");
-        }
-
-
+        response.setStatus(200);
+        response.setSuccess(true);
+        response.setMessage("Ok");
         return response;
     }
 
@@ -338,6 +360,17 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
             request.setCancelledReason(dto.getCancelledReason());
             consignmentRequestRepository.save(request);
         } else throw new CustomBusinessException("Can not cancel");
+
+        if (request.getStaff() != null) {
+            notificationService.notifyUserAfterCommit(
+                    request.getStaff().getId(),
+                    request.getId(),
+                    "USER_CANCEL_REQ",
+                    "Hủy yêu cầu kí gửi",
+                    "Người dùng " + request.getOwner().getProfile().getFullName() + " đã hủy yêu cầu kí gửi " +
+                            +request.getId()
+            );
+        }
 
         BaseResponse<Void> res = new BaseResponse<>();
         res.setSuccess(true);
@@ -517,6 +550,17 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
         // 11) Lưu
         consignmentRequestRepository.save(request);
 
+        //notification
+        if (request.getStaff() != null) {
+            notificationService.notifyUserAfterCommit(
+                    request.getStaff().getId(),
+                    request.getId(),
+                    "USER_UPDATE_REQ",
+                    "Sửa yêu cầu kí gửi",
+                    "Người dùng " + request.getOwner().getProfile().getFullName() + " đã sửa yêu cầu kí gửi " +
+                            +request.getId()
+            );
+        }
         BaseResponse<Void> res = new BaseResponse<>();
         res.setSuccess(true);
         res.setStatus(200);
@@ -540,13 +584,22 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                 .staffId(p.getStaffId())
                 .rejectedReason(p.getRejectedReason())
                 .itemType(p.getItemType())
+
+                .categoryId(p.getCategoryId())
                 .category(p.getCategory())
+
+                .brandId(p.getBrandId())
                 .brand(p.getBrand())
+
+                .modelId(p.getModelId())
                 .model(p.getModel())
+
                 .year(p.getYear())
                 .batteryCapacityKwh(p.getBatteryCapacityKwh())
                 .sohPercent(p.getSohPercent())
                 .mileageKm(p.getMileageKm())
+
+                .preferredBranchId(p.getPreferredBranchId())
                 .preferredBranchName(p.getPreferredBranchName())
                 .ownerExpectedPrice(p.getOwnerExpectedPrice())
                 .status(p.getStatus())
@@ -618,13 +671,22 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                         .staffId(p.getStaffId())
                         .rejectedReason(p.getRejectedReason())
                         .itemType(p.getItemType())
+
+                        .categoryId(p.getCategoryId())
                         .category(p.getCategory())
+
+                        .brandId(p.getBrandId())
                         .brand(p.getBrand())
+
+                        .modelId(p.getModelId())
                         .model(p.getModel())
+
                         .year(p.getYear())
                         .batteryCapacityKwh(p.getBatteryCapacityKwh())
                         .sohPercent(p.getSohPercent())
                         .mileageKm(p.getMileageKm())
+
+                        .preferredBranchId(p.getPreferredBranchId())
                         .preferredBranchName(p.getPreferredBranchName())
                         .ownerExpectedPrice(p.getOwnerExpectedPrice())
                         .status(p.getStatus())
@@ -654,13 +716,22 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
                         .staffId(p.getStaffId())
                         .rejectedReason(p.getRejectedReason())
                         .itemType(p.getItemType())
+
+                        .categoryId(p.getCategoryId())
                         .category(p.getCategory())
+
+                        .brandId(p.getBrandId())
                         .brand(p.getBrand())
+
+                        .modelId(p.getModelId())
                         .model(p.getModel())
+
                         .year(p.getYear())
                         .batteryCapacityKwh(p.getBatteryCapacityKwh())
                         .sohPercent(p.getSohPercent())
                         .mileageKm(p.getMileageKm())
+
+                        .preferredBranchId(p.getPreferredBranchId())
                         .preferredBranchName(p.getPreferredBranchName())
                         .ownerExpectedPrice(p.getOwnerExpectedPrice())
                         .status(p.getStatus())

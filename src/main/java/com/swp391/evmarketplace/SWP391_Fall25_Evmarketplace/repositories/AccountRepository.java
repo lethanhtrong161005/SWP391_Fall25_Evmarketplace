@@ -6,7 +6,6 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -18,11 +17,15 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AccountRepository extends JpaRepository<Account,Long> {
+public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findByPhoneNumber(String phoneNumber);
+
     Optional<Account> findByEmail(String email);
+
     Optional<Account> findByGoogleId(String googleId);
+
     boolean existsByPhoneNumber(String phoneNumber);
+
     boolean existsByEmail(String email);
 
     @EntityGraph(attributePaths = {"profile"})
@@ -38,6 +41,19 @@ public interface AccountRepository extends JpaRepository<Account,Long> {
     @Query("select a from Account a where a.id = :id")
     Optional<Account> lockById(@Param("id") Long id);
 
-    @EntityGraph(attributePaths = {"branch"})
-    List<Account> findByRoleAndStatusAndBranch_Id(AccountRole role, AccountStatus status, Long branchId);
+    @EntityGraph(attributePaths = {"branch", "profile"})
+    @Query("""
+                SELECT a
+                FROM Account a
+                LEFT JOIN ConsignmentRequest r ON r.staff.id = a.id
+                WHERE a.role = :role
+                  AND a.status = :status
+                  AND a.branch.id = :branchId
+                GROUP BY a.id
+                ORDER BY COUNT(r.id) ASC, a.id ASC
+            """)
+    List<Account> findByRoleAndStatusAndBranch_Id(
+            @Param("role") AccountRole role,
+            @Param("status") AccountStatus status,
+            @Param("branchId") Long branchId);
 }

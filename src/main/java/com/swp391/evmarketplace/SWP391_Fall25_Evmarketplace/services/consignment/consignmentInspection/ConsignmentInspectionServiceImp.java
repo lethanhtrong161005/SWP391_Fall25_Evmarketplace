@@ -146,4 +146,22 @@ public class ConsignmentInspectionServiceImp implements ConsignmentInspectionSer
         response.setData(list);
         return response;
     }
+
+    @Override
+    public BaseResponse<List<ConsignmentInspectionProjection>> getListInspectionByStaffId() {
+        Account account = authUtil.getCurrentAccount();
+
+        List<ConsignmentInspectionProjection> list = consignmentInspectionRepository.findActiveViewByStaffId(account.getId());
+
+        BaseResponse<List<ConsignmentInspectionProjection>> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage(list.isEmpty() ? "Empty list" : "OK");
+        response.setData(list);
+        return response;
+
+
+
+
+    }
 }

@@ -12,13 +12,21 @@ public interface ConsignmentRequestProjection {
     Long getStaffId();
     String getRejectedReason();
     String getItemType();
+
+    Long getCategoryId();
     String getCategory();
+
+    Long getBrandId();
     String getBrand();
+
+    Long getModelId();
     String getModel();
     Integer getYear();
     BigDecimal getBatteryCapacityKwh();
     BigDecimal getSohPercent();
     Integer getMileageKm();
+
+    Long getPreferredBranchId();
     String getPreferredBranchName();
     BigDecimal getOwnerExpectedPrice();
     ConsignmentRequestStatus getStatus();

@@ -22,6 +22,8 @@ import java.util.Optional;
 @Repository
 public interface InspectionScheduleRepository extends JpaRepository<InspectionSchedule, Long> {
 
+    long countByRequestId(Long requestId);
+
     boolean existsByShift_IdAndStatusIn(Long shiftId, List<InspectionScheduleStatus> statuses);
 
     boolean existsByStaffIdAndShiftIdAndScheduleDateAndStatusIn(Long staffId,

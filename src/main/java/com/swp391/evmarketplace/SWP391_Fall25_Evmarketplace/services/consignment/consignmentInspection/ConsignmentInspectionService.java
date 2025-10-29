@@ -12,5 +12,6 @@ public interface ConsignmentInspectionService {
     BaseResponse<Void> createInspection(CreateInspectionDTO dto);
     BaseResponse<ConsignmentInspectionProjection> getInspectionByRequestId(Long requestId);
     BaseResponse<List<ConsignmentInspectionProjection>> findAllViewsByStatus(Collection<ConsignmentInspectionResult> statuses, Boolean isActive);
+    BaseResponse<List<ConsignmentInspectionProjection>> getListInspectionByStaffId();
     BaseResponse<Void> inactiveInspection(Long inspectionId);
 }

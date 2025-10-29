@@ -65,6 +65,8 @@ public interface ConsignmentInspectionRepository extends JpaRepository<Consignme
                 SELECT 
                     ci.id AS id,
                     ci.request.id AS requestId,
+                    o.phoneNumber AS requestOwnerPhone,
+                    p.fullName AS requestOwnerFullName,
                     ci.branch.id AS branchId,
                     ci.result AS result,
                     ci.inspectionSummary AS inspectionSummary,
@@ -73,12 +75,15 @@ public interface ConsignmentInspectionRepository extends JpaRepository<Consignme
                     ci.createdAt AS createdAt,
                     ci.updatedAt AS updatedAt
                 FROM ConsignmentInspection ci 
-                WHERE ci.id = :id
+                JOIN ci.request.owner o
+                JOin o.profile p
+                WHERE 
+                    ci.request.staff.id = :staffId
+                    AND ci.isActive = true
+                ORDER BY ci.createdAt DESC
             """)
-    ConsignmentInspectionProjection findByIdWithRequest(@Param("id") Long id);
+    List<ConsignmentInspectionProjection> findActiveViewByStaffId(
+            @Param("staffId") Long staffId);
 
-
-
-//    @EntityGraph(attributePaths = "request")
-//    Optional<ConsignmentInspection> findByIdWithRequest(Long id);
+    Optional<ConsignmentInspection> findByRequestIdAndIsActiveTrue(Long requestId);
 }

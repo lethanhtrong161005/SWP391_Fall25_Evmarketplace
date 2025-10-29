@@ -681,10 +681,10 @@ public class AccountServiceImp implements AccountService {
         return response;
     }
 
-    public BaseResponse<List<Account>> getStaffListInBranch(Long branchId) {
-        if (branchId == null) throw new CustomBusinessException("Branch Id is required");
+    public BaseResponse<List<Account>> getStaffListInBranch() {
+        Account account = authUtil.getCurrentAccount();
 
-        List<Account> accounts = accountRepository.findByRoleAndStatusAndBranch_Id(AccountRole.STAFF, AccountStatus.ACTIVE, branchId);
+        List<Account> accounts = accountRepository.findByRoleAndStatusAndBranch_Id(AccountRole.STAFF, AccountStatus.ACTIVE, account.getBranch().getId());
         if (accounts == null || accounts.isEmpty())
             throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
 

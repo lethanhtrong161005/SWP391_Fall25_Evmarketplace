@@ -21,14 +21,24 @@ public class ConsignmentRequestListItemDTO {
     private Long staffId;
     private String rejectedReason;
     private String itemType; // keep as String to align with current projection
+
+    private Long categoryId;
     private String category;
+
+    private Long brandId;
     private String brand;
+
+    private Long modelId;
     private String model;
     private Integer year;
+
     private BigDecimal batteryCapacityKwh;
     private BigDecimal sohPercent;
     private Integer mileageKm;
+
+    private Long preferredBranchId;
     private String preferredBranchName;
+
     private BigDecimal ownerExpectedPrice;
     private ConsignmentRequestStatus status;
     private LocalDateTime createdAt;

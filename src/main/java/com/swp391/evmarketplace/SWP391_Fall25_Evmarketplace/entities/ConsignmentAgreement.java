@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AgreementDuration;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentAgreementStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -34,6 +35,14 @@ public class ConsignmentAgreement {
     private ConsignmentRequest request;
 
     @ManyToOne(optional = false)
+    @JoinColumn(name = "staff_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_cagr_staff"))
+    private Account staff;
+
+    @Column(name = "media_url", length = 500)
+    private String medialUrl;
+
+    @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_cagr_owner"))
     private Account owner;
@@ -49,9 +58,15 @@ public class ConsignmentAgreement {
     @Column(name = "acceptable_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal acceptablePrice;
 
+
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
     private ConsignmentAgreementStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "duration", nullable = false, length = 16)
+    private AgreementDuration duration;
 
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
@@ -67,15 +82,7 @@ public class ConsignmentAgreement {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToOne(mappedBy = "consignmentAgreement")
-    @JsonIgnore
-    private Listing listing;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "staff_id",
-            foreignKey = @ForeignKey(name = "fk_cagr_staff")
-    )
-    private Account staff;
-
+//    @OneToOne(mappedBy = "consignmentAgreement")
+//    @JsonIgnore
+//    private Listing listing;
 }
