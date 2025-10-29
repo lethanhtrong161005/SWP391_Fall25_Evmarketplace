@@ -148,9 +148,10 @@ public class ConsignmentInspectionServiceImp implements ConsignmentInspectionSer
     }
 
     @Override
-    public BaseResponse<List<ConsignmentInspectionProjection>> getListInspectionByStaffId(Long staffId) {
+    public BaseResponse<List<ConsignmentInspectionProjection>> getListInspectionByStaffId() {
+        Account account = authUtil.getCurrentAccount();
 
-        List<ConsignmentInspectionProjection> list = consignmentInspectionRepository.findActiveViewByStaffId(staffId);
+        List<ConsignmentInspectionProjection> list = consignmentInspectionRepository.findActiveViewByStaffId(account.getId());
 
         BaseResponse<List<ConsignmentInspectionProjection>> response = new BaseResponse<>();
         response.setSuccess(true);

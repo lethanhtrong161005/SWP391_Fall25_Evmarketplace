@@ -7,8 +7,10 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentReq
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.DepositStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ConsignmentAgreementRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ConsignmentRequestRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +48,7 @@ public class ConsignmentExpiryJob {
     }
 
 
+    //hợp đồng hết hạn
     @Transactional
     @Scheduled(cron = "0 * * * * *") // chạy mỗi giây một lần
     public void autoExpireAgreements() {

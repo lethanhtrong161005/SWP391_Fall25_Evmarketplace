@@ -27,9 +27,9 @@ public class ManagerController {
     ConsignmentAgreementService consignmentAgreementService;
 
     //account
-    @GetMapping("/branches/{branchId}/accounts/staff")
-    public ResponseEntity<BaseResponse<List<Account>>> getListStaffAccountInBranch(@PathVariable Long branchId) {
-        BaseResponse<List<Account>> response = accountService.getStaffListInBranch(branchId);
+    @GetMapping("/accounts/staff")
+    public ResponseEntity<BaseResponse<List<Account>>> getListStaffAccountInBranch() {
+        BaseResponse<List<Account>> response = accountService.getStaffListInBranch();
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

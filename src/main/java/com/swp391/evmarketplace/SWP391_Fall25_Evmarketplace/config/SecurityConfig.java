@@ -38,9 +38,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> {
+
                     //Public Access
-
-
                     auth.requestMatchers(
                             "/api/auth/login-with-phone-number",
                             "/api/auth/google",
@@ -54,6 +53,7 @@ public class SecurityConfig {
                             "/api/accounts/avatar",
                             "/ws/**"
                     ).permitAll();
+
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
 
                     auth.requestMatchers(HttpMethod.GET, "/api/files/contract/**").authenticated();
@@ -91,16 +91,15 @@ public class SecurityConfig {
 
                     //staff
                     auth.requestMatchers(HttpMethod.PATCH, "/api/inspection_schedule/{id}/check_in")
-                            .hasRole(AccountRole.STAFF.name());
-                    auth.requestMatchers("/api/staff/**").hasRole(AccountRole.STAFF.name());
+                            .hasAnyRole(AccountRole.STAFF.name());
+                    auth.requestMatchers("/api/staff/**").hasAnyRole(AccountRole.STAFF.name());
 //                    auth.requestMatchers("/api/inspections/**").hasRole(AccountRole.STAFF.name());
                     auth.requestMatchers(HttpMethod.POST, "/api/inspections/**")
-                                    .hasRole(AccountRole.STAFF.name());
+                            .hasAnyRole(AccountRole.STAFF.name());
                     auth.requestMatchers(HttpMethod.PUT, "/api/inspections/**")
-                                    .hasRole(AccountRole.STAFF.name());
-                    auth.requestMatchers(HttpMethod.GET,"/api/inspections/staff/{staffId}")
-                                    .hasRole(AccountRole.STAFF.name());
-
+                            .hasAnyRole(AccountRole.STAFF.name());
+                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/staff/{staffId}")
+                            .hasAnyRole(AccountRole.STAFF.name());
 
 
 //                    auth.requestMatchers(HttpMethod.POST, "/api/inspections/add").hasRole(AccountRole.STAFF.name());
@@ -108,14 +107,12 @@ public class SecurityConfig {
 //                    auth.requestMatchers(HttpMethod.PUT, "/api/inspections/{inspectionId}/inactive").hasRole(AccountRole.STAFF.name());
 
 
-
-
                     auth.requestMatchers(HttpMethod.POST, "/api/agreements/add")
-                            .hasRole(AccountRole.STAFF.name());
+                            .hasAnyRole(AccountRole.STAFF.name());
                     auth.requestMatchers(HttpMethod.GET, "/api/agreements/request/")
-                            .hasRole(AccountRole.STAFF.name());
+                            .hasAnyRole(AccountRole.STAFF.name());
                     auth.requestMatchers(HttpMethod.PUT, "/api/agreements/**")
-                            .hasRole(AccountRole.STAFF.name());
+                            .hasAnyRole(AccountRole.STAFF.name());
 
 
                     //moderator
@@ -132,13 +129,13 @@ public class SecurityConfig {
                                     "/api/manager/consignment-request",
                                     "/api/manager/branches/{branchId}/consignment-request/ignore-submitted",
                                     "/api/manager/branches/{branchId}/consignment-requests/assign")
-                            .hasRole("MANAGER");
+                            .hasAnyRole("MANAGER");
                     auth.requestMatchers(HttpMethod.PUT, "/api/manager/consignment-requests/{requestId}/assign/{staffId}")
-                            .hasRole(AccountRole.MANAGER.name());
+                            .hasAnyRole(AccountRole.MANAGER.name());
                     auth.requestMatchers(HttpMethod.GET, "/api/inspections/")
-                            .hasRole(AccountRole.MANAGER.name());
+                            .hasAnyRole(AccountRole.MANAGER.name());
                     auth.requestMatchers(HttpMethod.GET, "/api/manager/agreements/all")
-                            .hasRole(AccountRole.MANAGER.name());
+                            .hasAnyRole(AccountRole.MANAGER.name());
 
 
                     //admin

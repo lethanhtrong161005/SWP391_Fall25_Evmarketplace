@@ -11,6 +11,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusi
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.InspectionScheduleDetailProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.StaffScheduleRow;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,11 +40,16 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
     ShiftTemplateRepository shiftTemplateRepository;
     @Autowired
     AuthUtil authUtil;
+    @Autowired
+    NotificationService notificationService;
 
 
     @Transactional
     @Override
     public BaseResponse<Void> createSchedule(CreateInspectionScheduleDTO dto) {
+        long count = inspectionScheduleRepository.countByRequestId(dto.getRequestId());
+        if(count >= 3) throw new CustomBusinessException("reschedule too much");
+
         Account account = authUtil.getCurrentAccount();
         validateDate(dto.getDate());
         ConsignmentRequest request = consignmentRequestRepository.findById(dto.getRequestId())
@@ -113,6 +119,15 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
         } catch (DataIntegrityViolationException e) {
             throw new CustomBusinessException("REQUEST_ALREADY_HAS_ACTIVE_SCHEDULE");
         }
+
+        notificationService.notifyUserAfterCommit(
+                request.getStaff().getId(),
+                request.getId(),
+                "USER_SCHEDULE",
+                "Người dùng đặt lịch",
+                "Người dùng " + request.getOwner().getProfile().getFullName()
+                        + " đã đặt lịch"
+        );
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setMessage("Created");

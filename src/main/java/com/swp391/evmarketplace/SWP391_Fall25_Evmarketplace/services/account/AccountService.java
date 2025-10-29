@@ -42,6 +42,6 @@ public interface AccountService {
     BaseResponse<Void> unblockAccount(Long accountId);
     BaseResponse<StaffAccountResponseDTO> createStaffAccount(CreateStaffAccountRequestDTO requestDTO);
     BaseResponse<Void> resetPassword(ResetPasswordRequest request);
-    BaseResponse<List<Account>> getStaffListInBranch(Long branchId);
+    BaseResponse<List<Account>> getStaffListInBranch();
 
 }
