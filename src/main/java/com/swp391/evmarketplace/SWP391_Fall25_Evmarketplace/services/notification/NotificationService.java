@@ -8,6 +8,6 @@ import org.springframework.data.domain.Slice;
 public interface NotificationService {
     BaseResponse<?> update(Long id, Long accountId);
 
-    Slice<NotificationDto> listByAccount(Long accountId, int page, int size);
+    Slice<NotificationDto> listByAccount(Long accountId, Integer lastId, Integer limit);
     void notifySellerAfterCommit(Listing l, String type, String title, String msg);
 }

@@ -75,7 +75,7 @@ public class PaymentController {
     @GetMapping
     public ResponseEntity<?> getPaymentsByOrderId(
             @RequestParam Long orderId,
-            @RequestParam(required = false) Long lastId, // ID cuối cùng của batch trước
+            @RequestParam(required = false) Long lastId,
             @RequestParam(defaultValue = "4") int limit
     ) {
         var res = paymentService.getPaymentsByOrderId(orderId, lastId, limit);

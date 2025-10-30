@@ -32,4 +32,5 @@ public class NotificationStore {
 
         return notificationRepository.save(n);
     }
+
 }

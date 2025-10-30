@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.contract.ContractDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ContractSignMethod;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ContractStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -62,17 +63,52 @@ public class Contract {
     private ContractStatus status = ContractStatus.UPLOADED;
 
     public ContractDto toDto(Contract c){
+        if (c == null) return null;
+
         ContractDto dto = new ContractDto();
         dto.setId(c.getId());
-        dto.setFileUrl(c.getFileUrl());
+
+        var order = c.getOrder();
+        if (order != null) {
+            dto.setOrderId(order.getId());
+            dto.setOrderNo(order.getOrderNo());
+            dto.setOrderCode(order.getOrderCode() != null ? String.valueOf(order.getOrderCode()) : null);
+
+            var listing = order.getListing();
+            dto.setListingTitle(listing != null ? listing.getTitle() : null);
+
+            var buyer = order.getBuyer();
+            String buyerName = null;
+            if (buyer != null) {
+                buyerName = (buyer.getProfile() != null && buyer.getProfile().getFullName() != null && !buyer.getProfile().getFullName().isBlank())
+                        ? buyer.getProfile().getFullName()
+                        : buyer.getPhoneNumber();
+            }
+            dto.setBuyerName(buyerName);
+
+            var seller = order.getSeller();
+            String sellerName = null;
+            if (seller != null) {
+                sellerName = (seller.getProfile() != null && seller.getProfile().getFullName() != null && !seller.getProfile().getFullName().isBlank())
+                        ? seller.getProfile().getFullName()
+                        : seller.getPhoneNumber();
+            }
+            dto.setSellerName(sellerName);
+
+            var branch = order.getBranch();
+            dto.setBranchName(branch != null ? branch.getName() : null);
+        }
+
+        dto.setFileUrl(MedialUtils.converMediaNametoMedialUrl(c.getFileUrl(), ""));
         dto.setSignMethod(c.getSignMethod());
         dto.setStatus(c.getStatus());
-        dto.setOrderId(c.getOrder().getId());
-        dto.setSignAt(c.getSignedAt());
-        dto.setCreateAt(c.getCreatedAt());
+
+        dto.setCreatedAt(c.getCreatedAt());
+        dto.setUpdatedAt(c.getUpdatedAt());
+        dto.setSignedAt(c.getSignedAt());
         dto.setEffectiveFrom(c.getEffectiveFrom());
         dto.setEffectiveTo(c.getEffectiveTo());
-        dto.setUpdateAt(c.getUpdatedAt());
+
         return dto;
     }
 

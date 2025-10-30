@@ -66,7 +66,7 @@ public class PaymentServiceImp implements PaymentService {
                 : salePaymentRepository.findByOrderIdAndIdLessThanOrderByIdDesc(orderId, lastId, pageable)
                 .stream().map(p -> p.toDto(p)).toList();
 
-        // cursor cho trang tiếp theo (id nhỏ nhất của batch hiện tại)
+
         Long nextCursor = (items.size() == pageSize)
                 ? items.get(items.size() - 1).getId()
                 : null;

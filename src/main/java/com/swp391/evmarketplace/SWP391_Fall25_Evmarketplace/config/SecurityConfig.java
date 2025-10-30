@@ -40,7 +40,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     //Public Access
 
-
                     auth.requestMatchers(
                             "/api/auth/login-with-phone-number",
                             "/api/auth/google",
