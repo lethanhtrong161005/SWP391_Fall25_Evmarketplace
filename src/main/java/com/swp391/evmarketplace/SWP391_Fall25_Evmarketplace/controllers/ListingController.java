@@ -8,8 +8,11 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import jakarta.validation.Valid;
@@ -33,21 +36,11 @@ public class ListingController {
     @Autowired
     private AuthUtil authUtil;
 
-    @GetMapping("/all")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> getListings(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false, defaultValue = "desc") String dir
-    ) {
-        BaseResponse<Map<String, Object>> response = listingService.getAllListingsPublic(page, size, sort, dir);
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
-
     //TYPE: VEHICLE, BATTERY
-    @GetMapping
-    public ResponseEntity<?> getByType(
-            @RequestParam String type,
+    @GetMapping("/")
+    public ResponseEntity<BaseResponse<PageResponse<ListingListProjection>>> getByType(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) CategoryCode categoryCode,
             @RequestParam(required = false) ListingStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -55,18 +48,20 @@ public class ListingController {
             @RequestParam(required = false, defaultValue = "desc") String dir
     ) {
         status = status != null ? status : ListingStatus.ACTIVE;
-        var res = listingService.getByType(type, status.name(), page, size, sort, dir);
+        BaseResponse<PageResponse<ListingListProjection>> res =
+                listingService.getAllListingsPublic(type, categoryCode, status.name(), page, size, sort, dir);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @PostMapping(value="/post",
+
+    @PostMapping(value = "/post",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<?> postListing(
             @RequestPart("payload") String payload,
-            @RequestPart(value="images", required=false) List<MultipartFile> images,
-            @RequestPart(value="videos", required=false) List<MultipartFile> videos
-    ){
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "videos", required = false) List<MultipartFile> videos
+    ) {
         try {
             CreateListingRequest req = objectMapper.readValue(payload, CreateListingRequest.class);
             var res = listingService.createListing(req, images, videos);
@@ -77,14 +72,15 @@ public class ListingController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<BaseResponse<Map<String, Object>>> searchCards(
+    public ResponseEntity<BaseResponse<PageResponse<ListingListProjection>>> searchCards(
             @ModelAttribute SearchListingRequestDTO requestDTO,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = "desc") String dir
     ) {
-        BaseResponse<Map<String, Object>> response = listingService.searchForPublic(requestDTO, page, size, sort, dir);
+        BaseResponse<PageResponse<ListingListProjection>> response = listingService
+                .searchForPublic(requestDTO, page, size, sort, dir);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
@@ -144,31 +140,31 @@ public class ListingController {
 
     //Lấy chi tiết bài đăng theo người đăng
     @GetMapping("/seller/{listingId}")
-    public ResponseEntity<?> getListingBySeller(@PathVariable Long listingId){
+    public ResponseEntity<?> getListingBySeller(@PathVariable Long listingId) {
         var res = listingService.getListingDetailBySeller(listingId, authUtil.getCurrentAccount().getId());
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
     //Lấy chi tiết bài đăng
     @GetMapping("/{listingId}")
-    public ResponseEntity<?> getListingById(@PathVariable Long listingId){
+    public ResponseEntity<?> getListingById(@PathVariable Long listingId) {
         var res = listingService.getListingDetailById(listingId);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
     //Thay đổi trạng thái bài đăng
     @PostMapping("/status/change")
-    public ResponseEntity<?> changeListingStatus(@Valid @RequestBody ChangeStatusRequest request){
+    public ResponseEntity<?> changeListingStatus(@Valid @RequestBody ChangeStatusRequest request) {
         var res = listingService.changeStatus(request.getId(), request.getStatus());
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
     //Restore
     @PostMapping("/{id}/restore")
-    public ResponseEntity<?> restoreListing(@PathVariable Long id){
+    public ResponseEntity<?> restoreListing(@PathVariable Long id) {
         var res = listingService.restore(id);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
-    
+
 
 }

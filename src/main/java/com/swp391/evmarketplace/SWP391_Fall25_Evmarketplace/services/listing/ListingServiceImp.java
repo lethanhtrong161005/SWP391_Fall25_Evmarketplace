@@ -32,7 +32,6 @@ import org.springframework.data.domain.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -73,57 +72,61 @@ public class ListingServiceImp implements ListingService {
 
     @Override
     @Transactional(readOnly = true)
-    public BaseResponse<?> getByType(String type,
-                                     String status,
-                                     int page, int size, String sort, String dir) {
-        String t = type == null ? "" : type.trim().toUpperCase();
-        if (!t.equals("VEHICLE") && !t.equals("BATTERY")) {
-            throw new CustomBusinessException("Invalid listing type");
-        }
+    public BaseResponse<PageResponse<ListingListProjection>> getAllListingsPublic(
+            String type, CategoryCode cate, String status,
+            int page, int size, String sort, String dir
+    ) {
 
-        Set<String> allowedSortFields = Set.of(
-                "createdAt", "updatedAt", "price", "expiresAt", "promotedUntil", "batteryCapacityKwh"
-        );
+        Long currentId = authUtil.getCurrentAccountIdOrNull();
+        var statuses = parseStatusesOrDefault(status); // mặc định ACTIVE
+
+        Set<String> allowedSortFields = Set.of("createdAt", "updatedAt", "price", "expiresAt", "promotedUntil", "batteryCapacityKwh");
         String sortField = (sort == null || sort.isBlank()) ? "createdAt" : sort.trim();
         if (!allowedSortFields.contains(sortField)) sortField = "createdAt";
 
         Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(
-                Math.max(0, page),
-                Math.min(Math.max(1, size), 50),
-                Sort.by(direction, sortField).and(Sort.by(Sort.Direction.DESC, "id"))
-        );
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(Math.max(1, size), 50), Sort.by(direction, sortField).and(Sort.by(Sort.Direction.DESC, "id")));
 
-        var statuses = parseStatusesOrDefault(status); // mặc định ACTIVE
-        Long currentId = authUtil.getCurrentAccountIdOrNull();
+        Page<ListingListProjection> p;
 
-        Page<ListingListProjection> p = t.equals("VEHICLE")
-                ? listingRepository.findVehicles(currentId, statuses, pageable)
-                : listingRepository.findBatteries(currentId, statuses, pageable);
+
+        String t = type == null ? null : type.trim().toUpperCase();
+        if (t != null) {
+            if (!t.equals("VEHICLE") && !t.equals("BATTERY")) {
+                throw new CustomBusinessException("Invalid listing type");
+            }
+
+            p = t.equals("VEHICLE") ?
+                    listingRepository.findVehicles(currentId, statuses, pageable)
+                    : listingRepository.findBatteries(currentId, statuses, pageable);
+        } else if (cate != null) {
+            p = listingRepository.findByCategory(currentId, statuses, cate.name(), pageable);
+        } else {
+            p = listingRepository.getAllListWithFavPublic(statuses, currentId, pageable);
+        }
+
+        PageResponse<ListingListProjection> pr = new PageResponse<>(p.getTotalElements(), p.getTotalPages(), p.hasNext(), p.hasPrevious(), p.getNumber(), p.getSize(), p.getContent());
+
         BaseResponse<PageResponse<ListingListProjection>> response = new BaseResponse<>();
-        PageResponse<ListingListProjection> pr = new PageResponse<>(
-                p.getTotalElements(), p.getTotalPages(),
-                p.hasNext(), p.hasPrevious(), p.getNumber(), p.getSize(),
-                p.getContent()
-        );
         response.setData(pr);
         response.setStatus(200);
-        response.setMessage("Success");
+        response.setMessage(p.isEmpty() ? "Empty List" : "Success");
         response.setSuccess(true);
         return response;
+
     }
 
-    /** Parse "ACTIVE,APPROVED" -> Collection<ListingStatus>, mặc định ACTIVE, không bao giờ rỗng */
-    private Collection<ListingStatus>
-    parseStatusesOrDefault(String statusStr) {
+    /**
+     * Parse "ACTIVE,APPROVED" -> Collection<ListingStatus>, mặc định ACTIVE, không bao giờ rỗng
+     */
+    private Collection<ListingStatus> parseStatusesOrDefault(String statusStr) {
         var EnumType = ListingStatus.class;
 
         if (statusStr == null || statusStr.isBlank()) {
             return EnumSet.of(ListingStatus.ACTIVE);
         }
 
-        EnumSet<ListingStatus> set =
-                EnumSet.noneOf(EnumType);
+        EnumSet<ListingStatus> set = EnumSet.noneOf(EnumType);
 
         for (String raw : statusStr.split(",")) {
             String token = raw.trim();
@@ -146,14 +149,12 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos) {
         try {
             // 1) Category
-            var category = categoryRepository.findById(req.getCategoryId())
-                    .orElseThrow(() -> new CustomBusinessException("Category not found"));
+            var category = categoryRepository.findById(req.getCategoryId()).orElseThrow(() -> new CustomBusinessException("Category not found"));
 
             // 2) Nếu có modelId → dùng model làm “nguồn chân lý” để nhận diện loại và kiểm tính hợp lệ
             Model model = null;
             if (req.getModelId() != null) {
-                model = modelRepository.findById(req.getModelId())
-                        .orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
+                model = modelRepository.findById(req.getModelId()).orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
 
                 // Model phải thuộc đúng category người dùng chọn
                 if (!model.getCategory().getId().equals(req.getCategoryId())) {
@@ -205,9 +206,7 @@ public class ListingServiceImp implements ListingService {
             // 5) Tự link catalog nếu có brandId + modelId
             if (req.getBrandId() != null && req.getModelId() != null) {
                 if (type == ItemType.VEHICLE) {
-                    productVehicleRepository
-                            .findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId())
-                            .ifPresent(listing::setProductVehicle);
+                    productVehicleRepository.findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId()).ifPresent(listing::setProductVehicle);
                     // đảm bảo loại kia null
                     listing.setProductBattery(null);
                 } else { // BATTERY
@@ -216,9 +215,7 @@ public class ListingServiceImp implements ListingService {
                     listing.setMassKg(req.getMassKg());
                     listing.setDimensions(req.getDimensionsMm());
 
-                    productBatteryRepository
-                            .findFirstByCategory_IdAndBrand_IdAndModel_Id(req.getCategoryId(), req.getBrandId(), req.getModelId())
-                            .ifPresent(listing::setProductBattery);
+                    productBatteryRepository.findFirstByCategory_IdAndBrand_IdAndModel_Id(req.getCategoryId(), req.getBrandId(), req.getModelId()).ifPresent(listing::setProductBattery);
                     listing.setProductVehicle(null);
 
                 }
@@ -269,13 +266,11 @@ public class ListingServiceImp implements ListingService {
         }
     }
 
-    @Override
-    public BaseResponse<Map<String, Object>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
+    public BaseResponse<PageResponse<ListingListProjection>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
         return doSearch(requestDTO, EnumSet.of(ListingStatus.ACTIVE), page, size, sort, dir);
     }
 
-    @Override
-    public BaseResponse<Map<String, Object>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
+    public BaseResponse<PageResponse<ListingListProjection>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
         return doSearch(requestDTO, EnumSet.allOf(ListingStatus.class), page, size, sort, dir);
     }
 
@@ -293,71 +288,53 @@ public class ListingServiceImp implements ListingService {
 
 
     private Pageable buildPageable(int page, int size, String sort, String dir) {
-        Sort s = (sort == null || sort.isBlank())
-                ? Sort.by(Sort.Direction.DESC, "createdAt") //mặc định show acc mới tạo gần nhất
+        Sort s = (sort == null || sort.isBlank()) ? Sort.by(Sort.Direction.DESC, "createdAt") //mặc định show acc mới tạo gần nhất
                 : Sort.by("desc".equalsIgnoreCase(dir) ? Sort.Direction.DESC : Sort.Direction.ASC, sort);
         return PageRequest.of(Math.max(page, 0), Math.max(size, 1), s); // số trang 0 âm, ít nhất 1 phần tử trong mỗi trang
     }
 
-    public BaseResponse<Map<String, Object>> doSearch(SearchListingRequestDTO requestDTO, EnumSet<ListingStatus> statusSet, int page, int size, String sort, String dir) {
+    public BaseResponse<PageResponse<ListingListProjection>> doSearch(
+            SearchListingRequestDTO requestDTO, EnumSet<ListingStatus> statusSet,
+            int page, int size, String sort, String dir) {
+        Long currentId = authUtil.getCurrentAccountIdOrNull();
+
+        Set<String> allowedSort = Set.of("createdAt", "updatedAt", "price", "batteryCapacityKwh", "mileageKm", "sohPercent");
+        String sortField = (sort == null || sort.isBlank()) ? "createdAt"
+                : allowedSort.stream().anyMatch(f -> f.equalsIgnoreCase(sort.trim()))
+                ? allowedSort.stream().filter(f -> f.equalsIgnoreCase(sort.trim())).findFirst().get()
+                : "createdAt";
+        Sort.Direction direction = "asc".equalsIgnoreCase(dir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Sort sortSpec = Sort.by(new Sort.Order(direction, sortField).with(Sort.NullHandling.NULLS_LAST))
+                .and(Sort.by(Sort.Direction.DESC, "id"));
+
+        if (requestDTO.getProvince() != null && requestDTO.getProvince().isBlank()) requestDTO.setProvince(null);
+        if (requestDTO.getKey() != null && requestDTO.getKey().isBlank()) requestDTO.setKey(null);
+
         if (requestDTO.getKey() != null) {
             String key = requestDTO.getKey().trim();
             requestDTO.setKey(key.isEmpty() ? null : key);
         }
         Pageable pageable = buildPageable(page, size, sort, dir);
-        Slice<ListingListProjection> slice = listingRepository.searchCards(requestDTO, statusSet, pageable);
-        if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
+        Page<ListingListProjection> p = listingRepository.searchCards(currentId, requestDTO, statusSet, pageable);
 
-        List<ListingCardDTO> items = slice.getContent().stream()
-                .map(this::toCardDtoWithFav)
-                .toList();
+        PageResponse<ListingListProjection> pr = PageResponse.<ListingListProjection>builder()
+                .totalElements(p.getTotalElements())
+                .totalPages(p.getTotalPages())
+                .hasNext(p.hasNext())
+                .hasPrevious(p.hasPrevious())
+                .page(p.getNumber())
+                .size(p.getSize())
+                .items(p.getContent())
+                .build();
 
-        Map<String, Object> payload = Map.of(
-                "items", items,
-                "page", page,
-                "size", size,
-                "hasNext", slice.hasNext()
-        );
-
-        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
-        response.setData(payload);
-        response.setStatus(200);
-        response.setSuccess(true);
-        response.setMessage("OK");
-
-        return response;
+        BaseResponse<PageResponse<ListingListProjection>> res = new BaseResponse<>();
+        res.setData(pr);
+        res.setStatus(200);
+        res.setMessage("Success");
+        res.setSuccess(true);
+        return res;
     }
 
-
-    @Override
-    public BaseResponse<Map<String, Object>> getAllListingsPublic(int page, int size, String sort, String dir) {
-        Pageable pageable = buildPageable(page, size, sort, dir);
-
-        Long userId = authUtil.getCurrentAccountIdOrNull();
-
-        Slice<ListingListProjection> slice = listingRepository.getAllListWithFavPublic(EnumSet.of(ListingStatus.ACTIVE), userId, pageable);
-
-        if (slice.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
-
-        List<ListingCardDTO> items = slice.getContent().stream()
-                .map(this::toCardDtoWithFav)
-                .toList();
-
-        Map<String, Object> payload = Map.of(
-                "items", items,
-                "page", page,
-                "size", size,
-                "hasNext", slice.hasNext()
-        );
-
-        BaseResponse<Map<String, Object>> response = new BaseResponse<>();
-        response.setData(payload);
-        response.setStatus(200);
-        response.setSuccess(true);
-        response.setMessage("OK");
-
-        return response;
-    }
 
     @Override
     public BaseResponse<Map<String, Object>> getAllListForModerator(int page, int size, String sort, String dir) {
@@ -369,19 +346,9 @@ public class ListingServiceImp implements ListingService {
 
         if (pages.isEmpty()) throw new CustomBusinessException(ErrorCode.LISTING_NOT_FOUND.name());
 
-        List<ListingCardDTO> items = pages.getContent().stream()
-                .map(this::toCardDtoWithFav)
-                .toList();
+        List<ListingCardDTO> items = pages.getContent().stream().map(this::toCardDtoWithFav).toList();
 
-        Map<String, Object> payload = Map.of(
-                "items", items,
-                "page", page,
-                "size", size,
-                "totalPages", pages.getTotalPages(),
-                "totalElements", pages.getTotalElements(),
-                "hasNext", pages.hasNext(),
-                "hasPrevious", pages.hasPrevious()
-        );
+        Map<String, Object> payload = Map.of("items", items, "page", page, "size", size, "totalPages", pages.getTotalPages(), "totalElements", pages.getTotalElements(), "hasNext", pages.hasNext(), "hasPrevious", pages.hasPrevious());
 
         BaseResponse<Map<String, Object>> response = new BaseResponse<>();
         response.setData(payload);
@@ -394,32 +361,11 @@ public class ListingServiceImp implements ListingService {
 
     private ListingCardDTO toCardDto(ListingListProjection prj) {
 
-        String thumbName = listingMediaRepository.findThumbnailUrlByListingId(prj.getId())
-                .orElse(null);
+        String thumbName = listingMediaRepository.findThumbnailUrlByListingId(prj.getId()).orElse(null);
 
-        String thumbUrl = (thumbName == null || thumbName.isBlank())
-                ? null
-                : MedialUtils.converMediaNametoMedialUrl(thumbName, MediaType.IMAGE.name(), serverUrl);
+        String thumbUrl = (thumbName == null || thumbName.isBlank()) ? null : MedialUtils.converMediaNametoMedialUrl(thumbName, MediaType.IMAGE.name(), serverUrl);
 
-        return ListingCardDTO.builder()
-                .id(prj.getId())
-                .categoryId(prj.getCategoryId())
-                .title(prj.getTitle())
-                .brand(prj.getBrand())
-                .model(prj.getModel())
-                .year(prj.getYear())
-                .sellerName(prj.getSellerName())
-                .price(prj.getPrice())
-                .province(prj.getProvince())
-                .batteryCapacityKwh(prj.getBatteryCapacityKwh())
-                .sohPercent(prj.getSohPercent())
-                .mileageKm(prj.getMileageKm())
-                .createdAt(prj.getCreatedAt())
-                .status(prj.getStatus())
-                .visibility(prj.getVisibility())
-                .isConsigned(prj.getIsConsigned())
-                .thumbnailUrl(thumbUrl)
-                .build();
+        return ListingCardDTO.builder().id(prj.getId()).categoryId(prj.getCategoryId()).title(prj.getTitle()).brand(prj.getBrand()).model(prj.getModel()).year(prj.getYear()).sellerName(prj.getSellerName()).price(prj.getPrice()).province(prj.getProvince()).batteryCapacityKwh(prj.getBatteryCapacityKwh()).sohPercent(prj.getSohPercent()).mileageKm(prj.getMileageKm()).createdAt(prj.getCreatedAt()).status(prj.getStatus()).visibility(prj.getVisibility()).isConsigned(prj.getIsConsigned()).thumbnailUrl(thumbUrl).build();
     }
 
     private ListingCardDTO toCardDtoWithFav(ListingListProjection prj) {
@@ -430,68 +376,27 @@ public class ListingServiceImp implements ListingService {
     }
 
     @Override
-    public BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(
-            ListingStatus status, String q, Integer page, Integer size) {
+    public BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(ListingStatus status, String q, Integer page, Integer size) {
 
         final int p = (page == null || page < 0) ? 0 : page;
         final int s = (size == null || size <= 0 || size > 100) ? 10 : size;
 
         Long sellerId = authUtil.getCurrentAccount().getId();
 
-        Sort sort = (status == ListingStatus.SOFT_DELETED)
-                ? Sort.by(Sort.Direction.DESC, "deletedAt")
-                .and(Sort.by(Sort.Direction.DESC, "updatedAt"))
-                .and(Sort.by(Sort.Direction.DESC, "id"))
-                : Sort.by(Sort.Direction.DESC, "updatedAt")
-                .and(Sort.by(Sort.Direction.DESC, "id"));
+        Sort sort = (status == ListingStatus.SOFT_DELETED) ? Sort.by(Sort.Direction.DESC, "deletedAt").and(Sort.by(Sort.Direction.DESC, "updatedAt")).and(Sort.by(Sort.Direction.DESC, "id")) : Sort.by(Sort.Direction.DESC, "updatedAt").and(Sort.by(Sort.Direction.DESC, "id"));
 
         Pageable pageable = PageRequest.of(p, s, sort);
 
-        Page<ListingListProjection> pg = listingRepository.findMine(
-                sellerId,
-                status,
-                (q == null || q.isBlank()) ? null : q.trim(),
-                pageable
-        );
+        Page<ListingListProjection> pg = listingRepository.findMine(sellerId, status, (q == null || q.isBlank()) ? null : q.trim(), pageable);
 
         List<ListingListItemDTO> items = pg.getContent().stream().map(prj -> {
             LocalDateTime deletedAt = prj.getDeletedAt();
             LocalDateTime purgeAt = (deletedAt != null) ? deletedAt.plusDays(30) : null;
 
-            return ListingListItemDTO.builder()
-                    .id(prj.getId())
-                    .year(prj.getYear())
-                    .status(prj.getStatus())
-                    .visibility(prj.getVisibility())
-                    .title(prj.getTitle())
-                    .batteryCapacityKwh(prj.getBatteryCapacityKwh())
-                    .createdAt(prj.getCreatedAt())
-                    .province(prj.getProvince())
-                    .mileageKm(prj.getMileageKm() == null ? null : String.valueOf(prj.getMileageKm()))
-                    .sohPercent(prj.getSohPercent())
-                    .model(prj.getModel())
-                    .brand(prj.getBrand())
-                    .price(prj.getPrice())
-                    .isConsigned(prj.getIsConsigned())
-                    .sellerName(prj.getSellerName())
-                    .updatedAt(prj.getUpdatedAt())
-                    .deletedAt(deletedAt)
-                    .expiresAt(prj.getExpiresAt())
-                    .promotedUntil(prj.getPromotedUntil())
-                    .hiddenAt(prj.getHiddenAt())
-                    .purgeAt(purgeAt)
-                    .build();
+            return ListingListItemDTO.builder().id(prj.getId()).year(prj.getYear()).status(prj.getStatus()).visibility(prj.getVisibility()).title(prj.getTitle()).batteryCapacityKwh(prj.getBatteryCapacityKwh()).createdAt(prj.getCreatedAt()).province(prj.getProvince()).mileageKm(prj.getMileageKm() == null ? null : String.valueOf(prj.getMileageKm())).sohPercent(prj.getSohPercent()).model(prj.getModel()).brand(prj.getBrand()).price(prj.getPrice()).isConsigned(prj.getIsConsigned()).sellerName(prj.getSellerName()).updatedAt(prj.getUpdatedAt()).deletedAt(deletedAt).expiresAt(prj.getExpiresAt()).promotedUntil(prj.getPromotedUntil()).hiddenAt(prj.getHiddenAt()).purgeAt(purgeAt).build();
         }).toList();
 
-        PageResponse<ListingListItemDTO> body = PageResponse.<ListingListItemDTO>builder()
-                .totalElements(pg.getTotalElements())
-                .totalPages(pg.getTotalPages())
-                .hasNext(pg.hasNext())
-                .hasPrevious(pg.hasPrevious())
-                .page(pg.getNumber())
-                .size(pg.getSize())
-                .items(items)
-                .build();
+        PageResponse<ListingListItemDTO> body = PageResponse.<ListingListItemDTO>builder().totalElements(pg.getTotalElements()).totalPages(pg.getTotalPages()).hasNext(pg.hasNext()).hasPrevious(pg.hasPrevious()).page(pg.getNumber()).size(pg.getSize()).items(items).build();
 
         BaseResponse<PageResponse<ListingListItemDTO>> res = new BaseResponse<>();
         res.setData(body);
@@ -511,6 +416,7 @@ public class ListingServiceImp implements ListingService {
 
         return result;
     }
+
 
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
@@ -558,7 +464,7 @@ public class ListingServiceImp implements ListingService {
         listingDto.setFavoriteCount(favoriteCount);
         Long useId = authUtil.getCurrentAccountIdOrNull();
         listingDto.setLikedByCurrentUser(false);
-        if(useId != null){
+        if (useId != null) {
             listingDto.setLikedByCurrentUser(favoriteRepository.existsByAccount_IdAndListing_Id(useId, listing.getId()));
         }
         dto.setListing(listingDto);
@@ -570,7 +476,6 @@ public class ListingServiceImp implements ListingService {
         accountDto.setProfile(listing.getSeller().getProfile());
         accountDto.setPhoneNumber(listing.getSeller().getPhoneNumber());
         dto.setSellerId(accountDto);
-
 
 
         //Lấy cơ sở giữ dùng cho kí gửi
@@ -608,17 +513,9 @@ public class ListingServiceImp implements ListingService {
 
     @Transactional
     @Override
-    public BaseResponse<?> updatedListing(
-            Long id,
-            Long sellerId,
-            UpdateListingRequest req,
-            List<MultipartFile> images,
-            List<MultipartFile> videos,
-            List<Long> keepMediaIds
-    ) {
+    public BaseResponse<?> updatedListing(Long id, Long sellerId, UpdateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos, List<Long> keepMediaIds) {
 
-        Listing listing = listingRepository.findById(id)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing listing = listingRepository.findById(id).orElseThrow(() -> new CustomBusinessException("Listing not found"));
         assertNotLockedForEdit(listing);
 
         if (!Objects.equals(listing.getSeller().getId(), sellerId)) {
@@ -626,11 +523,7 @@ public class ListingServiceImp implements ListingService {
         }
 
         // Danh sách trạng thái cho role MEMBER
-        EnumSet<ListingStatus> EDITABLE_BY_MEMBER = EnumSet.of(
-                ListingStatus.PENDING,
-                ListingStatus.REJECTED,
-                ListingStatus.EXPIRED
-        );
+        EnumSet<ListingStatus> EDITABLE_BY_MEMBER = EnumSet.of(ListingStatus.PENDING, ListingStatus.REJECTED, ListingStatus.EXPIRED);
 
         if (listing.getSeller().getRole() == AccountRole.MEMBER) {
             // Chỉ các trạng thái cho phép
@@ -643,21 +536,15 @@ public class ListingServiceImp implements ListingService {
                 final int RENEW_COOLDOWN_DAYS = 7;
 
                 // Lấy visibility target (nếu FE không gửi thì giữ nguyên)
-                Visibility targetVis = (req.getVisibility() != null)
-                        ? req.getVisibility()
-                        : listing.getVisibility();
+                Visibility targetVis = (req.getVisibility() != null) ? req.getVisibility() : listing.getVisibility();
 
                 // Cho nâng lên BOOSTED ngay, chặn chỉ khi target là NORMAL và chưa hết cooldown
                 if (targetVis == Visibility.NORMAL) {
                     // Ưu tiên dùng expiredAt, nếu chưa có thì fallback updatedAt
-                    LocalDateTime expiredAt =
-                            listing.getExpiresAt() != null ? listing.getExpiresAt() : listing.getUpdatedAt();
+                    LocalDateTime expiredAt = listing.getExpiresAt() != null ? listing.getExpiresAt() : listing.getUpdatedAt();
 
-                    if (expiredAt == null ||
-                            LocalDateTime.now().isBefore(expiredAt.plusDays(RENEW_COOLDOWN_DAYS))) {
-                        throw new CustomBusinessException(
-                                "You can only renew the regular mode 7 days after it expires."
-                        );
+                    if (expiredAt == null || LocalDateTime.now().isBefore(expiredAt.plusDays(RENEW_COOLDOWN_DAYS))) {
+                        throw new CustomBusinessException("You can only renew the regular mode 7 days after it expires.");
                     }
                 }
                 // targetVis == BOOSTED → pass
@@ -666,21 +553,16 @@ public class ListingServiceImp implements ListingService {
 
         // 2) Không cho đổi category
         final Long categoryId = listing.getCategory().getId();
-        final boolean isBatteryCategory =
-                "BATTERY".equalsIgnoreCase(
-                        listing.getCategory().getName());
+        final boolean isBatteryCategory = "BATTERY".equalsIgnoreCase(listing.getCategory().getName());
 
         // ===== BRAND / MODEL — hỗ trợ 2 chế độ =====
         // A. BRAND
         if (req.getBrandId() != null) {
             // chuyển sang (hoặc giữ) chế độ catalog theo brandId
             if (!Objects.equals(listing.getBrandId(), req.getBrandId())) {
-                Brand brand = brandRepository.findById(req.getBrandId())
-                        .orElseThrow(() -> new CustomBusinessException("Brand not found: " + req.getBrandId()));
+                Brand brand = brandRepository.findById(req.getBrandId()).orElseThrow(() -> new CustomBusinessException("Brand not found: " + req.getBrandId()));
                 listing.setBrandId(brand.getId());
-                listing.setBrand(
-                        (req.getBrand() != null && !req.getBrand().isBlank()) ? req.getBrand() : brand.getName()
-                );
+                listing.setBrand((req.getBrand() != null && !req.getBrand().isBlank()) ? req.getBrand() : brand.getName());
 
                 listing.setModelId(null);
                 listing.setModel(null);
@@ -712,8 +594,7 @@ public class ListingServiceImp implements ListingService {
         // B. MODEL
         if (req.getModelId() != null) {
             // validate model
-            Model model = modelRepository.findById(req.getModelId())
-                    .orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
+            Model model = modelRepository.findById(req.getModelId()).orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
 
             if (!Objects.equals(model.getCategory().getId(), categoryId)) {
                 throw new CustomBusinessException("Model does not belong to listing category");
@@ -730,14 +611,10 @@ public class ListingServiceImp implements ListingService {
             // Relink product nếu đủ brandId + modelId (catalog mode)
             if (listing.getBrandId() != null && listing.getModelId() != null) {
                 if (isBatteryCategory) {
-                    productBatteryRepository
-                            .findFirstByCategory_IdAndBrand_IdAndModel_Id(categoryId, listing.getBrandId(), listing.getModelId())
-                            .ifPresent(listing::setProductBattery);
+                    productBatteryRepository.findFirstByCategory_IdAndBrand_IdAndModel_Id(categoryId, listing.getBrandId(), listing.getModelId()).ifPresent(listing::setProductBattery);
                     listing.setProductVehicle(null);
                 } else {
-                    productVehicleRepository
-                            .findFirstByCategoryIdAndBrandIdAndModelId(categoryId, listing.getBrandId(), listing.getModelId())
-                            .ifPresent(listing::setProductVehicle);
+                    productVehicleRepository.findFirstByCategoryIdAndBrandIdAndModelId(categoryId, listing.getBrandId(), listing.getModelId()).ifPresent(listing::setProductVehicle);
                     listing.setProductBattery(null);
                 }
             } else {
@@ -851,11 +728,7 @@ public class ListingServiceImp implements ListingService {
 
     private void assertNotLockedForEdit(Listing l) {
         if (l.getStatus() == ListingStatus.PENDING && isLockActive(l, LocalDateTime.now())) {
-            String ownerName = (l.getModerationLockedBy() != null && l.getModerationLockedBy().getProfile() != null
-                    && l.getModerationLockedBy().getProfile().getFullName() != null
-                    && !l.getModerationLockedBy().getProfile().getFullName().isBlank())
-                    ? l.getModerationLockedBy().getProfile().getFullName()
-                    : "user#" + (l.getModerationLockedBy() != null ? l.getModerationLockedBy().getId() : null);
+            String ownerName = (l.getModerationLockedBy() != null && l.getModerationLockedBy().getProfile() != null && l.getModerationLockedBy().getProfile().getFullName() != null && !l.getModerationLockedBy().getProfile().getFullName().isBlank()) ? l.getModerationLockedBy().getProfile().getFullName() : "user#" + (l.getModerationLockedBy() != null ? l.getModerationLockedBy().getId() : null);
 
             int ttlRemain = l.getModerationTtlRemainingSec(LocalDateTime.now());
             throw new CustomBusinessException("Listing is being reviewed by " + ownerName + " (" + ttlRemain + "s left).");
@@ -869,8 +742,7 @@ public class ListingServiceImp implements ListingService {
     @Transactional
     @Override
     public BaseResponse<?> deleteListing(Long listingId) {
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing listing = listingRepository.findById(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
 
         var actor = authUtil.getCurrentAccount();
         var role = actor.getRole();
@@ -889,8 +761,7 @@ public class ListingServiceImp implements ListingService {
 
             case MEMBER -> {
                 // Member chỉ xoá mềm tin của chính mình và khi PENDING/REJECTED
-                boolean canDelete = isOwner && (st == ListingStatus.PENDING || st == ListingStatus.REJECTED
-                        || st == ListingStatus.EXPIRED || st == ListingStatus.HIDDEN || st == ListingStatus.APPROVED);
+                boolean canDelete = isOwner && (st == ListingStatus.PENDING || st == ListingStatus.REJECTED || st == ListingStatus.EXPIRED || st == ListingStatus.HIDDEN || st == ListingStatus.APPROVED);
                 if (!canDelete) {
                     throw new CustomBusinessException("You can only delete your own PENDING/REJECTED/HIDDEN/EXPIRED/APPROVED listing");
                 }
@@ -944,8 +815,7 @@ public class ListingServiceImp implements ListingService {
     @Transactional
     @Override
     public BaseResponse<?> changeStatus(Long listingId, ListingStatus target) {
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing listing = listingRepository.findById(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
 
         var actor = authUtil.getCurrentAccount();
         boolean isOwner = listing.getSeller() != null && listing.getSeller().getId().equals(actor.getId());
@@ -965,8 +835,7 @@ public class ListingServiceImp implements ListingService {
         final LocalDateTime now = LocalDateTime.now();
 
         // hạn hiện tại (tuỳ visibility)
-        LocalDateTime currentDeadline =
-                (vis == Visibility.BOOSTED) ? listing.getPromotedUntil() : listing.getExpiresAt();
+        LocalDateTime currentDeadline = (vis == Visibility.BOOSTED) ? listing.getPromotedUntil() : listing.getExpiresAt();
 
         // log history helper
         Runnable logHistory = () -> {
@@ -1081,8 +950,7 @@ public class ListingServiceImp implements ListingService {
     @Transactional
     @Override
     public BaseResponse<?> restore(Long listingId) {
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing listing = listingRepository.findById(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
 
         var actor = authUtil.getCurrentAccount();
         boolean isOwner = listing.getSeller() != null && listing.getSeller().getId().equals(actor.getId());
@@ -1181,8 +1049,7 @@ public class ListingServiceImp implements ListingService {
 
     @Transactional
     public BaseResponse<?> claim(Long listingId, Long actorId, boolean force) {
-        Listing l = listingRepository.findByIdForUpdate(listingId)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing l = listingRepository.findByIdForUpdate(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
 
         LocalDateTime now = LocalDateTime.now();
         assertLockableStatus(l);
@@ -1192,15 +1059,10 @@ public class ListingServiceImp implements ListingService {
             boolean sameOwner = ownerId.equals(actorId);
             if (!sameOwner) {
                 if (!force) {
-                    String ownerName = (l.getModerationLockedBy().getProfile() != null
-                            && l.getModerationLockedBy().getProfile().getFullName() != null
-                            && !l.getModerationLockedBy().getProfile().getFullName().isBlank())
-                            ? l.getModerationLockedBy().getProfile().getFullName()
-                            : "user#" + l.getModerationLockedBy().getId();
+                    String ownerName = (l.getModerationLockedBy().getProfile() != null && l.getModerationLockedBy().getProfile().getFullName() != null && !l.getModerationLockedBy().getProfile().getFullName().isBlank()) ? l.getModerationLockedBy().getProfile().getFullName() : "user#" + l.getModerationLockedBy().getId();
                     throw new CustomBusinessException("Listing is locked by " + ownerName);
                 }
-                Account actor = accountRepository.findById(actorId)
-                        .orElseThrow(() -> new CustomBusinessException("Actor not found"));
+                Account actor = accountRepository.findById(actorId).orElseThrow(() -> new CustomBusinessException("Actor not found"));
                 l.setModerationLockedBy(actor);
                 l.setModerationLockedAt(now);
                 assignModerator(l, actor);
@@ -1209,8 +1071,7 @@ public class ListingServiceImp implements ListingService {
                 l.setModerationLockedAt(now);
             }
         } else {
-            Account actor = accountRepository.findById(actorId)
-                    .orElseThrow(() -> new CustomBusinessException("Actor not found"));
+            Account actor = accountRepository.findById(actorId).orElseThrow(() -> new CustomBusinessException("Actor not found"));
             l.setModerationLockedBy(actor);
             l.setModerationLockedAt(now);
             assignModerator(l, actor);
@@ -1223,26 +1084,12 @@ public class ListingServiceImp implements ListingService {
         String lockedByName = null;
         if (l.getModerationLockedBy() != null) {
             var prof = l.getModerationLockedBy().getProfile();
-            lockedByName = (prof != null && prof.getFullName() != null && !prof.getFullName().isBlank())
-                    ? prof.getFullName()
-                    : "user#" + lockedById;
+            lockedByName = (prof != null && prof.getFullName() != null && !prof.getFullName().isBlank()) ? prof.getFullName() : "user#" + lockedById;
         }
 
-        LocalDateTime lockExpiresAt = (l.getModerationLockedAt() == null || ttlCfg == null)
-                ? null
-                : l.getModerationLockedAt().plusSeconds(ttlCfg);
+        LocalDateTime lockExpiresAt = (l.getModerationLockedAt() == null || ttlCfg == null) ? null : l.getModerationLockedAt().plusSeconds(ttlCfg);
 
-        Map<String, Object> data = Map.of(
-                "listingId", l.getId(),
-                "status", l.getStatus(),
-                "title", l.getTitle(),
-                "lockedById", lockedById,
-                "lockedByName", lockedByName,
-                "lockedAt", l.getModerationLockedAt(),
-                "ttlRemainSec", ttlRemain,
-                "ttlConfiguredSec", ttlCfg,
-                "lockExpiresAt", lockExpiresAt
-        );
+        Map<String, Object> data = Map.of("listingId", l.getId(), "status", l.getStatus(), "title", l.getTitle(), "lockedById", lockedById, "lockedByName", lockedByName, "lockedAt", l.getModerationLockedAt(), "ttlRemainSec", ttlRemain, "ttlConfiguredSec", ttlCfg, "lockExpiresAt", lockExpiresAt);
 
         BaseResponse<Map<String, Object>> res = new BaseResponse<>();
         res.setSuccess(true);
@@ -1254,7 +1101,7 @@ public class ListingServiceImp implements ListingService {
 
 
     private void assertLockableStatus(Listing l) {
-        if(l.getStatus() != ListingStatus.PENDING) {
+        if (l.getStatus() != ListingStatus.PENDING) {
             throw new CustomBusinessException("Listing status is not lockable: " + l.getStatus());
         }
     }
@@ -1272,11 +1119,12 @@ public class ListingServiceImp implements ListingService {
         return lived < ttl;
     }
 
-    /** Heartbeat gia hạn lock */
+    /**
+     * Heartbeat gia hạn lock
+     */
     @Transactional
     public BaseResponse<?> extend(Long listingId, Long actorId) {
-        Listing l = listingRepository.findByIdForUpdate(listingId)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing l = listingRepository.findByIdForUpdate(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
         LocalDateTime now = LocalDateTime.now();
 
         if (l.getModerationLockedBy() == null || !actorId.equals(l.getModerationLockedBy().getId())) {
@@ -1293,26 +1141,12 @@ public class ListingServiceImp implements ListingService {
         String lockedByName = null;
         if (l.getModerationLockedBy() != null) {
             var prof = l.getModerationLockedBy().getProfile();
-            lockedByName = (prof != null && prof.getFullName() != null && !prof.getFullName().isBlank())
-                    ? prof.getFullName()
-                    : "user#" + lockedById;
+            lockedByName = (prof != null && prof.getFullName() != null && !prof.getFullName().isBlank()) ? prof.getFullName() : "user#" + lockedById;
         }
 
-        LocalDateTime lockExpiresAt = (l.getModerationLockedAt() == null || ttlCfg == null)
-                ? null
-                : l.getModerationLockedAt().plusSeconds(ttlCfg);
+        LocalDateTime lockExpiresAt = (l.getModerationLockedAt() == null || ttlCfg == null) ? null : l.getModerationLockedAt().plusSeconds(ttlCfg);
 
-        Map<String, Object> data = Map.of(
-                "listingId", l.getId(),
-                "status", l.getStatus(),
-                "title", l.getTitle(),
-                "lockedById", lockedById,
-                "lockedByName", lockedByName,
-                "lockedAt", l.getModerationLockedAt(),
-                "ttlRemainSec", ttlRemain,
-                "ttlConfiguredSec", ttlCfg,
-                "lockExpiresAt", lockExpiresAt
-        );
+        Map<String, Object> data = Map.of("listingId", l.getId(), "status", l.getStatus(), "title", l.getTitle(), "lockedById", lockedById, "lockedByName", lockedByName, "lockedAt", l.getModerationLockedAt(), "ttlRemainSec", ttlRemain, "ttlConfiguredSec", ttlCfg, "lockExpiresAt", lockExpiresAt);
 
         BaseResponse<Map<String, Object>> res = new BaseResponse<>();
         res.setSuccess(true);
@@ -1322,13 +1156,14 @@ public class ListingServiceImp implements ListingService {
         return res;
     }
 
-    /** Nhả lock: force=true cho phép giải phóng lock của người khác. */
+    /**
+     * Nhả lock: force=true cho phép giải phóng lock của người khác.
+     */
     @Transactional
     public BaseResponse<?> release(Long listingId, Long actorId, boolean force) {
-        Listing l = listingRepository.findByIdForUpdate(listingId)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing l = listingRepository.findByIdForUpdate(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
 
-        if (l.getModerationLockedBy() == null){
+        if (l.getModerationLockedBy() == null) {
             throw new CustomBusinessException("You do not own the lock");
         }
 
@@ -1344,32 +1179,24 @@ public class ListingServiceImp implements ListingService {
         res.setSuccess(true);
         res.setStatus(200);
         res.setMessage("Released listing");
-        res.setData(Map.of(
-                "listingId", l.getId(),
-                "released", true));
+        res.setData(Map.of("listingId", l.getId(), "released", true));
         return res;
     }
 
     @Transactional(readOnly = true)
-    public BaseResponse<Map<String, Object>> getQueuePaged(
-            ListingStatus status, int pageIdx, int pageSize, String rawTitle
-    ) {
+    public BaseResponse<Map<String, Object>> getQueuePaged(ListingStatus status, int pageIdx, int pageSize, String rawTitle) {
         String title = (rawTitle == null) ? null : rawTitle.trim();
 
-        List<Listing> src = (title == null || title.isEmpty())
-                ? listingRepository.findByStatusOrderByCreatedAtAsc(status)
-                : listingRepository.findByStatusAndTitleContainingIgnoreCaseOrderByCreatedAtAsc(status, title);
+        List<Listing> src = (title == null || title.isEmpty()) ? listingRepository.findByStatusOrderByCreatedAtAsc(status) : listingRepository.findByStatusAndTitleContainingIgnoreCaseOrderByCreatedAtAsc(status, title);
 
         // lọc bỏ listing đang bị lock còn hiệu lực
         LocalDateTime now = LocalDateTime.now();
-        List<Listing> unlocked = src.stream()
-                .filter(l -> !isLockActive(l, now))
-                .toList();
+        List<Listing> unlocked = src.stream().filter(l -> !isLockActive(l, now)).toList();
 
         // manual pagination cho hàng chờ
         int total = unlocked.size();
         int from = Math.max(0, Math.min(pageIdx * pageSize, total));
-        int to   = Math.max(0, Math.min(from + pageSize, total));
+        int to = Math.max(0, Math.min(from + pageSize, total));
         boolean hasNext = to < total;
 
         List<Map<String, Object>> items = new ArrayList<>();
@@ -1403,7 +1230,7 @@ public class ListingServiceImp implements ListingService {
         m.put("categoryId", l.getCategory().getId());
         m.put("categoryName", l.getCategory().getName());
         m.put("price", l.getPrice());
-        m.put("visibility",  l.getVisibility());
+        m.put("visibility", l.getVisibility());
         m.put("createdAt", l.getCreatedAt());
         m.put("lockedBy", (l.getModerationLockedBy() == null) ? null : l.getModerationLockedBy().getId());
         m.put("lockedAt", l.getModerationLockedAt());
@@ -1414,14 +1241,10 @@ public class ListingServiceImp implements ListingService {
     public List<Map<String, Object>> myActiveLocks(Long actorId, String rawTitle) {
         String title = (rawTitle == null) ? null : rawTitle.trim();
 
-        List<Listing> locked = (title == null || title.isEmpty())
-                ? listingRepository.findByModerationLockedBy_IdOrderByModerationLockedAtDesc(actorId)
-                : listingRepository.findByModerationLockedBy_IdAndTitleContainingIgnoreCaseOrderByModerationLockedAtDesc(actorId, title);
+        List<Listing> locked = (title == null || title.isEmpty()) ? listingRepository.findByModerationLockedBy_IdOrderByModerationLockedAtDesc(actorId) : listingRepository.findByModerationLockedBy_IdAndTitleContainingIgnoreCaseOrderByModerationLockedAtDesc(actorId, title);
 
         LocalDateTime now = LocalDateTime.now();
-        List<Listing> activeLocks = locked.stream()
-                .filter(l -> isLockActive(l, now))
-                .toList();
+        List<Listing> activeLocks = locked.stream().filter(l -> isLockActive(l, now)).toList();
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Listing l : activeLocks) {
@@ -1438,7 +1261,7 @@ public class ListingServiceImp implements ListingService {
         m.put("categoryId", l.getCategory().getId());
         m.put("categoryName", l.getCategory().getName());
         m.put("price", l.getPrice());
-        m.put("visibility",  l.getVisibility());
+        m.put("visibility", l.getVisibility());
         m.put("createdAt", l.getCreatedAt());
         m.put("lockedBy", (l.getModerationLockedBy() == null) ? null : l.getModerationLockedBy().getId());
         m.put("lockedAt", l.getModerationLockedAt());
@@ -1450,8 +1273,7 @@ public class ListingServiceImp implements ListingService {
 
     @Transactional
     public BaseResponse<?> approve(Long listingId, Long actorId, boolean force) {
-        Listing l = listingRepository.findByIdForUpdate(listingId)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing l = listingRepository.findByIdForUpdate(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
         if (l.getStatus() != ListingStatus.PENDING) {
             throw new CustomBusinessException("You are not allowed to approve this listing");
         }
@@ -1459,8 +1281,7 @@ public class ListingServiceImp implements ListingService {
         LocalDateTime now = LocalDateTime.now();
         ensureActiveLockOwnedOrForce(l, actorId, force, now);
 
-        Account actor = accountRepository.findById(actorId)
-                .orElseThrow(() -> new CustomBusinessException("Actor not found"));
+        Account actor = accountRepository.findById(actorId).orElseThrow(() -> new CustomBusinessException("Actor not found"));
 
         ListingStatus from = l.getStatus();
         if (from == ListingStatus.REJECTED || from == ListingStatus.SOLD || from == ListingStatus.EXPIRED) {
@@ -1477,11 +1298,12 @@ public class ListingServiceImp implements ListingService {
 
         pushHistory(l, actor, from, ListingStatus.APPROVED, "APPROVED", "");
 
-        notificationService.notifySellerAfterCommit(l, "LISTING_APPROVED",
-                l.getTitle(), "Đã được duyệt");
+        notificationService.notifySellerAfterCommit(l, "LISTING_APPROVED", l.getTitle(), "Đã được duyệt");
 
         var res = new BaseResponse<>();
-        res.setSuccess(true); res.setStatus(200); res.setMessage("Approved listing");
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Approved listing");
         return res;
     }
 
@@ -1490,8 +1312,7 @@ public class ListingServiceImp implements ListingService {
         if (reason == null || reason.isBlank()) {
             throw new CustomBusinessException("Rejected reason is required");
         }
-        Listing l = listingRepository.findByIdForUpdate(listingId)
-                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+        Listing l = listingRepository.findByIdForUpdate(listingId).orElseThrow(() -> new CustomBusinessException("Listing not found"));
         if (l.getStatus() != ListingStatus.PENDING) {
             throw new CustomBusinessException("You are not allowed to reject this listing");
         }
@@ -1499,8 +1320,7 @@ public class ListingServiceImp implements ListingService {
         LocalDateTime now = LocalDateTime.now();
         ensureActiveLockOwnedOrForce(l, actorId, force, now);
 
-        Account actor = accountRepository.findById(actorId)
-                .orElseThrow(() -> new CustomBusinessException("Actor not found"));
+        Account actor = accountRepository.findById(actorId).orElseThrow(() -> new CustomBusinessException("Actor not found"));
 
         ListingStatus from = l.getStatus();
         l.setStatus(ListingStatus.REJECTED);
@@ -1513,17 +1333,17 @@ public class ListingServiceImp implements ListingService {
         l.setModerationLockedBy(null);
         l.setModerationLockedAt(null);
 
-        notificationService.notifySellerAfterCommit(l, "LISTING_REJECTED",
-                l.getTitle(), reason);
+        notificationService.notifySellerAfterCommit(l, "LISTING_REJECTED", l.getTitle(), reason);
 
         var res = new BaseResponse<>();
-        res.setSuccess(true); res.setStatus(200); res.setMessage("Rejected listing");
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Rejected listing");
         return res;
     }
 
     private void assertCanForce(Long actorId) {
-        var a = accountRepository.findById(actorId)
-                .orElseThrow(() -> new CustomBusinessException("Actor not found"));
+        var a = accountRepository.findById(actorId).orElseThrow(() -> new CustomBusinessException("Actor not found"));
         var can = a.getRole() == AccountRole.ADMIN || a.getRole() == AccountRole.MANAGER;
         if (!can) throw new CustomBusinessException("Force is not allowed for your role");
     }
@@ -1546,20 +1366,9 @@ public class ListingServiceImp implements ListingService {
         claim(l.getId(), actorId, true);
     }
 
-
-
     @Transactional(readOnly = true)
     @Override
-    public BaseResponse<PageResponse<ListingHistoryDto>> getModeratorHistory(
-            Long actorId,
-            String q,
-            LocalDateTime fromTs,
-            LocalDateTime toTs,
-            List<String> reasons,
-            Set<ListingStatus> toStatuses,
-            Integer page,
-            Integer size
-    ) {
+    public BaseResponse<PageResponse<ListingHistoryDto>> getModeratorHistory(Long actorId, String q, LocalDateTime fromTs, LocalDateTime toTs, List<String> reasons, Set<ListingStatus> toStatuses, Integer page, Integer size) {
         final int p = (page == null || page < 0) ? 0 : page;
         final int s = (size == null || size <= 0 || size > 100) ? 10 : size;
 
@@ -1579,22 +1388,9 @@ public class ListingServiceImp implements ListingService {
 
         Pageable pageable = PageRequest.of(p, s, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<ListingHistoryDto> pg = listingStatusHistoryRepository.findModeratorHistory(
-                actorId, key, fromTs, toTs,
-                reasonsEmpty, reasonsEff,
-                toEmpty, toEff,
-                pageable
-        );
+        Page<ListingHistoryDto> pg = listingStatusHistoryRepository.findModeratorHistory(actorId, key, fromTs, toTs, reasonsEmpty, reasonsEff, toEmpty, toEff, pageable);
 
-        PageResponse<ListingHistoryDto> body = PageResponse.<ListingHistoryDto>builder()
-                .totalElements(pg.getTotalElements())
-                .totalPages(pg.getTotalPages())
-                .hasNext(pg.hasNext())
-                .hasPrevious(pg.hasPrevious())
-                .page(pg.getNumber())
-                .size(pg.getSize())
-                .items(pg.getContent())
-                .build();
+        PageResponse<ListingHistoryDto> body = PageResponse.<ListingHistoryDto>builder().totalElements(pg.getTotalElements()).totalPages(pg.getTotalPages()).hasNext(pg.hasNext()).hasPrevious(pg.hasPrevious()).page(pg.getNumber()).size(pg.getSize()).items(pg.getContent()).build();
 
         BaseResponse<PageResponse<ListingHistoryDto>> res = new BaseResponse<>();
         res.setStatus(200);
