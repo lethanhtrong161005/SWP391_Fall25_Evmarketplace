@@ -22,4 +22,6 @@ public class SearchListingRequestDTO {
 
     private BigDecimal sohMin;      // soh_percent
     private BigDecimal sohMax;
+
+    private String province;
 }

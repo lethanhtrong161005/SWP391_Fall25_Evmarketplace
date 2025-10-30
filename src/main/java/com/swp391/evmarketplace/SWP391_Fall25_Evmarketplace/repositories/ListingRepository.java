@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingStatusCount;
@@ -10,10 +11,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -22,57 +20,100 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ListingRepository extends JpaRepository<Listing, Long> {
+public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpecificationExecutor<Listing> {
     Optional<Listing> findById(long id);
 
 
     //SpEL :#{#req.field} cho phép bạn tham chiếu trực tiếp vào field của DTO.
-    @Query("""
-              select
-                    l.id as id,
-                    c.id as categoryId,
-                    l.title as title,
-                    l.brand as brand,
-                    l.model as model,
-                    l.year as year,
-                    p.fullName as sellerName,
-                    l.price as price,
-                    l.province as province,
-                    l.batteryCapacityKwh as batteryCapacityKwh,
-                    l.sohPercent as sohPercent,
-                    l.mileageKm as mileageKm,
-                    l.createdAt as createdAt,
-                    l.status as status,
-                    l.visibility as visibility,
-                    l.consigned as isConsigned
-                from Listing l
-                join l.seller a
-                join l.category c
-                join a.profile p
-              where l.status in :statuses
-                and (
-                          :#{#req.key} is null
-                          or lower(l.brand) like lower(concat('%', :#{#req.key}, '%'))
-                          or lower(l.model) like lower(concat('%', :#{#req.key}, '%'))
-                          or lower(l.title) like lower(concat('%', :#{#req.key}, '%'))
-                        )
-                and (:#{#req.yearFrom} is null or l.year >= :#{#req.yearFrom})
-                and (:#{#req.yearTo}   is null or l.year <= :#{#req.yearTo})
-                and (:#{#req.capacityMin} is null or l.batteryCapacityKwh >= :#{#req.capacityMin})
-                and (:#{#req.capacityMax} is null or l.batteryCapacityKwh <= :#{#req.capacityMax})
-                and (:#{#req.priceMin}    is null or l.price >= :#{#req.priceMin})
-                and (:#{#req.priceMax}    is null or l.price <= :#{#req.priceMax})
-                and (:#{#req.mileageMin}  is null or l.mileageKm >= :#{#req.mileageMin})
-                and (:#{#req.mileageMax}  is null or l.mileageKm <= :#{#req.mileageMax})
-                and (:#{#req.sohMin}      is null or l.sohPercent >= :#{#req.sohMin})
-                and (:#{#req.sohMax}      is null or l.sohPercent <= :#{#req.sohMax})
-            """)
-    Slice<ListingListProjection> searchCards(
+    @Query(
+            value = """
+                    select
+                        l.id as id,
+                        c.id as categoryId,
+                        l.title as title,
+                        l.brand as brand,
+                        l.model as model,
+                        l.year as year,
+                        p.fullName as sellerName,
+                        l.price as price,
+                        l.province as province,
+                        l.batteryCapacityKwh as batteryCapacityKwh,
+                        l.sohPercent as sohPercent,
+                        l.mileageKm as mileageKm,
+                        l.createdAt as createdAt,
+                        l.status as status,
+                        l.visibility as visibility,
+                        l.consigned as isConsigned,
+                        (select count(f) from Favorite f where f.listing = l) as favoriteCount,
+                        case when (:accountId is not null) and exists (
+                                 select 1 from Favorite fx
+                                 where fx.listing = l and fx.account.id = :accountId
+                             )
+                             then true else false end as likedByCurrentUser
+                    from Listing l
+                      join l.seller a
+                      join l.category c
+                      left join a.profile p
+                    where l.status in :statuses
+                      and (
+                            :#{#req.key} is null
+                            or lower(l.brand) like lower(concat('%', :#{#req.key}, '%'))
+                            or lower(l.model) like lower(concat('%', :#{#req.key}, '%'))
+                            or lower(l.title) like lower(concat('%', :#{#req.key}, '%'))
+                          )
+                      and (:#{#req.yearFrom}    is null or l.year >= :#{#req.yearFrom})
+                      and (:#{#req.yearTo}      is null or l.year <= :#{#req.yearTo})
+                      and (:#{#req.capacityMin} is null or l.batteryCapacityKwh >= :#{#req.capacityMin})
+                      and (:#{#req.capacityMax} is null or l.batteryCapacityKwh <= :#{#req.capacityMax})
+                      and (:#{#req.priceMin}    is null or l.price >= :#{#req.priceMin})
+                      and (:#{#req.priceMax}    is null or l.price <= :#{#req.priceMax})
+                      and (:#{#req.mileageMin}  is null or l.mileageKm >= :#{#req.mileageMin})
+                      and (:#{#req.mileageMax}  is null or l.mileageKm <= :#{#req.mileageMax})
+                      and (:#{#req.sohMin}      is null or l.sohPercent >= :#{#req.sohMin})
+                      and (:#{#req.sohMax}      is null or l.sohPercent <= :#{#req.sohMax})
+                      and (
+                            :#{#req.province} is null
+                            or lower(trim(l.province)) = lower(trim(:#{#req.province}))
+                          )
+                    """,
+            countQuery = """
+                      select count(l)
+                      from Listing l
+                      where l.status in :statuses
+                        and (
+                              :#{#req.key} is null
+                              or lower(l.brand) like lower(concat('%', :#{#req.key}, '%'))
+                              or lower(l.model) like lower(concat('%', :#{#req.key}, '%'))
+                              or lower(l.title) like lower(concat('%', :#{#req.key}, '%'))
+                            )
+                        and (:#{#req.yearFrom}    is null or l.year >= :#{#req.yearFrom})
+                        and (:#{#req.yearTo}      is null or l.year <= :#{#req.yearTo})
+                        and (:#{#req.capacityMin} is null or l.batteryCapacityKwh >= :#{#req.capacityMin})
+                        and (:#{#req.capacityMax} is null or l.batteryCapacityKwh <= :#{#req.capacityMax})
+                        and (:#{#req.priceMin}    is null or l.price >= :#{#req.priceMin})
+                        and (:#{#req.priceMax}    is null or l.price <= :#{#req.priceMax})
+                        and (:#{#req.mileageMin}  is null or l.mileageKm >= :#{#req.mileageMin})
+                        and (:#{#req.mileageMax}  is null or l.mileageKm <= :#{#req.mileageMax})
+                        and (:#{#req.sohMin}      is null or l.sohPercent >= :#{#req.sohMin})
+                        and (:#{#req.sohMax}      is null or l.sohPercent <= :#{#req.sohMax})
+                        and (
+                              :#{#req.province} is null
+                              or lower(trim(l.province)) = lower(trim(:#{#req.province}))
+                            )
+                    """
+    )
+    Page<ListingListProjection> searchCards(
+            @Param("accountId") Long accountId,
             @Param("req") SearchListingRequestDTO req,
             @Param("statuses") Collection<ListingStatus> statuses,
-            Pageable pageable);
+            Pageable pageable
+    );
 
-    @Query( value = """
+
+
+
+
+    @Query(value = """
                 select
                     l.id as id,
                     c.id as categoryId,
@@ -109,7 +150,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
                         join a.profile p
                       where l.status in :statuses
                     """)
-    Slice<ListingListProjection> getAllListWithFavPublic(
+    Page<ListingListProjection> getAllListWithFavPublic(
             @Param("statuses") Collection<ListingStatus> statuses,
             @Param("accountId") Long accountId,
             Pageable pageable);
@@ -274,21 +315,28 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     long countPurgeCandidates(@Param("days") int days);
 
 
-    /** Khoá bản ghi để thao tác lock an toàn */
+    /**
+     * Khoá bản ghi để thao tác lock an toàn
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select l from Listing l where l.id = :id")
     Optional<Listing> findByIdForUpdate(@Param("id") Long id);
 
 
-
-    /** Tất cả tin tôi đang lock (service lọc TTL còn hiệu lực). */
+    /**
+     * Tất cả tin tôi đang lock (service lọc TTL còn hiệu lực).
+     */
     List<Listing> findByModerationLockedBy_IdOrderByModerationLockedAtDesc(Long accountId);
+
     Page<Listing> findByStatus(ListingStatus status, Pageable pageable);
+
     // Queue (theo trạng thái)
     List<Listing> findByStatusOrderByCreatedAtAsc(ListingStatus status);
+
     List<Listing> findByStatusAndTitleContainingIgnoreCaseOrderByCreatedAtAsc(
             ListingStatus status, String title
     );
+
     // My locks
     List<Listing> findByModerationLockedBy_IdAndTitleContainingIgnoreCaseOrderByModerationLockedAtDesc(
             Long accountId, String title
@@ -297,113 +345,163 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
     //Dọn Claim hết hạn
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
-        UPDATE listing
-           SET moderation_locked_by = NULL,
-               moderation_locked_at = NULL,
-               moderator_id         = NULL,
-               updated_at           = NOW()
-         WHERE status = 'PENDING'
-           AND moderation_locked_by IS NOT NULL
-           AND moderation_locked_at IS NOT NULL
-           AND TIMESTAMPDIFF(SECOND, moderation_locked_at, NOW()) >= moderation_lock_ttl_secs
-        """, nativeQuery = true)
+            UPDATE listing
+               SET moderation_locked_by = NULL,
+                   moderation_locked_at = NULL,
+                   moderator_id         = NULL,
+                   updated_at           = NOW()
+             WHERE status = 'PENDING'
+               AND moderation_locked_by IS NOT NULL
+               AND moderation_locked_at IS NOT NULL
+               AND TIMESTAMPDIFF(SECOND, moderation_locked_at, NOW()) >= moderation_lock_ttl_secs
+            """, nativeQuery = true)
     int releaseExpiredModerationLocks();
 
     @Query(value = """
-        select
-           l.id as id,
-           l.category.id as categoryId,
-           l.title as title,
-           coalesce(bb.name, l.brand) as brand,
-           coalesce(mm.name, l.model) as model,
-           l.year as year,
-           coalesce(p.fullName, l.seller.phoneNumber) as sellerName,
-           l.price as price,
-           l.province as province,
-           l.batteryCapacityKwh as batteryCapacityKwh,
-           l.sohPercent as sohPercent,
-           concat(l.mileageKm, '') as mileageKm,
-           l.createdAt as createdAt,
-           concat(l.status, '') as status,
-           concat(l.visibility, '') as visibility,
-           l.consigned as isConsigned,
-           l.updatedAt as updatedAt,
-           l.expiresAt as expiresAt,
-           l.promotedUntil as promotedUntil,
-           l.hiddenAt as hiddenAt,
-           l.deletedAt as deletedAt,
-           (select count(f) from Favorite f where f.listing.id = l.id) as favoriteCount,
-           case when :currentAccountId is not null and exists
-                (select 1 from Favorite f2
-                  where f2.listing.id = l.id
-                    and f2.account.id = :currentAccountId)
-                then true else false end as likedByCurrentUser
-        from Listing l
-        left join Profile p on p.account.id = l.seller.id
-        left join Brand   bb on bb.id = l.brandId
-        left join Model   mm on mm.id = l.modelId
-        where l.deletedAt is null
-          and l.status in :statuses
-          and l.category.name <> 'BATTERY'
-        """,
+            select
+               l.id as id,
+               l.category.id as categoryId,
+               l.title as title,
+               coalesce(bb.name, l.brand) as brand,
+               coalesce(mm.name, l.model) as model,
+               l.year as year,
+               coalesce(p.fullName, l.seller.phoneNumber) as sellerName,
+               l.price as price,
+               l.province as province,
+               l.batteryCapacityKwh as batteryCapacityKwh,
+               l.sohPercent as sohPercent,
+               concat(l.mileageKm, '') as mileageKm,
+               l.createdAt as createdAt,
+               concat(l.status, '') as status,
+               concat(l.visibility, '') as visibility,
+               l.consigned as isConsigned,
+               l.updatedAt as updatedAt,
+               l.expiresAt as expiresAt,
+               l.promotedUntil as promotedUntil,
+               l.hiddenAt as hiddenAt,
+               l.deletedAt as deletedAt,
+               (select count(f) from Favorite f where f.listing.id = l.id) as favoriteCount,
+               case when :currentAccountId is not null and exists
+                    (select 1 from Favorite f2
+                      where f2.listing.id = l.id
+                        and f2.account.id = :currentAccountId)
+                    then true else false end as likedByCurrentUser
+            from Listing l
+            left join Profile p on p.account.id = l.seller.id
+            left join Brand   bb on bb.id = l.brandId
+            left join Model   mm on mm.id = l.modelId
+            where l.deletedAt is null
+              and l.status in :statuses
+              and l.category.name <> 'BATTERY'
+            """,
             countQuery = """
-        select count(l.id)
-        from Listing l
-        where l.deletedAt is null
-          and l.status in :statuses
-          and l.category.name <> 'BATTERY'
-        """)
+                    select count(l.id)
+                    from Listing l
+                    where l.deletedAt is null
+                      and l.status in :statuses
+                      and l.category.name <> 'BATTERY'
+                    """)
     Page<ListingListProjection> findVehicles(@Param("currentAccountId") Long currentAccountId,
                                              @Param("statuses") java.util.Collection<com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus> statuses,
                                              Pageable pageable);
 
     @Query(value = """
-        select
-           l.id as id,
-           l.category.id as categoryId,
-           l.title as title,
-           coalesce(bb.name, l.brand) as brand,
-           coalesce(mm.name, l.model) as model,
-           l.year as year,
-           coalesce(p.fullName, l.seller.phoneNumber) as sellerName,
-           l.price as price,
-           l.province as province,
-           l.batteryCapacityKwh as batteryCapacityKwh,
-           l.sohPercent as sohPercent,
-           concat(l.mileageKm, '') as mileageKm,
-           l.createdAt as createdAt,
-           concat(l.status, '') as status,
-           concat(l.visibility, '') as visibility,
-           l.consigned as isConsigned,
-           l.updatedAt as updatedAt,
-           l.expiresAt as expiresAt,
-           l.promotedUntil as promotedUntil,
-           l.hiddenAt as hiddenAt,
-           l.deletedAt as deletedAt,
-           (select count(f) from Favorite f where f.listing.id = l.id) as favoriteCount,
-           case when :currentAccountId is not null and exists
-                (select 1 from Favorite f2
-                  where f2.listing.id = l.id
-                    and f2.account.id = :currentAccountId)
-                then true else false end as likedByCurrentUser
-        from Listing l
-        left join Profile p on p.account.id = l.seller.id
-        left join Brand   bb on bb.id = l.brandId
-        left join Model   mm on mm.id = l.modelId
-        where l.deletedAt is null
-          and l.status in :statuses
-          and l.category.name = 'BATTERY'
-        """,
+            select
+               l.id as id,
+               l.category.id as categoryId,
+               l.title as title,
+               coalesce(bb.name, l.brand) as brand,
+               coalesce(mm.name, l.model) as model,
+               l.year as year,
+               coalesce(p.fullName, l.seller.phoneNumber) as sellerName,
+               l.price as price,
+               l.province as province,
+               l.batteryCapacityKwh as batteryCapacityKwh,
+               l.sohPercent as sohPercent,
+               concat(l.mileageKm, '') as mileageKm,
+               l.createdAt as createdAt,
+               concat(l.status, '') as status,
+               concat(l.visibility, '') as visibility,
+               l.consigned as isConsigned,
+               l.updatedAt as updatedAt,
+               l.expiresAt as expiresAt,
+               l.promotedUntil as promotedUntil,
+               l.hiddenAt as hiddenAt,
+               l.deletedAt as deletedAt,
+               (select count(f) from Favorite f where f.listing.id = l.id) as favoriteCount,
+               case when :currentAccountId is not null and exists
+                    (select 1 from Favorite f2
+                      where f2.listing.id = l.id
+                        and f2.account.id = :currentAccountId)
+                    then true else false end as likedByCurrentUser
+            from Listing l
+            left join Profile p on p.account.id = l.seller.id
+            left join Brand   bb on bb.id = l.brandId
+            left join Model   mm on mm.id = l.modelId
+            where l.deletedAt is null
+              and l.status in :statuses
+              and l.category.name = 'BATTERY'
+            """,
             countQuery = """
-        select count(l.id)
-        from Listing l
-        where l.deletedAt is null
-          and l.status in :statuses
-          and l.category.name = 'BATTERY'
-        """)
+                    select count(l.id)
+                    from Listing l
+                    where l.deletedAt is null
+                      and l.status in :statuses
+                      and l.category.name = 'BATTERY'
+                    """)
     Page<ListingListProjection> findBatteries(@Param("currentAccountId") Long currentAccountId,
                                               @Param("statuses") java.util.Collection<com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus> statuses,
                                               Pageable pageable);
+
+
+    @Query(value = """
+            select
+               l.id as id,
+               l.category.id as categoryId,
+               l.title as title,
+               coalesce(bb.name, l.brand) as brand,
+               coalesce(mm.name, l.model) as model,
+               l.year as year,
+               coalesce(p.fullName, l.seller.phoneNumber) as sellerName,
+               l.price as price,
+               l.province as province,
+               l.batteryCapacityKwh as batteryCapacityKwh,
+               l.sohPercent as sohPercent,
+               concat(l.mileageKm, '') as mileageKm,
+               l.createdAt as createdAt,
+               concat(l.status, '') as status,
+               concat(l.visibility, '') as visibility,
+               l.consigned as isConsigned,
+               l.updatedAt as updatedAt,
+               l.expiresAt as expiresAt,
+               l.promotedUntil as promotedUntil,
+               l.hiddenAt as hiddenAt,
+               l.deletedAt as deletedAt,
+               (select count(f) from Favorite f where f.listing.id = l.id) as favoriteCount,
+               case when :currentAccountId is not null and exists
+                    (select 1 from Favorite f2
+                      where f2.listing.id = l.id
+                        and f2.account.id = :currentAccountId)
+                    then true else false end as likedByCurrentUser
+            from Listing l
+            left join Profile p on p.account.id = l.seller.id
+            left join Brand   bb on bb.id = l.brandId
+            left join Model   mm on mm.id = l.modelId
+            where l.deletedAt is null
+              and l.status in :statuses
+              and l.category.name = :categoryCode
+            """,
+            countQuery = """
+                    select count(l.id)
+                    from Listing l
+                    where l.deletedAt is null
+                      and l.status in :statuses
+                      and l.category.name = :categoryCode
+                    """)
+    Page<ListingListProjection> findByCategory(@Param("currentAccountId") Long currentAccountId,
+                                               @Param("statuses") java.util.Collection<com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus> statuses,
+                                               @Param("categoryCode") String categoryCode,
+                                               Pageable pageable);
 
     Page<Listing> findAllByResponsibleStaff_Id(Long staffId, Pageable pageable);
 }

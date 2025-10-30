@@ -34,6 +34,11 @@ public class ConsignmentAgreement {
             foreignKey = @ForeignKey(name = "fk_cagr_req"))
     private ConsignmentRequest request;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "staff_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_cagr_staff"))
+    private Account staff;
+
     @Column(name = "media_url", length = 500)
     private String medialUrl;
 
@@ -78,12 +83,4 @@ public class ConsignmentAgreement {
     @OneToOne(mappedBy = "consignmentAgreement")
     @JsonIgnore
     private Listing listing;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "staff_id",
-            foreignKey = @ForeignKey(name = "fk_cagr_staff")
-    )
-    private Account staff;
-
 }
