@@ -55,7 +55,7 @@ public class Favorite {
                 break;
             }
         }
-        favoriteDto.setThumbnailUrl(MedialUtils.converMediaNametoMedialUrl(thumbnailUrl, MediaType.IMAGE.name(), serverUrl));
+        favoriteDto.setThumbnailUrl(MedialUtils.converMediaNametoMedialUrl(thumbnailUrl, MediaType.IMAGE.name()));
         favoriteDto.setFavoredAt(favorite.getCreatedAt());
         favoriteDto.setConsigned(favorite.getListing().getConsigned());
         favoriteDto.setTimeAgo(favorite.getListing().getCreatedAt());

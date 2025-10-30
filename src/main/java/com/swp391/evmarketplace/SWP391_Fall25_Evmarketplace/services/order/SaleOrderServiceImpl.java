@@ -4,21 +4,23 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.order.Cr
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.order.OrderSearchRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingDto;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.order.SaleOrderDetail;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.order.SaleOrderDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ListingMedia;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.SaleOrder;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ListingRepository;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.SaleOrderRepository;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.SalePaymentRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.payment.PaymentService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,12 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
     private final AccountRepository accountRepository;
     private final AuthUtil authUtil;
     private final PaymentService paymentService;
+    private final BrandRepository brandRepository;
+    private final ModelRepository modelRepository;
+    private final CategoryRepository categoryRepository;
+
+    @Value("${server.url}")
+    private String serverUrl;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -234,7 +242,39 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
         } catch(Exception e){
             throw new CustomBusinessException(e.getMessage());
         }
-
     }
+
+    @Override
+    public BaseResponse<?> getOrderDetails(Long orderId) {
+        var order = saleOrderRepository.findById(orderId).orElseThrow(() -> new CustomBusinessException("Order not found"));
+
+        SaleOrderDetail od = new  SaleOrderDetail();
+
+        od.setOrder(order.toDto(order));
+        var l = order.getListing();
+        ListingDto listingDto = l.toDto(l, brandRepository, categoryRepository, modelRepository);
+        if(l.getMediaList() != null && !l.getMediaList().isEmpty()) {
+            for(ListingMedia media : l.getMediaList()){
+                if(media.getMediaType() == MediaType.IMAGE){
+                    listingDto.setThumbnailUrl(MedialUtils.converMediaNametoMedialUrl(media.getMediaUrl(), MediaType.IMAGE.name()));
+                    break;
+                }
+            }
+        }
+        od.setListing(listingDto);
+
+        od.setBuyer(order.getBuyer().toDto(order.getBuyer(), serverUrl));
+        od.setBranch(order.getBranch().toDto(order.getBranch()));
+
+        od.setCreatedBy(order.getCreatedBy().toDto(order.getCreatedBy(), serverUrl));
+
+        BaseResponse<Object> res = new BaseResponse<>();
+        res.setStatus(200);
+        res.setSuccess(true);
+        res.setMessage("Order Details");
+        res.setData(od);
+        return res;
+    }
+
 
 }

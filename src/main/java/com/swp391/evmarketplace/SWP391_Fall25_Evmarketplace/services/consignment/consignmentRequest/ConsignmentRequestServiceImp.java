@@ -631,7 +631,7 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
             MediaType type = (MediaType) row[1];
 
             if (type == MediaType.IMAGE) {
-                urls.add(MedialUtils.converMediaNametoMedialUrl(url, type.name(), serverUrl));
+                urls.add(MedialUtils.converMediaNametoMedialUrl(url, type.name()));
             }
         }
         return urls;
@@ -651,7 +651,7 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
             MediaType type = (MediaType) row[2];
             mediaMap
                     .computeIfAbsent(rid, k -> new ArrayList<>())
-                    .add(MedialUtils.converMediaNametoMedialUrl(url, type.name(), serverUrl));
+                    .add(MedialUtils.converMediaNametoMedialUrl(url, type.name()));
         }
         return mediaMap;
     }

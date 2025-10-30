@@ -173,9 +173,9 @@ public class ChatServiceImpl implements ChatService {
     private ChatMessageDto toDtoWithUrl(ChatMessage m) {
         ChatMessageDto dto = m.toDto(m);
         if (m.getType() == ChatMessageType.IMAGE) {
-            dto.setMediaUrl(MedialUtils.converMediaNametoMedialUrl(m.getMediaUrl(), "IMAGE", serverUrl));
+            dto.setMediaUrl(MedialUtils.converMediaNametoMedialUrl(m.getMediaUrl(), "IMAGE"));
         } else if (m.getType() == ChatMessageType.VIDEO) {
-            dto.setMediaUrl(MedialUtils.converMediaNametoMedialUrl(m.getMediaUrl(), "VIDEO", serverUrl));
+            dto.setMediaUrl(MedialUtils.converMediaNametoMedialUrl(m.getMediaUrl(), "VIDEO"));
         }
         return dto;
     }

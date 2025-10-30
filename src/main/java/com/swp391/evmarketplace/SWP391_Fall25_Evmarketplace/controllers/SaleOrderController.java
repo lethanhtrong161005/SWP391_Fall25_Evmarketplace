@@ -29,9 +29,9 @@ public class SaleOrderController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    @GetMapping("/{userId}")
+    @GetMapping
     public ResponseEntity<?> getAllOrdersByUserId(
-            @PathVariable Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "desc") String dir,
@@ -52,6 +52,12 @@ public class SaleOrderController {
     @PutMapping("/cancel/{id}")
     public ResponseEntity<?> cancelOrder(@PathVariable Long id){
         var res =  saleOrderSerivce.cancelOrder(id);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOrderById(@PathVariable Long id){
+        var res = saleOrderSerivce.getOrderDetails(id);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 

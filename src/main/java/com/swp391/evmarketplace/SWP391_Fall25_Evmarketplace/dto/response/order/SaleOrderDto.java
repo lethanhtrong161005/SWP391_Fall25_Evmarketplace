@@ -1,5 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.order;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,8 +34,11 @@ public class SaleOrderDto {
     private String sellerPhone;
 
     private String orderNo;
+
+    @JsonSerialize(using = ToStringSerializer.class)
     private BigInteger orderCode;
-    //
+
+    private String contractUrl;
 
 
     private Long consignmentAgreementId;

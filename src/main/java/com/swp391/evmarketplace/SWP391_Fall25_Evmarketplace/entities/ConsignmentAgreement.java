@@ -34,11 +34,6 @@ public class ConsignmentAgreement {
             foreignKey = @ForeignKey(name = "fk_cagr_req"))
     private ConsignmentRequest request;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "staff_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_cagr_staff"))
-    private Account staff;
-
     @Column(name = "media_url", length = 500)
     private String medialUrl;
 
@@ -57,8 +52,6 @@ public class ConsignmentAgreement {
 
     @Column(name = "acceptable_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal acceptablePrice;
-
-
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
@@ -82,7 +75,15 @@ public class ConsignmentAgreement {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-//    @OneToOne(mappedBy = "consignmentAgreement")
-//    @JsonIgnore
-//    private Listing listing;
+    @OneToOne(mappedBy = "consignmentAgreement")
+    @JsonIgnore
+    private Listing listing;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "staff_id",
+            foreignKey = @ForeignKey(name = "fk_cagr_staff")
+    )
+    private Account staff;
+
 }

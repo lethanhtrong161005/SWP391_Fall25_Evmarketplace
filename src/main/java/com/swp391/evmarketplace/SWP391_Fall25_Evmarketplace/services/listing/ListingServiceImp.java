@@ -399,7 +399,7 @@ public class ListingServiceImp implements ListingService {
 
         String thumbUrl = (thumbName == null || thumbName.isBlank())
                 ? null
-                : MedialUtils.converMediaNametoMedialUrl(thumbName, MediaType.IMAGE.name(), serverUrl);
+                : MedialUtils.converMediaNametoMedialUrl(thumbName, MediaType.IMAGE.name());
 
         return ListingCardDTO.builder()
                 .id(prj.getId())
@@ -597,7 +597,7 @@ public class ListingServiceImp implements ListingService {
             List<ListingMediaDto> dtos = new ArrayList<>();
             for (ListingMedia media : mediaList) {
                 ListingMediaDto listingMediaDto = media.toDto(media);
-                listingMediaDto.setMediaUrl(MedialUtils.converMediaNametoMedialUrl(media.getMediaUrl(), media.getMediaType().name(), serverUrl));
+                listingMediaDto.setMediaUrl(MedialUtils.converMediaNametoMedialUrl(media.getMediaUrl(), media.getMediaType().name()));
                 dtos.add(listingMediaDto);
             }
             dto.setMedia(dtos);

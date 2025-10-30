@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.order.SaleOrderDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.OrderStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -170,6 +171,9 @@ public class SaleOrder {
         dto.setIsReservedActive(order.getReservedUntil() != null
                 ? java.time.LocalDateTime.now().isBefore(order.getReservedUntil())
                 : null);
+
+        String contractUrl = order.getContract() != null ? order.getContract().getFileUrl() : "";
+        dto.setContractUrl(MedialUtils.converMediaNametoMedialUrl(contractUrl, ""));
 
         return dto;
     }

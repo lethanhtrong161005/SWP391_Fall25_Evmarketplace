@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.payment.SalePaymentDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.PaymentMethod;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.PaymentPurpose;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.PaymentStatus;
@@ -74,5 +75,36 @@ public class SalePayment {
     @Column(name = "note", length = 255)
     private String note;
 
+    public SalePaymentDto toDto(SalePayment s) {
+        SalePaymentDto dto = new SalePaymentDto();
 
+        dto.setId(s.getId());
+
+        dto.setOrderId(s.getOrder() != null ? s.getOrder().getId() : null);
+        dto.setOrderNo(s.getOrder()  != null ? s.getOrder().getOrderNo() : null);
+
+        dto.setListingId(s.getListing() != null ? s.getListing().getId() : null);
+        dto.setListingTitle(s.getListing() != null ? s.getListing().getTitle() : null);
+
+        dto.setPayerId(s.getPayer() != null ? s.getPayer().getId() : null);
+        dto.setPayerName(s.getPayer() != null ? s.getPayer().getProfile().getFullName() : null);
+        dto.setPayerPhone(s.getPayer() != null ? s.getPayer().getPhoneNumber() : null);
+
+        dto.setAmount(s.getAmount());
+        dto.setMethod(s.getMethod());
+        dto.setStatus(s.getStatus());
+        dto.setPurpose(s.getPurpose());
+
+        dto.setProviderTxnId(s.getProviderTxnId() != null ? s.getProviderTxnId() : null);
+
+        dto.setReferenceNo(s.getReferenceNo() != null ? s.getReferenceNo() : null);
+        dto.setRecordedBy(s.getRecordedBy() != null ? s.getRecordedBy().getId() : null);
+
+        dto.setNote(s.getNote() != null ? s.getNote() : null);
+        dto.setPaidAt(s.getPaidAt() != null ? s.getPaidAt() : null);
+        dto.setExpiresAt(s.getExpiresAt() != null ? s.getExpiresAt() : null);
+        dto.setCreatedAt(s.getCreatedAt() != null ? s.getCreatedAt() : null);
+
+        return dto;
+    }
 }
