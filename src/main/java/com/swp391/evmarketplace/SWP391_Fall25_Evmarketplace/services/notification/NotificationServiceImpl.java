@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notificati
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.message.NotificationDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentAgreement;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Notification;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
@@ -33,7 +34,6 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
 
 
-
     @Override
     @Transactional(readOnly = true)
     public Slice<NotificationDto> listByAccount(Long accountId, Integer lastId, Integer limit) {
@@ -52,7 +52,8 @@ public class NotificationServiceImpl implements NotificationService {
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override public void afterCommit() {
+                @Override
+                public void afterCommit() {
                     try {
                         messaging.convertAndSendToUser(String.valueOf(sellerId), USER_QUEUE, dto);
                         log.debug("WS pushed (afterCommit) to seller {} for listing {}", sellerId, listingId);
@@ -85,5 +86,52 @@ public class NotificationServiceImpl implements NotificationService {
         res.setStatus(200);
         return res;
     }
+
+    public void notifyUserAfterCommit(
+            Long accountId,
+            Long referenceId,
+            String type,
+            String title,
+            String msg
+    ) {
+        if (accountId == null) return; // không có người nhận thì bỏ qua
+
+        // 1. Lưu vào DB
+        Notification saved = store.save(accountId, type, title, msg, referenceId);
+
+        // 2. Build DTO để gửi realtime cho FE
+        NotificationDto dto = saved.toDto(saved);
+
+        // 3. Nếu đang trong transaction, đợi commit DB xong rồi mới gửi WS
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        messaging.convertAndSendToUser(
+                                String.valueOf(accountId),
+                                USER_QUEUE,
+                                dto
+                        );
+                    } catch (Exception ex) {
+                        // tránh app crash nếu WS fail
+                        // chỉ warn log
+                        System.out.println("WS push failed afterCommit: " + ex.getMessage());
+                    }
+                }
+            });
+        } else {
+            // 4. Không trong transaction? Gửi ngay.
+            messaging.convertAndSendToUser(
+                    String.valueOf(accountId),
+                    USER_QUEUE,
+                    dto
+            );
+        }
+    }
+
+
+
 }
+
 

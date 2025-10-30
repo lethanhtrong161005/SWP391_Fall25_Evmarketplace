@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 public interface ConsignmentInspectionProjection {
     Long getId();
     Long getRequestId();
+    String getRequestOwnerPhone();
+    String getRequestOwnerFullName();
     Long getBranchId();
     String getResult();
     String getInspectionSummary();

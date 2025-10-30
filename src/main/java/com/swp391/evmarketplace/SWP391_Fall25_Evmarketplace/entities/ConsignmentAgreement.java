@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AgreementDuration;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentAgreementStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,6 +34,9 @@ public class ConsignmentAgreement {
             foreignKey = @ForeignKey(name = "fk_cagr_req"))
     private ConsignmentRequest request;
 
+    @Column(name = "media_url", length = 500)
+    private String medialUrl;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_cagr_owner"))
@@ -52,6 +56,10 @@ public class ConsignmentAgreement {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
     private ConsignmentAgreementStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "duration", nullable = false, length = 16)
+    private AgreementDuration duration;
 
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
@@ -77,8 +85,5 @@ public class ConsignmentAgreement {
             foreignKey = @ForeignKey(name = "fk_cagr_staff")
     )
     private Account staff;
-
-    @Column(name = "media_url", length = 500)
-    private String medialUrl;
 
 }

@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.request.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentRequestStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentRequestProjection;
@@ -25,13 +26,22 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    s.id                    as staffId,
                    cr.rejectedReason       as rejectedReason,
                    cr.itemType             as itemType,
+                   
+                   c.id                    as categoryId,
                    c.name                  as category,
+                   
+                   cr.brandId              as brandId,
                    cr.brand                as brand,
+                   
+                   cr.modelId              as modelId,
                    cr.model                as model,
+                   
                    cr.year                 as year,
                    cr.batteryCapacityKwh   as batteryCapacityKwh,
                    cr.sohPercent           as sohPercent,
                    cr.mileageKm            as mileageKm,
+                   
+                   b.id                    as preferredBranchId,
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
@@ -69,14 +79,23 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    p.fullName              as accountName,
                    s.id                    as staffId,
                    cr.rejectedReason       as rejectedReason,
-                   cr.itemType             as itemType,
+                  cr.itemType             as itemType,
+                   
+                   c.id                    as categoryId,
                    c.name                  as category,
+                   
+                   cr.brandId              as brandId,
                    cr.brand                as brand,
+                   
+                   cr.modelId              as modelId,
                    cr.model                as model,
+                   
                    cr.year                 as year,
                    cr.batteryCapacityKwh   as batteryCapacityKwh,
                    cr.sohPercent           as sohPercent,
                    cr.mileageKm            as mileageKm,
+                   
+                   b.id                    as preferredBranchId,
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
@@ -104,13 +123,22 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    s.id                    as staffId,
                    cr.rejectedReason       as rejectedReason,
                    cr.itemType             as itemType,
+                   
+                   c.id                    as categoryId,
                    c.name                  as category,
+                   
+                   cr.brandId              as brandId,
                    cr.brand                as brand,
+                   
+                   cr.modelId              as modelId,
                    cr.model                as model,
+                   
                    cr.year                 as year,
                    cr.batteryCapacityKwh   as batteryCapacityKwh,
                    cr.sohPercent           as sohPercent,
                    cr.mileageKm            as mileageKm,
+                   
+                   b.id                    as preferredBranchId,
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
@@ -189,13 +217,22 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    s.id                    as staffId,
                    cr.rejectedReason       as rejectedReason,
                    cr.itemType             as itemType,
+                   
+                   c.id                    as categoryId,
                    c.name                  as category,
+                   
+                   cr.brandId              as brandId,
                    cr.brand                as brand,
+                   
+                   cr.modelId              as modelId,
                    cr.model                as model,
+                   
                    cr.year                 as year,
                    cr.batteryCapacityKwh   as batteryCapacityKwh,
                    cr.sohPercent           as sohPercent,
                    cr.mileageKm            as mileageKm,
+                   
+                   b.id                    as preferredBranchId,
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,
@@ -225,13 +262,22 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
                    s.id                    as staffId,
                    cr.rejectedReason       as rejectedReason,
                    cr.itemType             as itemType,
+                   
+                   c.id                    as categoryId,
                    c.name                  as category,
+                   
+                   cr.brandId              as brandId,
                    cr.brand                as brand,
+                   
+                   cr.modelId              as modelId,
                    cr.model                as model,
+                   
                    cr.year                 as year,
                    cr.batteryCapacityKwh   as batteryCapacityKwh,
                    cr.sohPercent           as sohPercent,
                    cr.mileageKm            as mileageKm,
+                   
+                   b.id                    as preferredBranchId,
                    b.name                  as preferredBranchName,
                    cr.ownerExpectedPrice   as ownerExpectedPrice,
                    cr.status               as status,

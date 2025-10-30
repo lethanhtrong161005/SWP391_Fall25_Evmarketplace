@@ -1,5 +1,5 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums;
 
 public enum ConsignmentAgreementStatus {
-    SIGNED, EXPIRED, CANCELLED, FINISHED
+    FINISHED, EXPIRED, CANCELLED, SIGNED
 }

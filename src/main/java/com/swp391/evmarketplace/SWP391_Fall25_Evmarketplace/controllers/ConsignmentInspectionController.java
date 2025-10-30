@@ -65,4 +65,11 @@ public class ConsignmentInspectionController {
     }
 
 
+    //
+    @GetMapping("/staff/all")
+    public ResponseEntity<BaseResponse<List<ConsignmentInspectionProjection>>> getListInspectionByStaffId() {
+        BaseResponse<List<ConsignmentInspectionProjection>> res = inspectionService.getListInspectionByStaffId();
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
 }
