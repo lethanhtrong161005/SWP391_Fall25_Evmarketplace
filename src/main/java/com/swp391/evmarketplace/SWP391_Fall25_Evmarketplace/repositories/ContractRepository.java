@@ -13,6 +13,4 @@ public interface ContractRepository extends JpaRepository<Contract, Long>, JpaSp
     boolean existsByOrder_Id(Long orderId);
     Optional<Contract> findByOrder_Id(Long orderId);
     Optional<Contract> findById(Long id);
-
-
 }

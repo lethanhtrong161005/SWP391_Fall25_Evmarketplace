@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.contract.ActivateContractRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.contract.CreateContractRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.contract.UpdateContractRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ContractSignMethod;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ContractStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.contract.ContractService;
@@ -30,7 +31,7 @@ public class ContractController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createContract(
             @RequestPart("payload") String payload,
-            @RequestPart("file")MultipartFile file,
+            @RequestPart("file") MultipartFile file,
             HttpServletRequest http
             ){
 
@@ -50,6 +51,26 @@ public class ContractController {
     ){
         var res = contractService.activateContract(payload, http);
         return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @PutMapping(value = "/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE},
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<?> updateContract(
+            @PathVariable Long id,
+            @RequestPart(value = "payload", required = false) UpdateContractRequest payload,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            HttpServletRequest http
+    ){
+        try{
+            if (payload == null) {
+                payload = new UpdateContractRequest();
+            }
+            var res = contractService.updateContract(id, payload, file, http);
+            return ResponseEntity.status(res.getStatus()).body(res);
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @GetMapping
@@ -83,29 +104,21 @@ public class ContractController {
             @RequestParam(defaultValue = "createdAt") String sort,
             @RequestParam(defaultValue = "desc") String dir,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+
+            @RequestParam(required = false) String orderNo,
+            @RequestParam(required = false, defaultValue = "false") Boolean orderNoLike
     ) {
+
         var res = contractService.getAllContracts(
-                orderId,
-                status,
-                method,
-                branchId,
-                buyerId,
-                sellerId,
-                createdFrom,
-                createdTo,
-                signedFrom,
-                signedTo,
-                effectiveFrom,
-                effectiveTo,
-                q,
-                sort,
-                dir,
-                page,
-                size
+                orderId, status, method, branchId, buyerId, sellerId,
+                createdFrom, createdTo, signedFrom, signedTo, effectiveFrom, effectiveTo,
+                q, sort, dir, page, size,
+                orderNo, orderNoLike
         );
         return ResponseEntity.status(res.getStatus()).body(res);
     }
+
 
 
 
