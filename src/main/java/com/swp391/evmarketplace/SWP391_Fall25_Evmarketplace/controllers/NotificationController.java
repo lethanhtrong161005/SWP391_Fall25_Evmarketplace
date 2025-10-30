@@ -21,8 +21,8 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<?> getNotifications(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(required = false) Integer lastId,
+            @RequestParam(defaultValue = "5") Integer limit
     ) {
         Long accountId = authUtil.getCurrentAccountIdOrNull();
         if (accountId == null) {
@@ -30,10 +30,8 @@ public class NotificationController {
                     new BaseResponse<>(401, false, "Unauthorized", null, null, LocalDateTime.now())
             );
         }
-        var slice = notificationService.listByAccount(accountId, page, size);
+        var slice = notificationService.listByAccount(accountId, lastId, limit);
         var body = new  PageResponse<NotificationDto>();
-        body.setPage(page);
-        body.setSize(size);
         body.setItems(slice.getContent());
         body.setTotalElements(slice.getNumberOfElements());
         body.setHasNext(slice.hasNext());

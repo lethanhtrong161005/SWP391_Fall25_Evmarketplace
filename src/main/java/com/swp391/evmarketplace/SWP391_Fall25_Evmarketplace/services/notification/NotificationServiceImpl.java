@@ -19,6 +19,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +36,9 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public Slice<NotificationDto> listByAccount(Long accountId, int page, int size) {
+    public Slice<NotificationDto> listByAccount(Long accountId, Integer lastId, Integer limit) {
         return notificationRepository
-                .findByAccount_IdOrderByCreatedAtDesc(accountId, PageRequest.of(page, size))
+                .findByAccount_IdOrderByCreatedAtDesc(accountId, PageRequest.of(0, limit))
                 .map(n -> n.toDto(n));
     }
 

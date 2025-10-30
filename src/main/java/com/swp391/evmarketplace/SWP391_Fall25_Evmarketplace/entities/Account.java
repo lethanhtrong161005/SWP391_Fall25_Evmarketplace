@@ -165,7 +165,7 @@ public class Account {
         dto.setPhoneVerified(account.isPhoneVerified());
         dto.setProfile(account.getProfile());
         dto.setRole(account.getRole());
-        String avatarUrl = MedialUtils.converMediaNametoMedialUrl(dto.getProfile().getAvatarUrl(), "IMAGE", serverUrl);
+        String avatarUrl = MedialUtils.converMediaNametoMedialUrl(dto.getProfile().getAvatarUrl(), "IMAGE");
         if (dto.getProfile().getAvatarUrl() != null) {
             if(account.getGoogleId() == null) {
                 dto.getProfile().setAvatarUrl(avatarUrl);

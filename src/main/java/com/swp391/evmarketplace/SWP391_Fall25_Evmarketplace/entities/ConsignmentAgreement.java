@@ -58,8 +58,6 @@ public class ConsignmentAgreement {
     @Column(name = "acceptable_price", precision = 12, scale = 2, nullable = false)
     private BigDecimal acceptablePrice;
 
-
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
     private ConsignmentAgreementStatus status;

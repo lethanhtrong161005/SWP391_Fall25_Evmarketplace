@@ -31,8 +31,6 @@ public class AccountController {
     @Autowired
     private ProfileService profileService;
 
-
-
     @GetMapping("/current")
     public ResponseEntity<?> getAccountDetails() {
         var res = accountService.getAccountCurrent();
