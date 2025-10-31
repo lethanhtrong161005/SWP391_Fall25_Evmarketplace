@@ -9,6 +9,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingCardDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
@@ -38,7 +39,7 @@ public class ListingController {
 
     //TYPE: VEHICLE, BATTERY
     @GetMapping("/")
-    public ResponseEntity<BaseResponse<PageResponse<ListingListProjection>>> getByType(
+    public ResponseEntity<BaseResponse<PageResponse<ListingCardDTO>>> getByType(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) CategoryCode categoryCode,
             @RequestParam(required = false) ListingStatus status,
@@ -48,7 +49,7 @@ public class ListingController {
             @RequestParam(required = false, defaultValue = "desc") String dir
     ) {
         status = status != null ? status : ListingStatus.ACTIVE;
-        BaseResponse<PageResponse<ListingListProjection>> res =
+        BaseResponse<PageResponse<ListingCardDTO>> res =
                 listingService.getAllListingsPublic(type, categoryCode, status.name(), page, size, sort, dir);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
@@ -72,14 +73,14 @@ public class ListingController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<BaseResponse<PageResponse<ListingListProjection>>> searchCards(
+    public ResponseEntity<BaseResponse<PageResponse<ListingCardDTO>>> searchCards(
             @ModelAttribute SearchListingRequestDTO requestDTO,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = "desc") String dir
     ) {
-        BaseResponse<PageResponse<ListingListProjection>> response = listingService
+        BaseResponse<PageResponse<ListingCardDTO>> response = listingService
                 .searchForPublic(requestDTO, page, size, sort, dir);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
