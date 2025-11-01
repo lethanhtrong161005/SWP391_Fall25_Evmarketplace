@@ -49,7 +49,7 @@ public class SecurityConfig {
                             "/api/accounts/verify-otp",
                             "/api/accounts/register",
                             "/api/accounts/reset-password",
-                            "/api/listing/all",
+                            "/api/listing/",
                             "/api/listing/**",
                             "/api/accounts/avatar",
                             "/ws/**"
