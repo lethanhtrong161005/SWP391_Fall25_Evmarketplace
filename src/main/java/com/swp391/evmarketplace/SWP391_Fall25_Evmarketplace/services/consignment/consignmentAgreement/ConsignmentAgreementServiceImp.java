@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentAgreement;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.agree.CreateAgreementDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.agreement.ConsignmentAgreementDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StoredContractResult;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
@@ -15,6 +16,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.Consign
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentAgreementProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,7 +74,7 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
         //media
         StoredContractResult result;
         try {
-             result = fileService.storedContract(file);
+            result = fileService.storedContract(file);
         } catch (IOException e) {
             throw new CustomBusinessException("Error while uploading file: " + e.getMessage());
         }
@@ -108,15 +110,17 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
     }
 
     @Override
-    public BaseResponse<ConsignmentAgreementProjection> getAgreementByRequestId(Long requestId) {
+    public BaseResponse<ConsignmentAgreementDTO> getAgreementByRequestId(Long requestId) {
         if (requestId == null) throw new CustomBusinessException("request is is required");
 
         ConsignmentAgreementProjection agreement = consignmentAgreementRepository
                 .findProjectionByRequestId(requestId)
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.AGREEMENT_NOT_FOUND.name()));
 
-        BaseResponse<ConsignmentAgreementProjection> res = new BaseResponse<>();
-        res.setData(agreement);
+        ConsignmentAgreementDTO c = toDto(agreement);
+
+        BaseResponse<ConsignmentAgreementDTO> res = new BaseResponse<>();
+        res.setData(c);
         res.setSuccess(true);
         res.setStatus(200);
         res.setMessage("OK");
@@ -124,11 +128,14 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
     }
 
     @Override
-    public BaseResponse<List<ConsignmentAgreementProjection>> getAllAgreements() {
+    public BaseResponse<List<ConsignmentAgreementDTO>> getAllAgreements() {
         List<ConsignmentAgreementProjection> list = consignmentAgreementRepository.findAllProjections();
 
-        BaseResponse<List<ConsignmentAgreementProjection>> res = new BaseResponse<>();
-        res.setData(list);
+        List<ConsignmentAgreementDTO> dtos = list.stream()
+                .map(this::toDto).toList();
+
+        BaseResponse<List<ConsignmentAgreementDTO>> res = new BaseResponse<>();
+        res.setData(dtos);
         res.setSuccess(true);
         res.setStatus(200);
         res.setMessage(list.isEmpty() ? "empty" : "OK");
@@ -164,13 +171,13 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
     @Transactional
     @Override
     public BaseResponse<Void> updateAgreement(Long agreementId, AgreementDuration duration) {
-        if(agreementId == null)
+        if (agreementId == null)
             throw new CustomBusinessException("agreement id is required");
 
         ConsignmentAgreement agreement = consignmentAgreementRepository.findById(agreementId)
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.AGREEMENT_NOT_FOUND.name()));
 
-        if(!agreement.getStatus().equals(ConsignmentAgreementStatus.EXPIRED))
+        if (!agreement.getStatus().equals(ConsignmentAgreementStatus.EXPIRED))
             throw new CustomBusinessException("no condition to update agreement");
 
         var startAt = agreement.getExpireAt();
@@ -198,5 +205,28 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
         return res;
     }
 
+
+    //===================HELPER===================
+
+    private ConsignmentAgreementDTO toDto(ConsignmentAgreementProjection projection) {
+        return ConsignmentAgreementDTO.builder()
+                .id(projection.getId())
+                .requestId(projection.getRequestId())
+                .ownerName(projection.getOwnerName())
+                .staffName(projection.getStaffName())
+                .branchName(projection.getBranchName())
+                .commissionPercent(projection.getCommissionPercent())
+                .acceptablePrice(projection.getAcceptablePrice())
+                .status(projection.getStatus())
+                .duration(projection.getDuration())
+                .medialUrl(MedialUtils.converMediaNametoMedialUrl(projection.getMedialUrl(), ""))
+                .startAt(projection.getStartAt())
+                .expireAt(projection.getExpireAt())
+                .createdAt(projection.getCreatedAt())
+                .updatedAt(projection.getUpdatedAt())
+                .build();
+    }
+
+//
 
 }

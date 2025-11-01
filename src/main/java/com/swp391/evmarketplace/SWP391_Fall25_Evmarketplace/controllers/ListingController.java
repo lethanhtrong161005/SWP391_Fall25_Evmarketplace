@@ -39,7 +39,7 @@ public class ListingController {
 
     //TYPE: VEHICLE, BATTERY
     @GetMapping("/")
-    public ResponseEntity<BaseResponse<PageResponse<ListingCardDTO>>> getByType(
+    public ResponseEntity<BaseResponse<PageResponse<ListingCardDTO>>> getAll(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) CategoryCode categoryCode,
             @RequestParam(required = false) ListingStatus status,

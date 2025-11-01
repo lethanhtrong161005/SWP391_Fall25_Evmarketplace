@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.consignment.agree.CreateAgreementDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.agreement.ConsignmentAgreementDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentAgreement;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AgreementDuration;
@@ -36,10 +37,10 @@ public class ConsignmentAgreementController {
     }
 
     @GetMapping("/request/{requestId}")
-    public ResponseEntity<BaseResponse<ConsignmentAgreementProjection>> getByRequest(
+    public ResponseEntity<BaseResponse<ConsignmentAgreementDTO>> getByRequest(
             @PathVariable Long requestId
     ) {
-        BaseResponse<ConsignmentAgreementProjection> res =
+        BaseResponse<ConsignmentAgreementDTO> res =
                 agreementService.getAgreementByRequestId(requestId);
         return ResponseEntity.status(res.getStatus()).body(res);
     }

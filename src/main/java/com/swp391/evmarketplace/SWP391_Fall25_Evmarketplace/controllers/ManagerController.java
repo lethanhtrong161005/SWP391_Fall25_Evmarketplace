@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.agreement.ConsignmentAgreementDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.request.ConsignmentRequestListItemDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
@@ -71,8 +72,8 @@ public class ManagerController {
 
     //agreement
     @GetMapping("/agreements/all")
-    public ResponseEntity<BaseResponse<List<ConsignmentAgreementProjection>>> getAll() {
-        BaseResponse<List<ConsignmentAgreementProjection>> res =
+    public ResponseEntity<BaseResponse<List<ConsignmentAgreementDTO>>> getAll() {
+        BaseResponse<List<ConsignmentAgreementDTO>> res =
                 consignmentAgreementService.getAllAgreements();
         return ResponseEntity.status(res.getStatus()).body(res);
     }
