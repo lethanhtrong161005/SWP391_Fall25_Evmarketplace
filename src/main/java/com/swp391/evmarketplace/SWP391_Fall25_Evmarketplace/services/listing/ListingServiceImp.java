@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.ConsignmentListingFilter;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
@@ -11,6 +12,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.vehicle.VehicleListReponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingCardDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingLikeCount;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
@@ -22,10 +24,12 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileSe
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.TimeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.*;
@@ -35,6 +39,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -69,7 +74,8 @@ public class ListingServiceImp implements ListingService {
     private ListingStatusHistoryRepository listingStatusHistoryRepository;
     @Autowired
     private NotificationService notificationService;
-
+    @Autowired
+    private ConsignmentAgreementRepository consignmentAgreementRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -1601,6 +1607,294 @@ public class ListingServiceImp implements ListingService {
         res.setSuccess(true);
         res.setMessage("OK");
         res.setData(body);
+        return res;
+    }
+
+    @Override
+    @Transactional
+    public BaseResponse<?> createListingConsignment(CreateListingRequest req,
+                                                    List<MultipartFile> images,
+                                                    List<MultipartFile> videos) {
+        // 0) Kiểm tra Agreement
+        ConsignmentAgreement ag = consignmentAgreementRepository.findById(req.getConsignmentAgreementId())
+                .orElseThrow(() -> new CustomBusinessException("Consignment Agreement not found"));
+
+        if (ag.getStatus() != ConsignmentAgreementStatus.SIGNED) {
+            throw new CustomBusinessException("Consignment Agreement must be SIGNED");
+        }
+
+        listingRepository.findByConsignmentAgreementId(ag.getId()).ifPresent(l -> {
+            throw new CustomBusinessException("This agreement already has a listing");
+        });
+
+        if(ag.getExpireAt() == null){
+            throw new CustomBusinessException("Expire at is null");
+        }
+
+        TimeUtils.assertNotExpired(
+                ag.getExpireAt(),
+                () -> "Agreement expired at " + TimeUtils.formatTs(ag.getExpireAt())
+        );
+
+        // 1) Category
+        Category category = categoryRepository.findById(req.getCategoryId())
+                .orElseThrow(() -> new CustomBusinessException("Category not found"));
+
+        // 2) Model/Brand tham chiếu (nếu có)
+        Model model = null;
+        if (req.getModelId() != null) {
+            model = modelRepository.findById(req.getModelId())
+                    .orElseThrow(() -> new CustomBusinessException("Model not found: " + req.getModelId()));
+            if (!model.getCategory().getId().equals(req.getCategoryId())) {
+                throw new CustomBusinessException("Model does not belong to selected category");
+            }
+            if (req.getBrandId() != null && !model.getBrand().getId().equals(req.getBrandId())) {
+                throw new CustomBusinessException("Model does not belong to selected brand");
+            }
+        }
+
+        // 3) Xác định ItemType và cross-check categoryCode
+        ItemType resolvedType = resolveItemType(req, model);  // ở dưới
+        if (resolvedType == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
+            throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
+        }
+        if (resolvedType == ItemType.VEHICLE && "BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
+            throw new CustomBusinessException("categoryCode must not be BATTERY for itemType=VEHICLE");
+        }
+
+        // 4) Business rule về GIÁ theo Agreement (nếu bạn dùng acceptable_price)
+        if (ag.getAcceptablePrice() != null && req.getPrice() != null
+                && req.getPrice().compareTo(ag.getAcceptablePrice()) < 0) {
+            throw new CustomBusinessException("Listing price must be >= acceptable_price in agreement");
+        }
+
+        // 5) Xác định Seller & Branch theo cơ sở ký gửi
+        Account seller = null;
+        if (ag.getBranch() == null) {
+            throw new CustomBusinessException("Agreement has no branch");
+        }
+        seller = ag.getBranch().getManager();
+        if (seller == null) {
+            throw new CustomBusinessException("Branch has no manager to be listing seller");
+        }
+
+        // 6) Build Listing
+        Listing listing = new Listing();
+        listing.setCategory(category);
+
+        // snapshot “textual” (brand/model hiển thị) – NOT NULL trong schema
+        listing.setBrand(req.getBrand());
+        listing.setModel(req.getModel());
+
+        listing.setTitle(req.getTitle());
+        listing.setSeller(seller);
+
+        listing.setBrandId(req.getBrandId());
+        listing.setModelId(req.getModelId());
+        listing.setYear(req.getYear());
+        listing.setBatteryCapacityKwh(req.getBatteryCapacityKwh());
+        listing.setSohPercent(req.getSohPercent());
+        listing.setMileageKm(req.getMileageKm());
+        listing.setColor(req.getColor());
+        listing.setDescription(req.getDescription());
+        listing.setPrice(req.getPrice());
+        listing.setVisibility(Visibility.NORMAL);
+
+        // Ký gửi → đã thẩm định
+        listing.setVerified(true);
+        listing.setConsigned(true);
+        listing.setBranch(ag.getBranch());                   // FK branch_id
+        listing.setConsignmentAgreement(ag);       // UNIQUE
+        if (req.getResponsibleStaffId() != null) {
+            Account staff = accountRepository.findById(req.getResponsibleStaffId())
+                    .orElseThrow(() -> new CustomBusinessException("Responsible staff not found"));
+            listing.setResponsibleStaff(staff);
+        }
+
+        // Địa lý
+        listing.setProvince(req.getProvince());
+        listing.setDistrict(req.getDistrict());
+        listing.setWard(req.getWard());
+        listing.setAddress(req.getAddress());
+
+        // Trạng thái (consigned/verified có thể ACTIVE luôn – tuỳ policy)
+        // Nếu bạn muốn đi qua duyệt moderator, set PENDING và để flow duyệt đẩy ACTIVE.
+        listing.setStatus(ListingStatus.ACTIVE);
+
+        listing.setExpiresAt(ag.getExpireAt());
+
+        // 7) Nếu có brandId + modelId → link catalog phù hợp
+        if (req.getBrandId() != null && req.getModelId() != null) {
+            if (resolvedType == ItemType.VEHICLE) {
+                productVehicleRepository
+                        .findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId())
+                        .ifPresent(listing::setProductVehicle);
+                listing.setProductBattery(null);
+            } else { // BATTERY
+                // Lưu thông số pin riêng
+                listing.setVoltage(req.getVoltageV());
+                listing.setBatteryChemistry(req.getBatteryChemistry());
+                listing.setMassKg(req.getMassKg());
+                listing.setDimensions(req.getDimensionsMm());
+
+                productBatteryRepository
+                        .findFirstByCategory_IdAndBrand_IdAndModel_Id(req.getCategoryId(), req.getBrandId(), req.getModelId())
+                        .ifPresent(listing::setProductBattery);
+                listing.setProductVehicle(null);
+            }
+        }
+
+        // 8) Lưu listing (đợt 1) để có ID
+        listingRepository.save(listing);
+
+        // 9) Media
+        try {
+            if (images != null) {
+                for (MultipartFile img : images) {
+                    if (img == null || img.isEmpty()) continue;
+                    var stored = fileService.storeImage(img);
+                    ListingMedia m = new ListingMedia();
+                    m.setListing(listing);
+                    m.setMediaUrl(stored.getStoredName());
+                    m.setMediaType(MediaType.IMAGE);
+                    listing.addMedia(m);
+                }
+            }
+            if (videos != null) {
+                for (MultipartFile v : videos) {
+                    if (v == null || v.isEmpty()) continue;
+                    var stored = fileService.storeVideo(v);
+                    ListingMedia m = new ListingMedia();
+                    m.setListing(listing);
+                    m.setMediaUrl(stored.getStoredName());
+                    m.setMediaType(MediaType.VIDEO);
+                    listing.addMedia(m);
+                }
+            }
+        } catch (IOException ioe) {
+            throw new CustomBusinessException("Upload media failed: " + ioe.getMessage());
+        }
+
+        // 10) Lưu lần 2 để flush media
+        listingRepository.save(listing);
+
+        // 11) Response
+        var res = new BaseResponse<CreateListingResponse>();
+        CreateListingResponse data = new CreateListingResponse();
+        data.setListingId(listing.getId());
+        data.setPersistedStatus(listing.getStatus().name());
+        res.setSuccess(true);
+        res.setStatus(201);
+        res.setMessage("Listing created for consignment agreement");
+        res.setData(data);
+        return res;
+    }
+
+    @Override
+    public BaseResponse<?> searchConsignment(ConsignmentListingFilter f, int page, int size) {
+        if (f == null) f = new ConsignmentListingFilter();
+
+        // ---- Whitelist sort fields (phải khớp field của entity Listing) ----
+        var allowedSort = Set.of(
+                // timestamps & id
+                "createdAt", "updatedAt", "id",
+                // giá/đời & thông số xe
+                "price", "year", "mileageKm", "sohPercent",
+                // thông số pin / kỹ thuật
+                "batteryCapacityKwh", "voltageV", "massKg", "batteryChemistry",
+                // thời hạn/khuyến mãi
+                "promotedUntil", "expiresAt",
+                // text fields
+                "title", "brand", "model",
+                // địa lý
+                "province", "district", "ward",
+                // trạng thái/nhãn
+                "visibility", "status", "verified",
+                // scope/quan hệ
+                "branchId", "responsibleStaffId", "consignmentAgreementId"
+        );
+
+        String sortField = (f.getSort() == null || !allowedSort.contains(f.getSort()))
+                ? "createdAt"
+                : f.getSort();
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(f.getDir())
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+
+        Pageable pageable = PageRequest.of(
+                Math.max(0, page),
+                Math.min(Math.max(1, size), 50),
+                Sort.by(direction, sortField).and(Sort.by(Sort.Direction.DESC, "id"))
+        );
+
+        // ---- Lấy viewer (có thể null nếu guest) ----
+        Account viewer = null;
+        try { viewer = authUtil.getCurrentAccountOrNull(); } catch (Exception ignored) { }
+
+        String role = (viewer != null && viewer.getRole() != null) ? viewer.getRole().name() : null;
+        Long viewerId = (viewer != null) ? viewer.getId() : null;
+        Long viewerBranchId = (viewer != null && viewer.getBranch() != null)
+                ? viewer.getBranch().getId()
+                : null;
+
+        // ---- Spec: filter + scope theo role ----
+        Specification<Listing> spec = Specification.allOf(
+                ListingSpecs.consignmentFilter(f),
+                ListingSpecs.scopeByRole(role, viewerId, viewerBranchId)
+        );
+
+        Page<Listing> pageData = listingRepository.findAll(spec, pageable);
+
+
+        List<Long> ids = pageData.getContent().stream()
+                .map(Listing::getId)
+                .toList();
+
+
+        Map<Long, Long> likeCountMap = favoriteRepository.countByListingIds(ids).stream()
+                .collect(Collectors.toMap(
+                        ListingLikeCount::getListingId,
+                        ListingLikeCount::getCnt
+                ));
+
+
+        Set<Long> likedByMeIds = (viewer != null)
+                ? favoriteRepository.findListingIdsLikedByAccount(viewer.getId(), ids)
+                : Set.of();
+
+        Page<ListingDto> dtoPage = pageData.map(
+                item -> {
+                    ListingDto dto = new ListingDto();
+                    dto = item.toDto(item, brandRepository, categoryRepository, modelRepository);
+                    dto.setFavoriteCount(likeCountMap.getOrDefault(item.getId(), 0L));
+                    dto.setLikedByCurrentUser(likedByMeIds.contains(item.getId()));
+                    if(item.getMediaList() != null && item.getMediaList().size() > 0) {
+                        for (ListingMedia media : item.getMediaList()) {
+                            if(MediaType.IMAGE.equals(media.getMediaType())) {
+                                dto.setThumbnailUrl(MedialUtils.converMediaNametoMedialUrl(media.getMediaUrl(), MediaType.IMAGE.name()));
+                            }
+                        }
+                    }
+                    return dto;
+                }
+        );
+
+        PageResponse<ListingDto> body = new PageResponse();
+        body.setTotalElements(pageData.getTotalElements());
+        body.setTotalPages(pageData.getTotalPages());
+        body.setItems(dtoPage.toList());
+        body.setPage(pageable.getPageNumber());
+        body.setSize(pageable.getPageSize());
+        body.setHasPrevious(pageable.getPageNumber() > 1);
+        body.setHasNext(pageable.getPageNumber() < pageData.getTotalPages());
+
+
+        BaseResponse<Object> res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setData(body);
+        res.setMessage("Get listing by consignment agreement");
         return res;
     }
 
