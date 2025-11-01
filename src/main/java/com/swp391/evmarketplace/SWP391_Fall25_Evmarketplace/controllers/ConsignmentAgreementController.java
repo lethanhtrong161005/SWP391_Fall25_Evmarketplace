@@ -45,7 +45,7 @@ public class ConsignmentAgreementController {
     }
 
     @PutMapping("/cancel/{id}")
-    public ResponseEntity<BaseResponse<Void>> cancelAgreement(Long id) {
+    public ResponseEntity<BaseResponse<Void>> cancelAgreement(@PathVariable Long id) {
         BaseResponse<Void> res = agreementService.cancelAgreement(id);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
