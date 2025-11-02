@@ -3,22 +3,18 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.ChangeStatusRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingCardDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -166,6 +162,46 @@ public class ListingController {
         var res = listingService.restore(id);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
+
+    //Consignment Listing Create
+    @PostMapping(
+            value = "/consignment",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<?> consignment(
+            @RequestPart("payload") CreateListingRequest payload,
+            @RequestPart(value="images", required=false) List<MultipartFile> images,
+            @RequestPart(value="videos", required=false) List<MultipartFile> videos
+    ){
+        var res = listingService.createListingConsignment(payload, images, videos);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    //Consignment Listing Update
+    @PutMapping(
+            value = "/consignment",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<?> consignmentUpdate(){
+        return null;
+    }
+
+    //Consignment Listing Get
+    @GetMapping("/consignment")
+    public ResponseEntity<?> getConsignmentListing(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @ModelAttribute ConsignmentListingFilter f
+            ){
+        var res = listingService.searchConsignment(f, page, size);
+        i++;
+        System.out.println("API CAll: LLLLLLLL "  + i);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    static int i = 0;
+
+
 
 
 }

@@ -98,4 +98,11 @@ public class CreateListingRequest {
     /** Kích thước theo mm, ví dụ "780 x 175 x 220" (L x W x H) */
     @Size(max = 100)
     private String dimensionsMm;
+
+
+    //Thêm field đăng ký gửi
+    private Long consignmentAgreementId;
+    private Long responsibleStaffId;
+    private Long branchId;
+
 }

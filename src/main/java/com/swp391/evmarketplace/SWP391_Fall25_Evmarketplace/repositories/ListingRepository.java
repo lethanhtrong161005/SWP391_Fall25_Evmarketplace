@@ -3,6 +3,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingLikeCount;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingStatusCount;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Listing;
@@ -18,10 +19,12 @@ import org.springframework.stereotype.Repository;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpecificationExecutor<Listing> {
     Optional<Listing> findById(long id);
+    Optional<Listing> findByConsignmentAgreementId(Long agreementId);
 
 
     //SpEL :#{#req.field} cho phép bạn tham chiếu trực tiếp vào field của DTO.
@@ -504,4 +507,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                                                Pageable pageable);
 
     Page<Listing> findAllByResponsibleStaff_Id(Long staffId, Pageable pageable);
+
+
 }

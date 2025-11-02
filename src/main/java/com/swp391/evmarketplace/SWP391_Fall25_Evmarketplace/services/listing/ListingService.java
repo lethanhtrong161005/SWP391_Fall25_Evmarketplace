@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing;
 
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.ConsignmentListingFilter;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.CreateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.UpdateListingRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
@@ -98,5 +99,10 @@ public interface ListingService {
      * Lấy bài đăng do staff quản lý
      **/
     BaseResponse<?> getListingAllByStaffId(Long staffId);
+
+ //Consignment Listing
+ BaseResponse<?> createListingConsignment(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
+ BaseResponse<?> searchConsignment(ConsignmentListingFilter f, int page, int size);
+
 
 }

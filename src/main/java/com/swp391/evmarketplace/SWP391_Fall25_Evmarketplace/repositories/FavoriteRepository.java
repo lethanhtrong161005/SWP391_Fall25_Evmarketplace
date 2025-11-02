@@ -1,6 +1,7 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Favorite;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingLikeCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -25,5 +26,21 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
 
     Slice<Favorite> findByAccount_IdOrderByCreatedAtDesc(Long accountId, Pageable pageable);
 
+    @Query("""
+           select f.listing.id as listingId, count(f.id) as cnt
+           from Favorite f
+           where f.listing.id in :listingIds
+           group by f.listing.id
+           """)
+    List<ListingLikeCount> countByListingIds(@Param("listingIds") Collection<Long> listingIds);
+
+    @Query("""
+           select f.listing.id
+           from Favorite f
+           where f.account.id = :accountId
+             and f.listing.id in :listingIds
+           """)
+    Set<Long> findListingIdsLikedByAccount(@Param("accountId") Long accountId,
+                                           @Param("listingIds") Collection<Long> listingIds);
 }
 
