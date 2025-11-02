@@ -374,14 +374,6 @@ public class ContractServiceImpl implements ContractService {
 
         enforceEditPermission(authUtil.getCurrentAccountOrNull(), contract);
 
-        if(contract.getStatus() == ContractStatus.ACTIVE
-                || contract.getStatus() == ContractStatus.SIGNED
-                || contract.getStatus() == ContractStatus.EXPIRED
-                || contract.getStatus() == ContractStatus.CANCELLED
-        ) {
-            throw new CustomBusinessException("Contract cannot be updated");
-        }
-
         boolean changed = false;
 
         //Change contract file
@@ -434,12 +426,15 @@ public class ContractServiceImpl implements ContractService {
             ));
         }
 
+        System.out.println("Contract Status: " + req.getStatus());
+        contract.setStatus(req.getStatus() != null ? req.getStatus() : contract.getStatus());
+
         if (!changed && (req.getNote() == null || req.getNote().isBlank())) {
             return new BaseResponse<>(
                     200, true, "Nothing changed", contract.toDto(contract), null, LocalDateTime.now()
             );
         }
-
+        contractRepository.save(contract);
         contractRepository.saveAndFlush(contract);
         return new BaseResponse<>(
                 200, true, "Contract updated", contract.toDto(contract), null, LocalDateTime.now()

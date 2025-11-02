@@ -113,7 +113,7 @@ public class ListingController {
             @RequestParam("payload") String payloadJson,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @RequestPart(value = "videos", required = false) List<MultipartFile> videos,
-            @RequestParam(value = "keepMediaIds", required = false) List<Long> keepMediaIds // <= String->Long binding
+            @RequestParam(value = "keepMediaIds", required = false) List<Long> keepMediaIds
     ) {
         try {
             UpdateListingRequest req = objectMapper.readValue(payloadJson, UpdateListingRequest.class);
@@ -179,11 +179,18 @@ public class ListingController {
 
     //Consignment Listing Update
     @PutMapping(
-            value = "/consignment",
+            value = "/consignment/{id}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<?> consignmentUpdate(){
-        return null;
+    public ResponseEntity<?> consignmentUpdate(
+            @PathVariable Long id,
+            @RequestPart("payload") UpdateListingRequest payload,
+            @RequestPart(value="images", required = false) List<MultipartFile> images,
+            @RequestPart(value="videos", required = false) List<MultipartFile> videos,
+            @RequestParam(value = "keepMediaIds", required = false) List<Long> keepMediaIds
+    ){
+        BaseResponse<?> res = listingService.updateConsignmentListing(id, payload, images, videos, keepMediaIds == null ? List.of() : keepMediaIds);
+        return ResponseEntity.status(res.getStatus()).body(res);
     }
 
     //Consignment Listing Get
