@@ -16,9 +16,16 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
                 SELECT
                     ca.id AS id,
                     ca.request.id AS requestId,
+                    
                     ca.owner.id AS ownerId,
+                    ca.owner.profile.fullName AS ownerName,
+                    
                     s.id AS staffId,
+                    s.profile.fullName AS staffName,
+                    
                     ca.branch.id AS branchId,
+                    ca.branch.name AS branchName,
+                    
                     ca.commissionPercent AS commissionPercent,
                     ca.acceptablePrice AS acceptablePrice,
                     ca.status AS status,
@@ -38,9 +45,16 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
                 SELECT
                     ca.id AS id,
                     ca.request.id AS requestId,
+                    
                     ca.owner.id AS ownerId,
-                    s.id AS staffId,
-                    ca.branch.id AS branchId,
+                     ca.owner.profile.fullName AS ownerName,
+    
+                     s.id AS staffId,
+                     s.profile.fullName AS staffName,
+    
+                     ca.branch.id AS branchId,
+                     ca.branch.name AS branchName,
+                     
                     ca.commissionPercent AS commissionPercent,
                     ca.acceptablePrice AS acceptablePrice,
                     ca.status AS status,

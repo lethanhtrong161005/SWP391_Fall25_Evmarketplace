@@ -78,7 +78,7 @@ public class ListingServiceImp implements ListingService {
 
     @Override
     @Transactional(readOnly = true)
-    public BaseResponse<PageResponse<ListingListProjection>> getAllListingsPublic(
+    public BaseResponse<PageResponse<ListingCardDTO>> getAllListingsPublic(
             String type, CategoryCode cate, String status,
             int page, int size, String sort, String dir
     ) {
@@ -95,13 +95,11 @@ public class ListingServiceImp implements ListingService {
 
         Page<ListingListProjection> p;
 
-
         String t = type == null ? null : type.trim().toUpperCase();
         if (t != null) {
             if (!t.equals("VEHICLE") && !t.equals("BATTERY")) {
                 throw new CustomBusinessException("Invalid listing type");
             }
-
             p = t.equals("VEHICLE") ?
                     listingRepository.findVehicles(currentId, statuses, pageable)
                     : listingRepository.findBatteries(currentId, statuses, pageable);
@@ -111,15 +109,22 @@ public class ListingServiceImp implements ListingService {
             p = listingRepository.getAllListWithFavPublic(statuses, currentId, pageable);
         }
 
-        PageResponse<ListingListProjection> pr = new PageResponse<>(p.getTotalElements(), p.getTotalPages(), p.hasNext(), p.hasPrevious(), p.getNumber(), p.getSize(), p.getContent());
+        List<ListingCardDTO> cards = p.getContent().stream().map(this::toCardDtoWithFav).toList();
+        PageResponse<ListingCardDTO> pr = new PageResponse<>(
+                p.getTotalElements(),
+                p.getTotalPages(),
+                p.hasNext(),
+                p.hasPrevious(),
+                p.getNumber(),
+                p.getSize(),
+                cards);
 
-        BaseResponse<PageResponse<ListingListProjection>> response = new BaseResponse<>();
+        BaseResponse<PageResponse<ListingCardDTO>> response = new BaseResponse<>();
         response.setData(pr);
         response.setStatus(200);
         response.setMessage(p.isEmpty() ? "Empty List" : "Success");
         response.setSuccess(true);
         return response;
-
     }
 
     /**
@@ -272,11 +277,11 @@ public class ListingServiceImp implements ListingService {
         }
     }
 
-    public BaseResponse<PageResponse<ListingListProjection>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
+    public BaseResponse<PageResponse<ListingCardDTO>> searchForPublic(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
         return doSearch(requestDTO, EnumSet.of(ListingStatus.ACTIVE), page, size, sort, dir);
     }
 
-    public BaseResponse<PageResponse<ListingListProjection>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
+    public BaseResponse<PageResponse<ListingCardDTO>> searchForManage(SearchListingRequestDTO requestDTO, int page, int size, String sort, String dir) {
         return doSearch(requestDTO, EnumSet.allOf(ListingStatus.class), page, size, sort, dir);
     }
 
@@ -299,7 +304,7 @@ public class ListingServiceImp implements ListingService {
         return PageRequest.of(Math.max(page, 0), Math.max(size, 1), s); // số trang 0 âm, ít nhất 1 phần tử trong mỗi trang
     }
 
-    public BaseResponse<PageResponse<ListingListProjection>> doSearch(
+    public BaseResponse<PageResponse<ListingCardDTO>> doSearch(
             SearchListingRequestDTO requestDTO, EnumSet<ListingStatus> statusSet,
             int page, int size, String sort, String dir) {
         Long currentId = authUtil.getCurrentAccountIdOrNull();
@@ -323,17 +328,17 @@ public class ListingServiceImp implements ListingService {
         Pageable pageable = buildPageable(page, size, sort, dir);
         Page<ListingListProjection> p = listingRepository.searchCards(currentId, requestDTO, statusSet, pageable);
 
-        PageResponse<ListingListProjection> pr = PageResponse.<ListingListProjection>builder()
-                .totalElements(p.getTotalElements())
-                .totalPages(p.getTotalPages())
-                .hasNext(p.hasNext())
-                .hasPrevious(p.hasPrevious())
-                .page(p.getNumber())
-                .size(p.getSize())
-                .items(p.getContent())
-                .build();
+        List<ListingCardDTO> cards = p.getContent().stream().map(this::toCardDtoWithFav).toList();
+        PageResponse<ListingCardDTO> pr = new PageResponse<>(
+                p.getTotalElements(),
+                p.getTotalPages(),
+                p.hasNext(),
+                p.hasPrevious(),
+                p.getNumber(),
+                p.getSize(),
+                cards);
 
-        BaseResponse<PageResponse<ListingListProjection>> res = new BaseResponse<>();
+        BaseResponse<PageResponse<ListingCardDTO>> res = new BaseResponse<>();
         res.setData(pr);
         res.setStatus(200);
         res.setMessage("Success");
@@ -530,7 +535,7 @@ public class ListingServiceImp implements ListingService {
         listingDto.setFavoriteCount(favoriteCount);
         Long useId = authUtil.getCurrentAccountIdOrNull();
         listingDto.setLikedByCurrentUser(false);
-        if(useId != null){
+        if (useId != null) {
             listingDto.setLikedByCurrentUser(favoriteRepository.existsByAccount_IdAndListing_Id(useId, listing.getId()));
         }
         dto.setListing(listingDto);
@@ -542,7 +547,6 @@ public class ListingServiceImp implements ListingService {
         accountDto.setProfile(listing.getSeller().getProfile());
         accountDto.setPhoneNumber(listing.getSeller().getPhoneNumber());
         dto.setSellerId(accountDto);
-
 
 
         //Lấy cơ sở giữ dùng cho kí gửi
@@ -1191,7 +1195,7 @@ public class ListingServiceImp implements ListingService {
 
 
     private void assertLockableStatus(Listing l) {
-        if(l.getStatus() != ListingStatus.PENDING) {
+        if (l.getStatus() != ListingStatus.PENDING) {
             throw new CustomBusinessException("Listing status is not lockable: " + l.getStatus());
         }
     }
@@ -1209,7 +1213,9 @@ public class ListingServiceImp implements ListingService {
         return lived < ttl;
     }
 
-    /** Heartbeat gia hạn lock */
+    /**
+     * Heartbeat gia hạn lock
+     */
     @Transactional
     public BaseResponse<?> extend(Long listingId, Long actorId) {
         Listing l = listingRepository.findByIdForUpdate(listingId)
@@ -1259,13 +1265,15 @@ public class ListingServiceImp implements ListingService {
         return res;
     }
 
-    /** Nhả lock: force=true cho phép giải phóng lock của người khác. */
+    /**
+     * Nhả lock: force=true cho phép giải phóng lock của người khác.
+     */
     @Transactional
     public BaseResponse<?> release(Long listingId, Long actorId, boolean force) {
         Listing l = listingRepository.findByIdForUpdate(listingId)
                 .orElseThrow(() -> new CustomBusinessException("Listing not found"));
 
-        if (l.getModerationLockedBy() == null){
+        if (l.getModerationLockedBy() == null) {
             throw new CustomBusinessException("You do not own the lock");
         }
 
@@ -1306,7 +1314,7 @@ public class ListingServiceImp implements ListingService {
         // manual pagination cho hàng chờ
         int total = unlocked.size();
         int from = Math.max(0, Math.min(pageIdx * pageSize, total));
-        int to   = Math.max(0, Math.min(from + pageSize, total));
+        int to = Math.max(0, Math.min(from + pageSize, total));
         boolean hasNext = to < total;
 
         List<Map<String, Object>> items = new ArrayList<>();
@@ -1340,7 +1348,7 @@ public class ListingServiceImp implements ListingService {
         m.put("categoryId", l.getCategory().getId());
         m.put("categoryName", l.getCategory().getName());
         m.put("price", l.getPrice());
-        m.put("visibility",  l.getVisibility());
+        m.put("visibility", l.getVisibility());
         m.put("createdAt", l.getCreatedAt());
         m.put("lockedBy", (l.getModerationLockedBy() == null) ? null : l.getModerationLockedBy().getId());
         m.put("lockedAt", l.getModerationLockedAt());
@@ -1375,7 +1383,7 @@ public class ListingServiceImp implements ListingService {
         m.put("categoryId", l.getCategory().getId());
         m.put("categoryName", l.getCategory().getName());
         m.put("price", l.getPrice());
-        m.put("visibility",  l.getVisibility());
+        m.put("visibility", l.getVisibility());
         m.put("createdAt", l.getCreatedAt());
         m.put("lockedBy", (l.getModerationLockedBy() == null) ? null : l.getModerationLockedBy().getId());
         m.put("lockedAt", l.getModerationLockedAt());
@@ -1418,7 +1426,9 @@ public class ListingServiceImp implements ListingService {
                 l.getTitle(), "Đã được duyệt");
 
         var res = new BaseResponse<>();
-        res.setSuccess(true); res.setStatus(200); res.setMessage("Approved listing");
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Approved listing");
         return res;
     }
 
@@ -1454,7 +1464,9 @@ public class ListingServiceImp implements ListingService {
                 l.getTitle(), reason);
 
         var res = new BaseResponse<>();
-        res.setSuccess(true); res.setStatus(200); res.setMessage("Rejected listing");
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Rejected listing");
         return res;
     }
 
@@ -1482,7 +1494,6 @@ public class ListingServiceImp implements ListingService {
 
         claim(l.getId(), actorId, true);
     }
-
 
 
     @Transactional(readOnly = true)

@@ -7,10 +7,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.request.listing.SearchListingRequestDTO;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.CreateListingResponse;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingDetailResponseDto;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingHistoryDto;
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.ListingListItemDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.listing.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.CategoryCode;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ListingListProjection;
@@ -27,13 +24,13 @@ public interface ListingService {
     BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
     BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(ListingStatus status, String q, Integer page, Integer size);
     Map<ListingStatus, Long> getMyCounts(Long sellerId);
-    BaseResponse<PageResponse<ListingListProjection>> searchForPublic(SearchListingRequestDTO requestDTO,
+    BaseResponse<PageResponse<ListingCardDTO>> searchForPublic(SearchListingRequestDTO requestDTO,
                                                                        int page, int size, String sort, String dir);
-    BaseResponse<PageResponse<ListingListProjection>> searchForManage(SearchListingRequestDTO requestDTO,
-                                                                       int page, int size, String sort, String dir);
+    BaseResponse<PageResponse<ListingCardDTO>> searchForManage(SearchListingRequestDTO requestDTO,
+                                                               int page, int size, String sort, String dir);
 
     BaseResponse<Map<String, Object>> getAllListForModerator(int page, int size, String sort, String dir);
-    BaseResponse<PageResponse<ListingListProjection>> getAllListingsPublic(
+    BaseResponse<PageResponse<ListingCardDTO>> getAllListingsPublic(
             String type, CategoryCode categoryCode, String status,
             int page, int size, String sort, String dir
     );
