@@ -22,14 +22,19 @@ import java.util.Set;
 
 public interface ListingService {
     BaseResponse<CreateListingResponse> createListing(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
+
     BaseResponse<PageResponse<ListingListItemDTO>> getMyListings(ListingStatus status, String q, Integer page, Integer size);
+
     Map<ListingStatus, Long> getMyCounts(Long sellerId);
+
     BaseResponse<PageResponse<ListingCardDTO>> searchForPublic(SearchListingRequestDTO requestDTO,
-                                                                       int page, int size, String sort, String dir);
+                                                               int page, int size, String sort, String dir);
+
     BaseResponse<PageResponse<ListingCardDTO>> searchForManage(SearchListingRequestDTO requestDTO,
                                                                int page, int size, String sort, String dir);
 
     BaseResponse<Map<String, Object>> getAllListForModerator(int page, int size, String sort, String dir);
+
     BaseResponse<PageResponse<ListingCardDTO>> getAllListingsPublic(
             String type, CategoryCode categoryCode, String status,
             int page, int size, String sort, String dir
@@ -38,6 +43,7 @@ public interface ListingService {
 
     //Lấy chi tiết bài đăng theo người bán
     BaseResponse<ListingDetailResponseDto> getListingDetailBySeller(Long listingId, Long sellerId);
+
     //Lấy chi tiết bài đăng
     BaseResponse<ListingDetailResponseDto> getListingDetailById(Long listingId);
     //Chỉnh Bài Đăng
@@ -73,13 +79,21 @@ public interface ListingService {
      *
      **/
     BaseResponse<?> changeStatus(Long listingId, ListingStatus newStatus);
+
     BaseResponse<?> restore(Long listingId);
+
     BaseResponse<?> claim(Long listingId, Long actorId, boolean force);
+
     BaseResponse<?> extend(Long listingId, Long actorId);
+
     BaseResponse<?> release(Long listingId, Long actorId, boolean force);
+
     List<Map<String, Object>> myActiveLocks(Long actorId, String rawTitle);
+
     BaseResponse<?> approve(Long listingId, Long actorId, boolean force);
+
     BaseResponse<?> reject(Long listingId, Long actorId, String reason, boolean force);
+
     BaseResponse<Map<String, Object>> getQueuePaged(
             ListingStatus status, int pageIdx, int pageSize, String rawTitle
     );
@@ -100,9 +114,17 @@ public interface ListingService {
      **/
     BaseResponse<?> getListingAllByStaffId(Long staffId);
 
- //Consignment Listing
- BaseResponse<?> createListingConsignment(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
- BaseResponse<?> searchConsignment(ConsignmentListingFilter f, int page, int size);
+    //Consignment Listing
+    BaseResponse<?> createListingConsignment(CreateListingRequest req, List<MultipartFile> images, List<MultipartFile> videos);
+
+    BaseResponse<?> searchConsignment(ConsignmentListingFilter f, int page, int size);
 
 
+    BaseResponse<?> updateConsignmentListing(
+            Long id,
+            UpdateListingRequest req,
+            List<MultipartFile> images,
+            List<MultipartFile> videos,
+            List<Long> keepMediaIds
+    );
 }
