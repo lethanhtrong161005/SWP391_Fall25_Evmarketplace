@@ -163,12 +163,14 @@ public class Account {
         dto.setStatus(account.getStatus());
         dto.setEmailVerified(account.isEmailVerified());
         dto.setPhoneVerified(account.isPhoneVerified());
-        dto.setProfile(account.getProfile());
+        dto.setProfile(account.getProfile() != null ? account.getProfile() : null);
         dto.setRole(account.getRole());
-        if (dto.getProfile().getAvatarUrl() != null) {
-            String avatarUrl = MedialUtils.converMediaNametoMedialUrl(dto.getProfile().getAvatarUrl(), "IMAGE");
-            if(account.getGoogleId() == null) {
-                dto.getProfile().setAvatarUrl(avatarUrl);
+        if (dto.getProfile() != null) {
+            if(dto.getProfile().getAvatarUrl() != null) {
+                String avatarUrl = MedialUtils.converMediaNametoMedialUrl(dto.getProfile().getAvatarUrl(), "IMAGE");
+                if(account.getGoogleId() == null) {
+                    dto.getProfile().setAvatarUrl(avatarUrl);
+                }
             }
         }
         if(account.getBranch() != null){
