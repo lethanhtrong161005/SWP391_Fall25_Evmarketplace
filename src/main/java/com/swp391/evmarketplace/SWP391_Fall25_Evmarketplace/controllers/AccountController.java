@@ -107,4 +107,5 @@ public class AccountController {
         BaseResponse<Void> response = accountService.resetPassword(request);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+
 }

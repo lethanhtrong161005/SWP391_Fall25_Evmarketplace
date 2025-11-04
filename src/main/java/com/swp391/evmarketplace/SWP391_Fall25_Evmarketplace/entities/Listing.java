@@ -267,6 +267,7 @@ public class Listing {
         ListingDto listingDto = new ListingDto();
 
         listingDto.setId(listing.getId());
+        listingDto.setSellerPhone(listing.getSeller() != null ? listing.getSeller().getPhoneNumber() : null);
 
         listingDto.setCategoryId(listing.getCategory().getId());
         listingDto.setCategoryName(listing.getCategory().getName());
