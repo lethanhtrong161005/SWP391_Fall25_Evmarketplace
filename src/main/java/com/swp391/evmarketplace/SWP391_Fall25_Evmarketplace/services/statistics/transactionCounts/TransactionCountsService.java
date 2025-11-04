@@ -1,6 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.statistics.transactionCounts;
 
-import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.transaction.TransactionCountsDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.statistics.TransactionCountsDTO;
 
 import java.time.LocalDate;
 

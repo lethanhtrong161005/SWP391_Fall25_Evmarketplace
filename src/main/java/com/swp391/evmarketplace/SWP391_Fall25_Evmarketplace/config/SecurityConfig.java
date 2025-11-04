@@ -137,6 +137,10 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.GET, "/api/manager/agreements/all")
                             .hasAnyRole(AccountRole.MANAGER.name());
 
+                    auth.requestMatchers(HttpMethod.GET,
+                                    "/api/reports/**")
+                            .hasAnyRole(AccountRole.MANAGER.name());
+
 
                     //admin
                     auth.requestMatchers("/api/admin/accounts/**").hasRole("ADMIN");
