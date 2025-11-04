@@ -85,6 +85,7 @@ public class Contract {
                         : buyer.getPhoneNumber();
             }
             dto.setBuyerName(buyerName);
+            dto.setBuyerPhoneNumber(buyer != null ? buyer.getPhoneNumber() : null);
 
             var seller = order.getSeller();
             String sellerName = null;

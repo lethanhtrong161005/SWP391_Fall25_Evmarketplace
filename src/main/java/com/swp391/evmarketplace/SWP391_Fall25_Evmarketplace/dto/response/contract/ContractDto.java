@@ -25,7 +25,10 @@ public class ContractDto {
     private String orderCode;
 
     private String listingTitle;
+
     private String buyerName;
+    private String buyerPhoneNumber;
+
     private String sellerName;
     private String branchName;
 
