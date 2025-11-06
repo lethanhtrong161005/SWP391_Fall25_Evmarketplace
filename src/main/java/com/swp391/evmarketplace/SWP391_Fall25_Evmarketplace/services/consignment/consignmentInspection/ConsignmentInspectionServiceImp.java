@@ -66,6 +66,7 @@ public class ConsignmentInspectionServiceImp implements ConsignmentInspectionSer
         inspection.setResult(dto.getResult());
         inspection.setSuggestedPrice(dto.getSuggestedPrice());
 
+
         ConsignmentInspectionResult status = dto.getResult();
         inspection.setActive(status.equals(ConsignmentInspectionResult.PASS));
 

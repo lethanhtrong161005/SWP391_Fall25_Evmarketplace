@@ -56,7 +56,7 @@ public class ConsignmentSettlement {
     private String note;
 
     @Column(name = "media_url", length = 500)
-    private String medialUrl;
+    private String mediaUrl;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

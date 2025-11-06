@@ -2,14 +2,21 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignmen
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StoredContractResult;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentAgreement;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentRequest;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentSettlement;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentAgreementStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ConsignmentRequestStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.SettlementMethod;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.SettlementStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ConsignmentAgreementRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ConsignmentRequestRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ConsignmentSettlementRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -20,6 +27,10 @@ import java.util.List;
 public class ConsignmentSettlementServiceImp implements ConsignmentSettlementService {
     @Autowired
     ConsignmentSettlementRepository consignmentSettlementRepository;
+    @Autowired
+    ConsignmentRequestRepository consignmentRequestRepository;
+    @Autowired
+    ConsignmentAgreementRepository consignmentAgreementRepository;
 
     @Autowired
     FileService fileService;
@@ -65,6 +76,7 @@ public class ConsignmentSettlementServiceImp implements ConsignmentSettlementSer
         return response;
     }
 
+    @Transactional
     @Override
     public BaseResponse<Void> setPayout(Long settlementId, MultipartFile file) {
 
@@ -72,6 +84,12 @@ public class ConsignmentSettlementServiceImp implements ConsignmentSettlementSer
 
         ConsignmentSettlement settlement = consignmentSettlementRepository.findById(settlementId)
                 .orElseThrow(() -> new CustomBusinessException("NOT_FOUND_SETTLEMENT"));
+
+        ConsignmentAgreement agreement = consignmentAgreementRepository.findById(settlement.getAgreementId())
+                .orElseThrow(() -> new CustomBusinessException("Not found agreement of this settlement id: " + settlementId));
+
+        ConsignmentRequest request = consignmentRequestRepository.findById(agreement.getRequest().getId())
+                .orElseThrow(() -> new CustomBusinessException("Not found request of this settlement id: " + settlementId));
 
         if (!settlement.getStatus().equals(SettlementStatus.PENDING))
             throw new CustomBusinessException("No condition to update payout");
@@ -82,11 +100,18 @@ public class ConsignmentSettlementServiceImp implements ConsignmentSettlementSer
         } catch (IOException e) {
             throw new CustomBusinessException("Error while uploading file: " + e.getMessage());
         }
-
-        settlement.setMedialUrl(result.getFileName());
+        settlement.setMediaUrl(result.getFileName());
         settlement.setMethod(SettlementMethod.CASH);
         settlement.setPaidAt(LocalDateTime.now());
         settlement.setStatus(SettlementStatus.PAID);
+
+        agreement.setStatus(ConsignmentAgreementStatus.FINISHED);
+
+        request.setStatus(ConsignmentRequestStatus.FINISHED);
+
+        consignmentSettlementRepository.save(settlement);
+        consignmentRequestRepository.save(request);
+        consignmentAgreementRepository.save(agreement);
 
         BaseResponse<Void> response = new BaseResponse<>();
         response.setSuccess(true);
