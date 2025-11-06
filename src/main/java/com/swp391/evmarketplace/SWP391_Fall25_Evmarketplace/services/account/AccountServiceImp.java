@@ -80,7 +80,7 @@ public class AccountServiceImp implements AccountService {
         Account ac = authUtil.getCurrentAccount();
         AccountReponseDTO dto = new AccountReponseDTO();
         BaseResponse<AccountReponseDTO> response = new BaseResponse<>();
-        if(ac != null) {
+        if (ac != null) {
             dto = ac.toDto(ac, serverUrl);
             response.setData(dto);
             response.setMessage("Get Account Success");
@@ -481,8 +481,6 @@ public class AccountServiceImp implements AccountService {
     }
 
 
-
-
     public Pageable buildPageable(int page, int size, String sort, String dir) {
         Sort s = (sort == null || sort.isBlank())
                 ? Sort.by(Sort.Direction.DESC, "createdAt") //mặc định show acc mới tạo gần nhất
@@ -652,6 +650,9 @@ public class AccountServiceImp implements AccountService {
 
         Branch branch = branchRepository.findById(requestDTO.getBranchId())
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRANCH_NOT_FOUND.name()));
+
+        if (!(requestDTO.getRole().equals(AccountRole.STAFF)) && !(requestDTO.getRole().equals(AccountRole.MODERATOR)))
+            throw new CustomBusinessException("No condition to create new account");
 
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         Account account = new Account();
