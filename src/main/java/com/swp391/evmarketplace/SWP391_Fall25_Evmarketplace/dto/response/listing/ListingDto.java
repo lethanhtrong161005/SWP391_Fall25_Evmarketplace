@@ -28,6 +28,7 @@ public class ListingDto {
     //Lấy id của người bán
     private Long sellerId;
     private String sellerName;
+    private String sellerPhone;
 
     //Lấy id vehicle nếu có trong catalog
     private Long productVehicleId;
