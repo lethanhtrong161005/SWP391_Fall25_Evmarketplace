@@ -37,10 +37,10 @@ public class ConsignmentAgreementController {
     }
 
     @GetMapping("/request/{requestId}")
-    public ResponseEntity<BaseResponse<ConsignmentAgreementDTO>> getByRequest(
+    public ResponseEntity<?> getByRequest(
             @PathVariable Long requestId
     ) {
-        BaseResponse<ConsignmentAgreementDTO> res =
+        var res =
                 agreementService.getAgreementByRequestId(requestId);
         return ResponseEntity.status(res.getStatus()).body(res);
     }

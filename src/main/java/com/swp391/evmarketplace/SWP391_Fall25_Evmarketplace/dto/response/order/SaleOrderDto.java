@@ -39,6 +39,8 @@ public class SaleOrderDto {
     private BigInteger orderCode;
 
     private String contractUrl;
+    private Long contractId;
+    private String contractStatus;
 
 
     private Long consignmentAgreementId;

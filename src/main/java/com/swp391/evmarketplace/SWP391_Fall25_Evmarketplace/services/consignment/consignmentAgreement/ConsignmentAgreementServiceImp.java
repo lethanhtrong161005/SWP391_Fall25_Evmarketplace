@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ConsignmentAgreementServiceImp implements ConsignmentAgreementService {
@@ -110,17 +111,21 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
     }
 
     @Override
-    public BaseResponse<ConsignmentAgreementDTO> getAgreementByRequestId(Long requestId) {
+    public BaseResponse<Object> getAgreementByRequestId(Long requestId) {
         if (requestId == null) throw new CustomBusinessException("request is is required");
-
+        var ar = consignmentAgreementRepository.findByRequest_Id(requestId).orElseThrow(() -> new CustomBusinessException("AGREEMENT NOT FOUND BY REQUEST ID" + requestId));
+        boolean isCreateListing = ar.getListing() == null;
         ConsignmentAgreementProjection agreement = consignmentAgreementRepository
                 .findProjectionByRequestId(requestId)
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.AGREEMENT_NOT_FOUND.name()));
 
         ConsignmentAgreementDTO c = toDto(agreement);
-
-        BaseResponse<ConsignmentAgreementDTO> res = new BaseResponse<>();
-        res.setData(c);
+        Map<String, Object> data = Map.of(
+                "item", c,
+                "isCreateListing", isCreateListing
+        );
+        BaseResponse<Object> res = new BaseResponse<>();
+        res.setData(data);
         res.setSuccess(true);
         res.setStatus(200);
         res.setMessage("OK");
