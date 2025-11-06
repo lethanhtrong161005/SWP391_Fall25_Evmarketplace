@@ -5,10 +5,12 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consign
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ListingStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.projections.ConsignmentAgreementProjection;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.account.AccountService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentAgreement.ConsignmentAgreementService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentRequest.ConsignmentRequestService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.listing.ListingService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +23,13 @@ import java.util.List;
 @Tag(name = "manager", description = "APIs that manager manage")
 public class ManagerController {
     @Autowired
-    ConsignmentRequestService consignmentRequestService;
+    private ConsignmentRequestService consignmentRequestService;
     @Autowired
-    AccountService accountService;
+    private AccountService accountService;
     @Autowired
-    ConsignmentAgreementService consignmentAgreementService;
+    private ConsignmentAgreementService consignmentAgreementService;
+    @Autowired
+    private ListingService listingService;
 
     //account
     @GetMapping("/accounts/staff")
@@ -75,6 +79,26 @@ public class ManagerController {
     public ResponseEntity<BaseResponse<List<ConsignmentAgreementDTO>>> getAll() {
         BaseResponse<List<ConsignmentAgreementDTO>> res =
                 consignmentAgreementService.getAllAgreements();
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @GetMapping("/listing")
+    public ResponseEntity<?> getAllListing(
+            @RequestParam(required = false) ListingStatus status,
+            @RequestParam(required = false, defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        var res = listingService.managerListing(status, q, page, size);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @PutMapping("/listing/{id}")
+    public ResponseEntity<?> updateListing(
+            @PathVariable Long id,
+            @RequestParam(required = false) ListingStatus status
+    ){
+        var res = listingService.managerListingUpdate(id, status);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 

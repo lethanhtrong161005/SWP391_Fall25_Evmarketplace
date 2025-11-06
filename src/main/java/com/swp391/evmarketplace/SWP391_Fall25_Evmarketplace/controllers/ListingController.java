@@ -201,12 +201,9 @@ public class ListingController {
             @ModelAttribute ConsignmentListingFilter f
             ){
         var res = listingService.searchConsignment(f, page, size);
-        i++;
-        System.out.println("API CAll: LLLLLLLL "  + i);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
-    static int i = 0;
 
 
 

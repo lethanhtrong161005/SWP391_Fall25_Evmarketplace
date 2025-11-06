@@ -18,6 +18,47 @@ import java.util.Set;
 public final class ListingSpecs {
     private ListingSpecs() {}
 
+    public static Specification<Listing> managerFilter(String q) {
+        if (q == null || q.isBlank()) return null;
+
+        final String pat = "%" + q.trim().toLowerCase() + "%";
+        final String qDigits = q.replaceAll("\\D+", "");
+
+        return (root, cq, cb) -> {
+
+            var title    = cb.lower(cb.coalesce(root.get("title"), ""));
+            var province = cb.lower(cb.coalesce(root.get("province"), ""));
+            var district = cb.lower(cb.coalesce(root.get("district"), ""));
+            var ward     = cb.lower(cb.coalesce(root.get("ward"), ""));
+            var address  = cb.lower(cb.coalesce(root.get("address"), ""));
+
+            var seller     = root.join("seller", jakarta.persistence.criteria.JoinType.LEFT);
+            var phoneRaw   = cb.coalesce(seller.get("phoneNumber"), "");
+
+            var phoneNoSpace = cb.function("REPLACE", String.class, phoneRaw, cb.literal(" "), cb.literal(""));
+            var phoneNoDash  = cb.function("REPLACE", String.class, phoneNoSpace, cb.literal("-"), cb.literal(""));
+            var phoneNoDot   = cb.function("REPLACE", String.class, phoneNoDash, cb.literal("."), cb.literal(""));
+            var phoneNoOpen  = cb.function("REPLACE", String.class, phoneNoDot, cb.literal("("), cb.literal(""));
+            var phoneNoClose = cb.function("REPLACE", String.class, phoneNoOpen, cb.literal(")"), cb.literal(""));
+            var phoneNorm    = cb.function("REPLACE", String.class, phoneNoClose, cb.literal("+"), cb.literal(""));
+
+            List<Predicate> ors = new ArrayList<>();
+            // text
+            ors.add(cb.like(title,    pat));
+            ors.add(cb.like(province, pat));
+            ors.add(cb.like(district, pat));
+            ors.add(cb.like(ward,     pat));
+            ors.add(cb.like(address,  pat));
+
+            if (!qDigits.isBlank() && qDigits.length() >= 3) {
+                ors.add(cb.like(phoneNorm, "%" + qDigits + "%"));
+            }
+
+            return cb.or(ors.toArray(new Predicate[0]));
+        };
+    }
+
+
     public static Specification<Listing> consignmentFilter(ConsignmentListingFilter f) {
         if (f == null) f = new ConsignmentListingFilter();
 

@@ -127,4 +127,7 @@ public interface ListingService {
             List<MultipartFile> videos,
             List<Long> keepMediaIds
     );
+
+    BaseResponse<?> managerListing(ListingStatus status, String q, int page, int size);
+    BaseResponse<?> managerListingUpdate(Long listingId,  ListingStatus status);
 }
