@@ -82,6 +82,7 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
             """)
     List<ConsignmentAgreement> findExpiredAgreements();
 
+    Optional<ConsignmentAgreement> findByRequest_Id (Long requestId);
 }
 
 

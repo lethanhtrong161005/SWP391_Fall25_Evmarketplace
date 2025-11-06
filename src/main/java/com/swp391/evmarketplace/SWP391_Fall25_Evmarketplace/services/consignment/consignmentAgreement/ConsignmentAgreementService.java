@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface ConsignmentAgreementService {
     BaseResponse<Void> createAgreement(CreateAgreementDTO dto, MultipartFile file);
-    BaseResponse<ConsignmentAgreementDTO> getAgreementByRequestId(Long requestId);
+    BaseResponse<Object> getAgreementByRequestId(Long requestId);
     BaseResponse<List<ConsignmentAgreementDTO>> getAllAgreements();
     BaseResponse<Void> cancelAgreement(Long agreementId);
     BaseResponse<Void> updateAgreement(Long agreementId, AgreementDuration duration);
