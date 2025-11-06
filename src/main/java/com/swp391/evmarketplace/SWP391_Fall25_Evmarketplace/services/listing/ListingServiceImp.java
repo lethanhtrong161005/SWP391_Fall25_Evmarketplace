@@ -2072,5 +2072,67 @@ public class ListingServiceImp implements ListingService {
         return res;
     }
 
+    @Override
+    public BaseResponse<?> managerListing(ListingStatus status, String q, int page, int size) {
+        Specification<Listing> spec = (root, cq, cb) -> {
+            cq.distinct(true);
+            return cb.conjunction();
+        };
 
+        if (status != null) {
+            spec = spec.and((root, cq, cb) -> cb.equal(root.get("status"), status));
+        }
+
+        if (q != null && !q.isBlank()) {
+            spec = spec.and(ListingSpecs.managerFilter(q));
+        }
+
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        var rs = listingRepository.findAll(spec, pageable);
+
+        var items = rs.getContent().stream()
+                .map(l -> l.toDto(l, brandRepository, categoryRepository, modelRepository))
+                .toList();
+
+
+        PageResponse<ListingDto> pageRes = new PageResponse<>();
+        pageRes.setTotalElements(rs.getTotalElements());
+        pageRes.setTotalPages(rs.getTotalPages());
+        pageRes.setHasNext(rs.hasNext());
+        pageRes.setHasPrevious(rs.hasPrevious());
+        pageRes.setSize(rs.getSize());
+        pageRes.setPage(page);
+        pageRes.setItems(items);
+
+        BaseResponse<Object> res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Get All Listings");
+        res.setData(pageRes);
+
+        return res;
+    }
+
+    @Override
+    public BaseResponse<?> managerListingUpdate(Long listingId, ListingStatus status) {
+        var actor = authUtil.getCurrentAccount();
+        if(actor.getRole() != AccountRole.MANAGER){
+            throw new CustomBusinessException("Only MANAGER are allowed ");
+        }
+
+        var l = listingRepository.findById(listingId)
+                .orElseThrow(() -> new CustomBusinessException("Listing not found"));
+
+        pushHistory(l, actor, l.getStatus(), status, "", "");
+        l.setPrevStatus(l.getStatus());
+        l.setStatus(status);
+        listingRepository.save(l);
+
+        var res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage("Consignment listing updated");
+        return res;
+
+    }
 }
