@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountServiceImp implements AccountService {
@@ -682,14 +683,17 @@ public class AccountServiceImp implements AccountService {
         return response;
     }
 
-    public BaseResponse<List<Account>> getStaffListInBranch() {
+    public BaseResponse<?> getStaffListInBranch() {
         Account account = authUtil.getCurrentAccount();
 
-        List<Account> accounts = accountRepository.findByRoleAndStatusAndBranch_Id(AccountRole.STAFF, AccountStatus.ACTIVE, account.getBranch().getId());
+        List<AccountReponseDTO> accounts = accountRepository.findByRoleAndStatusAndBranch_Id(AccountRole.STAFF, AccountStatus.ACTIVE, account.getBranch().getId())
+                .stream()
+                .map(item -> item.toDto(item, ""))
+                .collect(Collectors.toList());
         if (accounts == null || accounts.isEmpty())
             throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
 
-        BaseResponse<List<Account>> response = new BaseResponse<>();
+        BaseResponse<Object> response = new BaseResponse<>();
         response.setData(accounts);
         response.setSuccess(true);
         response.setStatus(200);

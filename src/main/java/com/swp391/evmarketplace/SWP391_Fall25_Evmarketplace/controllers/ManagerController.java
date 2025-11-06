@@ -33,8 +33,8 @@ public class ManagerController {
 
     //account
     @GetMapping("/accounts/staff")
-    public ResponseEntity<BaseResponse<List<Account>>> getListStaffAccountInBranch() {
-        BaseResponse<List<Account>> response = accountService.getStaffListInBranch();
+    public ResponseEntity<?> getListStaffAccountInBranch() {
+        var response = accountService.getStaffListInBranch();
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
