@@ -6,9 +6,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-public interface consignmentSettleService {
+public interface ConsignmentSettlementService {
     BaseResponse<List<ConsignmentSettlement>> getAll();
     BaseResponse<ConsignmentSettlement> getById(Long id);
+    BaseResponse<List<ConsignmentSettlement>> getListWithoutPayout();
 
     BaseResponse<Void> setPayout(Long settlementId, MultipartFile file);
 

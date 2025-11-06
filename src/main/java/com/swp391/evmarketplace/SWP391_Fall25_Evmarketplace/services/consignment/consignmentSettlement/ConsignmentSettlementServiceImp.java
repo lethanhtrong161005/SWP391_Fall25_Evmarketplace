@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class consignmentSettlementServiceImp implements consignmentSettleService {
+public class ConsignmentSettlementServiceImp implements ConsignmentSettlementService {
     @Autowired
     ConsignmentSettlementRepository consignmentSettlementRepository;
 
@@ -32,7 +32,7 @@ public class consignmentSettlementServiceImp implements consignmentSettleService
         response.setData(list);
         response.setSuccess(true);
         response.setStatus(200);
-        response.setMessage("OK");
+        response.setMessage(list.isEmpty() ? "Empty" : "OK");
 
         return response;
     }
@@ -49,6 +49,19 @@ public class consignmentSettlementServiceImp implements consignmentSettleService
         response.setSuccess(true);
         response.setStatus(200);
         response.setMessage("OK");
+        return response;
+    }
+
+    @Override
+    public BaseResponse<List<ConsignmentSettlement>> getListWithoutPayout() {
+
+        List<ConsignmentSettlement> list = consignmentSettlementRepository.findByStatus(SettlementStatus.PENDING);
+        BaseResponse<List<ConsignmentSettlement>> response = new BaseResponse<>();
+        response.setData(list);
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage(list.isEmpty() ? "Empty" : "OK");
+
         return response;
     }
 

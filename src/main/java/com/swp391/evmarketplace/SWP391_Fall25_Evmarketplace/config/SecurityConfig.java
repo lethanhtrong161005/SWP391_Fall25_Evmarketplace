@@ -141,6 +141,13 @@ public class SecurityConfig {
                                     "/api/reports/**")
                             .hasAnyRole(AccountRole.MANAGER.name());
 
+                    auth.requestMatchers(HttpMethod.GET,
+                                    "/api/consignment_settlement/**")
+                            .hasAnyRole(AccountRole.MANAGER.name());
+                    auth.requestMatchers(HttpMethod.POST,
+                                    "/api/consignment_settlement/")
+                            .hasAnyRole(AccountRole.MANAGER.name());
+
 
                     //admin
                     auth.requestMatchers("/api/admin/accounts/**").hasRole("ADMIN");
