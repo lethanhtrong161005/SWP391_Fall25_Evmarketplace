@@ -1559,7 +1559,6 @@ public class ListingServiceImp implements ListingService {
     public BaseResponse<?> createListingConsignment(CreateListingRequest req,
                                                     List<MultipartFile> images,
                                                     List<MultipartFile> videos) {
-        // 0) Kiểm tra Agreement
         ConsignmentAgreement ag = consignmentAgreementRepository.findById(req.getConsignmentAgreementId())
                 .orElseThrow(() -> new CustomBusinessException("Consignment Agreement not found"));
 
@@ -1580,11 +1579,9 @@ public class ListingServiceImp implements ListingService {
                 () -> "Agreement expired at " + TimeUtils.formatTs(ag.getExpireAt())
         );
 
-        // 1) Category
         Category category = categoryRepository.findById(req.getCategoryId())
                 .orElseThrow(() -> new CustomBusinessException("Category not found"));
 
-        // 2) Model/Brand tham chiếu (nếu có)
         Model model = null;
         if (req.getModelId() != null) {
             model = modelRepository.findById(req.getModelId())
@@ -1597,8 +1594,7 @@ public class ListingServiceImp implements ListingService {
             }
         }
 
-        // 3) Xác định ItemType và cross-check categoryCode
-        ItemType resolvedType = resolveItemType(req, model);  // ở dưới
+        ItemType resolvedType = resolveItemType(req, model);
         if (resolvedType == ItemType.BATTERY && !"BATTERY".equalsIgnoreCase(req.getCategoryCode())) {
             throw new CustomBusinessException("categoryCode must be BATTERY for itemType=BATTERY");
         }
@@ -1606,33 +1602,26 @@ public class ListingServiceImp implements ListingService {
             throw new CustomBusinessException("categoryCode must not be BATTERY for itemType=VEHICLE");
         }
 
-        // 4) Business rule về GIÁ theo Agreement (nếu bạn dùng acceptable_price)
         if (ag.getAcceptablePrice() != null && req.getPrice() != null
                 && req.getPrice().compareTo(ag.getAcceptablePrice()) < 0) {
             throw new CustomBusinessException("Listing price must be >= acceptable_price in agreement");
         }
 
-        // 5) Xác định Seller & Branch theo cơ sở ký gửi
-        Account seller = null;
         if (ag.getBranch() == null) {
             throw new CustomBusinessException("Agreement has no branch");
         }
-        seller = ag.getBranch().getManager();
+
+        Account seller = ag.getBranch().getManager();
         if (seller == null) {
             throw new CustomBusinessException("Branch has no manager to be listing seller");
         }
 
-        // 6) Build Listing
         Listing listing = new Listing();
         listing.setCategory(category);
-
-        // snapshot “textual” (brand/model hiển thị) – NOT NULL trong schema
         listing.setBrand(req.getBrand());
         listing.setModel(req.getModel());
-
         listing.setTitle(req.getTitle());
         listing.setSeller(seller);
-
         listing.setBrandId(req.getBrandId());
         listing.setModelId(req.getModelId());
         listing.setYear(req.getYear());
@@ -1643,44 +1632,33 @@ public class ListingServiceImp implements ListingService {
         listing.setDescription(req.getDescription());
         listing.setPrice(req.getPrice());
         listing.setVisibility(Visibility.NORMAL);
-
-        // Ký gửi → đã thẩm định
         listing.setVerified(true);
         listing.setConsigned(true);
-        listing.setBranch(ag.getBranch());                   // FK branch_id
-        listing.setConsignmentAgreement(ag);       // UNIQUE
+        listing.setBranch(ag.getBranch());
+        listing.setConsignmentAgreement(ag);
         if (req.getResponsibleStaffId() != null) {
             Account staff = accountRepository.findById(req.getResponsibleStaffId())
                     .orElseThrow(() -> new CustomBusinessException("Responsible staff not found"));
             listing.setResponsibleStaff(staff);
         }
-
-        // Địa lý
         listing.setProvince(req.getProvince());
         listing.setDistrict(req.getDistrict());
         listing.setWard(req.getWard());
         listing.setAddress(req.getAddress());
-
-        // Trạng thái (consigned/verified có thể ACTIVE luôn – tuỳ policy)
-        // Nếu bạn muốn đi qua duyệt moderator, set PENDING và để flow duyệt đẩy ACTIVE.
         listing.setStatus(ListingStatus.ACTIVE);
-
         listing.setExpiresAt(ag.getExpireAt());
 
-        // 7) Nếu có brandId + modelId → link catalog phù hợp
         if (req.getBrandId() != null && req.getModelId() != null) {
             if (resolvedType == ItemType.VEHICLE) {
                 productVehicleRepository
                         .findFirstByCategoryIdAndBrandIdAndModelId(req.getCategoryId(), req.getBrandId(), req.getModelId())
                         .ifPresent(listing::setProductVehicle);
                 listing.setProductBattery(null);
-            } else { // BATTERY
-                // Lưu thông số pin riêng
+            } else {
                 listing.setVoltage(req.getVoltageV());
                 listing.setBatteryChemistry(req.getBatteryChemistry());
                 listing.setMassKg(req.getMassKg());
                 listing.setDimensions(req.getDimensionsMm());
-
                 productBatteryRepository
                         .findFirstByCategory_IdAndBrand_IdAndModel_Id(req.getCategoryId(), req.getBrandId(), req.getModelId())
                         .ifPresent(listing::setProductBattery);
@@ -1688,41 +1666,40 @@ public class ListingServiceImp implements ListingService {
             }
         }
 
-        // 8) Lưu listing (đợt 1) để có ID
-        listingRepository.save(listing);
-
-        // 9) Media
-        try {
-            if (images != null) {
-                for (MultipartFile img : images) {
-                    if (img == null || img.isEmpty()) continue;
+        if (images != null) {
+            for (MultipartFile img : images) {
+                if (img == null || img.isEmpty()) continue;
+                try {
                     var stored = fileService.storeImage(img);
                     ListingMedia m = new ListingMedia();
                     m.setListing(listing);
                     m.setMediaUrl(stored.getStoredName());
                     m.setMediaType(MediaType.IMAGE);
                     listing.addMedia(m);
+                } catch (IOException e) {
+                    throw new CustomBusinessException("Upload image failed: " + e.getMessage());
                 }
             }
-            if (videos != null) {
-                for (MultipartFile v : videos) {
-                    if (v == null || v.isEmpty()) continue;
+        }
+
+        if (videos != null) {
+            for (MultipartFile v : videos) {
+                if (v == null || v.isEmpty()) continue;
+                try {
                     var stored = fileService.storeVideo(v);
                     ListingMedia m = new ListingMedia();
                     m.setListing(listing);
                     m.setMediaUrl(stored.getStoredName());
                     m.setMediaType(MediaType.VIDEO);
                     listing.addMedia(m);
+                } catch (IOException e) {
+                    throw new CustomBusinessException("Upload video failed: " + e.getMessage());
                 }
             }
-        } catch (IOException ioe) {
-            throw new CustomBusinessException("Upload media failed: " + ioe.getMessage());
         }
 
-        // 10) Lưu lần 2 để flush media
         listingRepository.save(listing);
 
-        // 11) Response
         var res = new BaseResponse<CreateListingResponse>();
         CreateListingResponse data = new CreateListingResponse();
         data.setListingId(listing.getId());
@@ -1733,6 +1710,7 @@ public class ListingServiceImp implements ListingService {
         res.setData(data);
         return res;
     }
+
 
     @Override
     public BaseResponse<?> searchConsignment(ConsignmentListingFilter f, int page, int size) {
@@ -1913,10 +1891,10 @@ public class ListingServiceImp implements ListingService {
         if (req.getCategoryId() != null && !req.getCategoryId().equals(categoryId)) {
             throw new CustomBusinessException("Cannot change category for consignment listing");
         }
-        if (req.getBrandId() != null && listing.getBranch() != null
-                && !req.getBrandId().equals(listing.getBranch().getId())) {
-            throw new CustomBusinessException("Cannot move branch for consignment listing");
-        }
+//        if (req.getBrandId() != null && listing.getBranch() != null
+//                && !req.getBrandId().equals(listing.getBranch().getId())) {
+//            throw new CustomBusinessException("Cannot move branch for consignment listing");
+//        }
 
 
         // Nếu có order đang mở → chặn thay đổi rủi ro

@@ -174,6 +174,8 @@ public class SaleOrder {
 
         String contractUrl = order.getContract() != null ? order.getContract().getFileUrl() : "";
         dto.setContractUrl(MedialUtils.converMediaNametoMedialUrl(contractUrl, ""));
+        dto.setContractId(order.getContract() != null ? order.getContract().getId() : null);
+        dto.setContractStatus(order.getContract() != null ? order.getContract().getStatus().name() : null);
 
         return dto;
     }
