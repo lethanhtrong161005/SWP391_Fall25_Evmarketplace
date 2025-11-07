@@ -36,7 +36,7 @@ public class ConsignmentSettlementController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{settlementId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> setPayout(
             @PathVariable Long settlementId,
             @RequestPart(value = "images", required = false) MultipartFile file
