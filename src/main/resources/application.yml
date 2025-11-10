@@ -25,12 +25,13 @@ spring:
       enabled: true
       file-size-threshold: 2MB
 
-  # Email configuration
+
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
+    default-encoding: UTF-8
     properties:
       mail:
         smtp:
@@ -40,6 +41,13 @@ spring:
           timeout: 20000
           connectiontimeout: 20000
           writetimeout: 20000
+
+
+
+app:
+  mail:
+    from: ${MAIL_FROM:pizzastore369.app@gmail.com}
+    from-name: ${MAIL_FROM_NAME:ReEV Marketplace}
 
 server:
   port: ${PORT:8089}
