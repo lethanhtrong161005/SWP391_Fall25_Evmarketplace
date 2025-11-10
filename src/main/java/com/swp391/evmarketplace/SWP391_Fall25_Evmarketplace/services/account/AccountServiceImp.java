@@ -366,9 +366,9 @@ public class AccountServiceImp implements AccountService {
 
     @Override
     public BaseResponse<String> sendOtpEmail(String email) {
-        if (accountRepository.existsByEmail(email)) {
-            throw new CustomBusinessException(ErrorCode.EMAIL_ALREADY_EXISTS.name());
-        }
+//        if (accountRepository.existsByEmail(email)) {
+//            throw new CustomBusinessException(ErrorCode.EMAIL_ALREADY_EXISTS.name());
+//        }
 
         String otp = generateOtp();
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(5);

@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.consignment.consignmentSettlement;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.settlement.ConsignmentSettlementResponseDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StoredContractResult;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ConsignmentAgreement;
@@ -36,11 +37,14 @@ public class ConsignmentSettlementServiceImp implements ConsignmentSettlementSer
     FileService fileService;
 
     @Override
-    public BaseResponse<List<ConsignmentSettlement>> getAll() {
+    public BaseResponse<List<ConsignmentSettlementResponseDto>> getAll() {
 
         List<ConsignmentSettlement> list = consignmentSettlementRepository.findAll();
-        BaseResponse<List<ConsignmentSettlement>> response = new BaseResponse<>();
-        response.setData(list);
+
+        List<ConsignmentSettlementResponseDto> dtos = list.stream().map(item -> item.toDto()).toList();
+
+        BaseResponse<List<ConsignmentSettlementResponseDto>> response = new BaseResponse<>();
+        response.setData(dtos);
         response.setSuccess(true);
         response.setStatus(200);
         response.setMessage(list.isEmpty() ? "Empty" : "OK");
@@ -49,14 +53,16 @@ public class ConsignmentSettlementServiceImp implements ConsignmentSettlementSer
     }
 
     @Override
-    public BaseResponse<ConsignmentSettlement> getById(Long id) {
+    public BaseResponse<ConsignmentSettlementResponseDto> getById(Long id) {
         if (id == null) throw new CustomBusinessException("Settlement is required");
 
         ConsignmentSettlement c = consignmentSettlementRepository.findById(id)
                 .orElseThrow(() -> new CustomBusinessException("NOT_FOUND_SETTLEMENT"));
 
-        BaseResponse<ConsignmentSettlement> response = new BaseResponse<>();
-        response.setData(c);
+        ConsignmentSettlementResponseDto dto = c.toDto();
+
+        BaseResponse<ConsignmentSettlementResponseDto> response = new BaseResponse<>();
+        response.setData(dto);
         response.setSuccess(true);
         response.setStatus(200);
         response.setMessage("OK");
@@ -64,11 +70,13 @@ public class ConsignmentSettlementServiceImp implements ConsignmentSettlementSer
     }
 
     @Override
-    public BaseResponse<List<ConsignmentSettlement>> getListWithoutPayout() {
+    public BaseResponse<List<ConsignmentSettlementResponseDto>> getListWithoutPayout() {
 
         List<ConsignmentSettlement> list = consignmentSettlementRepository.findByStatus(SettlementStatus.PENDING);
-        BaseResponse<List<ConsignmentSettlement>> response = new BaseResponse<>();
-        response.setData(list);
+        List<ConsignmentSettlementResponseDto> dtos = list.stream().map(item -> item.toDto()).toList();
+
+        BaseResponse<List<ConsignmentSettlementResponseDto>> response = new BaseResponse<>();
+        response.setData(dtos);
         response.setSuccess(true);
         response.setStatus(200);
         response.setMessage(list.isEmpty() ? "Empty" : "OK");

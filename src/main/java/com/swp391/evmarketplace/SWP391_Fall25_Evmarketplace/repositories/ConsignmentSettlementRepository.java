@@ -11,5 +11,5 @@ import java.util.Optional;
 @Repository
 public interface ConsignmentSettlementRepository extends JpaRepository<ConsignmentSettlement, Long> {
     List<ConsignmentSettlement> findByStatus(SettlementStatus status);
-
+    Optional<ConsignmentSettlement> findByAgreementId(Long agreementID);
 }

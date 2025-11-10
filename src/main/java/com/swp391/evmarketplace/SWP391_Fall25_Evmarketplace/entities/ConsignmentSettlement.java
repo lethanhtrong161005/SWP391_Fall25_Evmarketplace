@@ -1,7 +1,9 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.consignment.settlement.ConsignmentSettlementResponseDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.SettlementMethod;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.SettlementStatus;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -68,7 +70,23 @@ public class ConsignmentSettlement {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    ;
-
-
+    public ConsignmentSettlementResponseDto toDto() {
+        return ConsignmentSettlementResponseDto.builder()
+                .id(this.id)
+                .orderId(this.orderId)
+                .agreementId(this.agreementId)
+                .ownerId(this.ownerId)
+                .grossAmount(this.grossAmount)
+                .commissionPercent(this.commissionPercent)
+                .commissionAmount(this.commissionAmount)
+                .ownerReceiveAmount(this.ownerReceiveAmount)
+                .method(this.method != null ? this.method.name() : null)
+                .status(this.status != null ? this.status.name() : null)
+                .paidAt(this.paidAt)
+                .note(this.note)
+                .mediaUrl(MedialUtils.converMediaNametoMedialUrl(this.mediaUrl, ""))
+                .createdAt(this.createdAt)
+                .updatedAt(this.updatedAt)
+                .build();
+    }
 }
