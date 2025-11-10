@@ -43,9 +43,11 @@ public class ConsignmentSettlement {
     @Column(name = "owner_receive_amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal ownerReceiveAmount; // số tiền thực trả cho chủ xe (sau khi trừ hoa hồng)
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "method", nullable = false, length = 20)
     private SettlementMethod method; // BANK_TRANSFER
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private SettlementStatus status; // PENDING / PAID / CANCELLED
 
