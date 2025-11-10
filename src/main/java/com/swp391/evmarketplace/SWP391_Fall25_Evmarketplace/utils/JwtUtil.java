@@ -2,6 +2,7 @@ package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils;
 
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Profile;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.MediaType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -35,7 +36,7 @@ public class JwtUtil {
                 .subject(getIdentifier(account))
                 .claim("uid", account.getId())
                 .claim("fullName", profile != null ? profile.getFullName() : null)
-                .claim("avatar", profile != null ? profile.getAvatarUrl() : null)
+                .claim("avatar", profile != null ? MedialUtils.converMediaNametoMedialUrl(profile.getAvatarUrl(), MediaType.IMAGE.name()) : null)
                 .claim("phoneVerified", account.isPhoneVerified())
                 .claim("emailVerified", account.isEmailVerified())
                 .claim("role", account.getRole().name())

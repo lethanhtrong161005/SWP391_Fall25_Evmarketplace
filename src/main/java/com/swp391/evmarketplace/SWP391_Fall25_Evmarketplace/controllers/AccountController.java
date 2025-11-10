@@ -89,12 +89,6 @@ public class AccountController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-//    @PostMapping("/email/verify-otp")
-//    public ResponseEntity<BaseResponse<Void>> verifyEmailOtp(@Valid @RequestBody VerifyEmailOtpRequestDTO dto) {
-//        BaseResponse<Void> response = accountService.verifyEmailOtp(dto);
-//        return ResponseEntity.status(response.getStatus()).body(response);
-//    }
-
     @PutMapping("/update-email")
     public ResponseEntity<?> updateEmail(UpdateEmailRequestDTO requestDTO) {
         BaseResponse<Void> response = accountService.updateEmail(requestDTO);
