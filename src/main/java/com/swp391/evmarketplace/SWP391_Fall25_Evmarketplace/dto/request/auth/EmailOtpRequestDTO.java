@@ -8,5 +8,5 @@ import lombok.Data;
 public class EmailOtpRequestDTO {
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email")
-    private String Email;
+    private String email;
 }

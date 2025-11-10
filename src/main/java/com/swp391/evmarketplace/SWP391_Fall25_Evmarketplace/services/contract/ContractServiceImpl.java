@@ -19,6 +19,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusi
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ContractRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.SaleOrderRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -57,6 +58,7 @@ public class ContractServiceImpl implements ContractService {
     private final SaleOrderRepository saleOrderRepository;
     private final ObjectMapper objectMapper;
     private final AuthUtil authUtil;
+    private final NotificationService notificationService;
 
 
     @Transactional(readOnly = true)
@@ -289,6 +291,13 @@ public class ContractServiceImpl implements ContractService {
         contract.setStatus(ContractStatus.UPLOADED);
 
         contractRepository.saveAndFlush(contract);
+        notificationService.notifyUserAfterCommit(
+                order.getBuyer().getId(),
+                contract.getId(),
+                "CREATE_CONTRACT",
+                "Bạn có thông báo mới",
+                "Đơn hàng: " + order.getOrderNo() + " đã được tạo hợp đồng"
+        );
 
         BaseResponse<Object> res = new BaseResponse<>();
         res.setStatus(200);
@@ -338,6 +347,13 @@ public class ContractServiceImpl implements ContractService {
 
         contract.setStatus(!efFrom.isAfter(now) ? ContractStatus.ACTIVE : ContractStatus.SIGNED);
         contractRepository.saveAndFlush(contract);
+        notificationService.notifyUserAfterCommit(
+                contract.getOrder().getBuyer().getId(),
+                contract.getId(),
+                "ACTIVE_CONTRACT",
+                "Bạn có thông báo mới",
+                "Đơn hàng: " + contract.getOrder().getOrderNo() + " đã được kích hoạt hợp đồng"
+        );
 
         BaseResponse<Object> res = new BaseResponse<>();
         res.setStatus(200);
@@ -369,17 +385,19 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    @Transactional
     public BaseResponse<?> updateContract(Long id, UpdateContractRequest req, MultipartFile contractFile, HttpServletRequest http) {
-        var contract = contractRepository.findById(id).orElseThrow(() -> new CustomBusinessException("Contract not found"));
+        var contract = contractRepository.findById(id)
+                .orElseThrow(() -> new CustomBusinessException("Contract not found"));
 
-        enforceEditPermission(authUtil.getCurrentAccountOrNull(), contract);
+        var currentAcc = authUtil.getCurrentAccountOrNull();
+        enforceEditPermission(currentAcc, contract);
 
         boolean changed = false;
 
-        //Change contract file
-        if(contractFile != null && !contractFile.isEmpty()){
+        if (contractFile != null && !contractFile.isEmpty()) {
             final StoredContractResult up;
-            try{
+            try {
                 up = fileService.storedContract(contractFile);
             } catch (Exception e) {
                 throw new CustomBusinessException("Error while uploading file: " + e.getMessage());
@@ -388,14 +406,14 @@ public class ContractServiceImpl implements ContractService {
             contract.setFileUrl(up.getFileName());
             changed = true;
 
-            appendEvent(contract, "FILE_REPLACED", authUtil.getCurrentAccount().getId(), http, Map.of(
-                    "old", Objects.toString(oldFileName, ""),
-                    "new", up.getFileName(),
-                    "sha256", up.getSha256(),
-                    "size", up.getSizeBytes()
-            ));
+            appendEvent(contract, "FILE_REPLACED",
+                    currentAcc != null ? currentAcc.getId() : null, http, Map.of(
+                            "old", Objects.toString(oldFileName, ""),
+                            "new", up.getFileName(),
+                            "sha256", up.getSha256(),
+                            "size", up.getSizeBytes()
+                    ));
         }
-
 
         LocalDateTime newFrom = req.getEffectiveFrom();
         LocalDateTime newTo   = req.getEffectiveTo();
@@ -406,7 +424,6 @@ public class ContractServiceImpl implements ContractService {
             throw new CustomBusinessException("effectiveTo must be after or equal to effectiveFrom");
         }
 
-
         if (newFrom != null && !Objects.equals(newFrom, contract.getEffectiveFrom())) {
             contract.setEffectiveFrom(newFrom);
             changed = true;
@@ -416,30 +433,39 @@ public class ContractServiceImpl implements ContractService {
             changed = true;
         }
 
-        // 6) Ghi chú note (nếu có) -> vẫn append event dù metadata không đổi
-        if (req.getNote() != null && !req.getNote().isBlank()) {
-            appendEvent(contract, "META_UPDATED", authUtil.getCurrentAccount().getId(), http, Map.of(
-                    "note", req.getNote(),
-                    "signMethod", Objects.toString(contract.getSignMethod(), null),
-                    "effectiveFrom", Objects.toString(contract.getEffectiveFrom(), null),
-                    "effectiveTo", Objects.toString(contract.getEffectiveTo(), null)
-            ));
+        var incomingStatus = req.getStatus();
+        boolean statusChanged = incomingStatus != null && incomingStatus != contract.getStatus();
+
+        boolean hasNote = req.getNote() != null && !req.getNote().isBlank();
+
+        if (!changed && !statusChanged && !hasNote) {
+            return new BaseResponse<>(200, true, "Nothing changed", contract.toDto(contract), null, LocalDateTime.now());
         }
 
-        System.out.println("Contract Status: " + req.getStatus());
-        contract.setStatus(req.getStatus() != null ? req.getStatus() : contract.getStatus());
-
-        if (!changed && (req.getNote() == null || req.getNote().isBlank())) {
-            return new BaseResponse<>(
-                    200, true, "Nothing changed", contract.toDto(contract), null, LocalDateTime.now()
-            );
+        if (statusChanged) {
+            contract.setStatus(incomingStatus);
+            appendEvent(contract, "STATUS_UPDATED",
+                    currentAcc != null ? currentAcc.getId() : null, http, Map.of(
+                            "old", Objects.toString(contract.getStatus(), null),
+                            "new", incomingStatus.name()
+                    ));
         }
+
+        if (hasNote) {
+            appendEvent(contract, "META_UPDATED",
+                    currentAcc != null ? currentAcc.getId() : null, http, Map.of(
+                            "note", req.getNote(),
+                            "signMethod", Objects.toString(contract.getSignMethod(), null),
+                            "effectiveFrom", Objects.toString(contract.getEffectiveFrom(), null),
+                            "effectiveTo", Objects.toString(contract.getEffectiveTo(), null)
+                    ));
+        }
+
         contractRepository.save(contract);
         contractRepository.saveAndFlush(contract);
-        return new BaseResponse<>(
-                200, true, "Contract updated", contract.toDto(contract), null, LocalDateTime.now()
-        );
 
+
+        return new BaseResponse<>(200, true, "Contract updated", contract.toDto(contract), null, LocalDateTime.now());
     }
 
     private void appendEvent(Contract c, String type, Long actorId, HttpServletRequest http, Map<String, Object> extra) {

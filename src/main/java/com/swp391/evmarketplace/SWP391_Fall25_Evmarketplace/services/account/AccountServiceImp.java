@@ -26,6 +26,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.Account
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.BranchRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.OtpRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ProfileRepository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.email.EmailService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.JwtUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.SpeedSMSAPI;
@@ -67,6 +68,8 @@ public class AccountServiceImp implements AccountService {
     private String serverUrl;
     @Autowired
     private BranchRepository branchRepository;
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public BaseResponse<String> sendOtpRegister(String phoneNumber) {
@@ -384,11 +387,7 @@ public class AccountServiceImp implements AccountService {
         String result = "";
 
         try {
-            SimpleMailMessage msg = new SimpleMailMessage();
-            msg.setTo(email);
-            msg.setSubject("Your OTP Code:");
-            msg.setText("Your OTP is: " + otp + ". It will expire in 5 minute");
-            mailSender.send(msg);
+            emailService.sendOtpEmail(email, otp);
             isSendOtp = true;
             result = ErrorCode.EMAIL_SENT.name();
         } catch (Exception e) {
