@@ -11,6 +11,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.Listing
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.SaleOrderRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.SalePaymentRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.config.ConfigService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.vnpay.VNPayService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.UUIDUtil;
@@ -53,6 +54,8 @@ public class PaymentServiceImp implements PaymentService {
     private SaleOrderRepository saleOrderRepository;
     @Autowired
     private EntityManager entityManager;
+    @Autowired
+    private NotificationService notificationService;
 
 
     @Override
@@ -319,6 +322,13 @@ public class PaymentServiceImp implements PaymentService {
         salePaymentRepository.save(pay);
 
         entityManager.refresh(order);
+        notificationService.notifyUserAfterCommit(
+                order.getBuyer().getId(),
+                order.getId(),
+                "CASH_PAYMENT",
+                "Bạn đã thanh toán tiền mặt thành công ",
+                "Mã đơn hàng: " + order.getOrderNo() + ", "+ "Số tiền: " + pay.getAmount()
+        );
 
         var res = new BaseResponse<Map<String, Object>>();
         res.setData(Map.of(
