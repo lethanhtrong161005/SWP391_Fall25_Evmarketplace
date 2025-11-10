@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ConsignmentSettlementService {
     BaseResponse<List<ConsignmentSettlementResponseDto>> getAll();
-    BaseResponse<ConsignmentSettlementResponseDto> getById(Long id);
+    BaseResponse<ConsignmentSettlementResponseDto> getByAgreementId(Long id);
     BaseResponse<List<ConsignmentSettlementResponseDto>> getListWithoutPayout();
 
     BaseResponse<Void> setPayout(Long settlementId, MultipartFile file);

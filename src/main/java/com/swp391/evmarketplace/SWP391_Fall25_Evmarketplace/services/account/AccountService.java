@@ -31,8 +31,7 @@ public interface AccountService {
 
     BaseResponse<?> getAccountCurrent();
 
-    BaseResponse<String> sendOtpEmail(String email);
-    BaseResponse<OtpResponse> verifyEmailOtp(VerifyEmailOtpRequestDTO verifyEmailOtp);
+    BaseResponse<Void> sendOtpEmail(String email);
 
     //admin
     BaseResponse<Map<String, Object>> getAll(int page, int size, String sort, String dir);

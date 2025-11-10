@@ -53,10 +53,10 @@ public class ConsignmentSettlementServiceImp implements ConsignmentSettlementSer
     }
 
     @Override
-    public BaseResponse<ConsignmentSettlementResponseDto> getById(Long id) {
-        if (id == null) throw new CustomBusinessException("Settlement is required");
+    public BaseResponse<ConsignmentSettlementResponseDto> getByAgreementId(Long agreementId) {
+        if (agreementId == null) throw new CustomBusinessException("Settlement is required");
 
-        ConsignmentSettlement c = consignmentSettlementRepository.findById(id)
+        ConsignmentSettlement c = consignmentSettlementRepository.findByAgreementId(agreementId)
                 .orElseThrow(() -> new CustomBusinessException("NOT_FOUND_SETTLEMENT"));
 
         ConsignmentSettlementResponseDto dto = c.toDto();

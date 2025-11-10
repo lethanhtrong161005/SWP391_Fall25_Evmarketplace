@@ -24,9 +24,9 @@ public class ConsignmentSettlementController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Long id) {
-        var response = consignmentSettlementService.getById(id);
+    @GetMapping("/{agreementId}")
+    public ResponseEntity<?> getById(@PathVariable Long agreementId) {
+        var response = consignmentSettlementService.getByAgreementId(agreementId);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

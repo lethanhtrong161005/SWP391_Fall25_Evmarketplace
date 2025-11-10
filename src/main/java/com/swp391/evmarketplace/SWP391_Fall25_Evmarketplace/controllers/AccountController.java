@@ -84,16 +84,16 @@ public class AccountController {
     //update email
     //Chưa Test
     @PostMapping("/email/request-otp")
-    public ResponseEntity<BaseResponse<String>> requestEmailOtp(@Valid @RequestBody EmailOtpRequestDTO dto) {
-        BaseResponse<String> response = accountService.sendOtpEmail(dto.getEmail());
+    public ResponseEntity<BaseResponse<Void>> requestEmailOtp(@Valid @RequestBody EmailOtpRequestDTO dto) {
+        BaseResponse<Void> response = accountService.sendOtpEmail(dto.getEmail());
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    @PostMapping("/email/verify-otp")
-    public ResponseEntity<?> verifyEmailOtp(@Valid @RequestBody VerifyEmailOtpRequestDTO dto) {
-        BaseResponse<OtpResponse> response = accountService.verifyEmailOtp(dto);
-        return ResponseEntity.status(response.getStatus()).body(response);
-    }
+//    @PostMapping("/email/verify-otp")
+//    public ResponseEntity<BaseResponse<Void>> verifyEmailOtp(@Valid @RequestBody VerifyEmailOtpRequestDTO dto) {
+//        BaseResponse<Void> response = accountService.verifyEmailOtp(dto);
+//        return ResponseEntity.status(response.getStatus()).body(response);
+//    }
 
     @PutMapping("/update-email")
     public ResponseEntity<?> updateEmail(UpdateEmailRequestDTO requestDTO) {
