@@ -85,7 +85,8 @@ public class SecurityConfig {
                             "/api/consignments_request/**",
                             "/api/branchs/**",
                             "/api/inspections/request/{requestId}",
-                            "/api/agreements/request/{requestId}"
+                            "/api/agreements/request/{requestId}",
+                            "/api/accounts/email/**"
                     ).authenticated();
 
 

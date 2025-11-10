@@ -71,6 +71,11 @@ public class AccountServiceImp implements AccountService {
     @Autowired
     private EmailService emailService;
 
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+    @Value("${MAIL_FROM_NAME:ReEV Marketplace}")
+    private String fromName;
+
     @Override
     public BaseResponse<String> sendOtpRegister(String phoneNumber) {
         if (accountRepository.existsByPhoneNumber(phoneNumber)) {
@@ -365,7 +370,7 @@ public class AccountServiceImp implements AccountService {
     }
 
     @Override
-    public BaseResponse<String> sendOtpEmail(String email) {
+    public BaseResponse<Void> sendOtpEmail(String email) {
         if (accountRepository.existsByEmail(email)) {
             throw new CustomBusinessException(ErrorCode.EMAIL_ALREADY_EXISTS.name());
         }
@@ -383,93 +388,63 @@ public class AccountServiceImp implements AccountService {
 
         otpRepository.save(emailOtp);
 
-        boolean isSendOtp = false;
-        String result = "";
-
         try {
             emailService.sendOtpEmail(email, otp);
-            isSendOtp = true;
-            result = ErrorCode.EMAIL_SENT.name();
-        } catch (Exception e) {
-            throw new CustomBusinessException(ErrorCode.EMAIL_FAIL.name());
+        } catch (Exception e){
+            throw new CustomBusinessException("EMAIL_SEND_FAILED");
         }
 
-        BaseResponse<String> response = new BaseResponse<>();
-        response.setData(result);
-        response.setSuccess(isSendOtp);
-        response.setStatus(isSendOtp ? 200 : 400);
-        response.setMessage(isSendOtp ? ErrorCode.SEND_OTP_SUCCESSFULLY.name() : ErrorCode.SEND_OTP_FAILED.name());
-
+        BaseResponse<Void> response = new BaseResponse<>();
+        response.setStatus(200);
+        response.setSuccess(true);
+        response.setMessage("OTP sent successfully to " + email);
         return response;
     }
 
-    @Override
-    public BaseResponse<OtpResponse> verifyEmailOtp(VerifyEmailOtpRequestDTO verifyEmailOtp) {
-        Otp emailOtp = otpRepository.findByEmail(verifyEmailOtp.getEmail())
+    public boolean verifyEmailOtp(String mail, String otp) {
+        Otp emailOtp = otpRepository.findByEmail(mail)
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.OTP_NOT_FOUND.name()));
-
-        LocalDateTime now = LocalDateTime.now();
-
-        if (emailOtp.getOtp() == null || !emailOtp.getOtp().equals(verifyEmailOtp.getOtp())) {
-            throw new CustomBusinessException(ErrorCode.INVALID_OTP.name());
-        }
-
-        if (emailOtp.getExpiredAt().isBefore(now)) {
-            throw new CustomBusinessException(ErrorCode.OTP_HAS_EXPIRED.name());
-        }
 
         if (Boolean.TRUE.equals(emailOtp.getIsUsed())) {
             throw new CustomBusinessException(ErrorCode.OTP_ALREADY_USED.name());
         }
 
-        String tempToken = UUID.randomUUID().toString();
-        emailOtp.setTempToken(tempToken);
-        emailOtp.setTokenExpiredAt(now.plusMinutes(10));
+        LocalDateTime now = LocalDateTime.now();
+
+        if (emailOtp.getExpiredAt().isBefore(now)) {
+            throw new CustomBusinessException(ErrorCode.OTP_HAS_EXPIRED.name());
+        }
+
+        if (emailOtp.getOtp() == null || !emailOtp.getOtp().equals(otp)) {
+            throw new CustomBusinessException(ErrorCode.INVALID_OTP.name());
+        }
+
         emailOtp.setIsUsed(true);
         emailOtp.setOtp(null);
 
         otpRepository.save(emailOtp);
 
-        OtpResponse otpResponse = new OtpResponse();
-        otpResponse.setTempToken(tempToken);
-
-        BaseResponse<OtpResponse> response = new BaseResponse<>();
-        response.setMessage(ErrorCode.VERIFY_OTP_SUCCESSFULLY.name());
-        response.setData(otpResponse);
-        response.setSuccess(true);
-        response.setStatus(200);
-        return response;
+        return true;
     }
 
 
     //====================ACCOUNT====================
     @Override
     public BaseResponse<Void> updateEmail(UpdateEmailRequestDTO requestDTO) {
-        Otp otp = otpRepository.findByTempToken(requestDTO.getTempToken());
-
-        if (otp == null) {
-            throw new CustomBusinessException(ErrorCode.INVALID_TOKEN.name());
-        }
-
-        if (otp.getTokenExpiredAt().isBefore(LocalDateTime.now())) {
-            throw new CustomBusinessException(ErrorCode.TOKEN_HAS_EXPIRED.name());
-        }
-
-
         Account account = authUtil.getCurrentAccount();
         if (account == null) {
             throw new CustomBusinessException(ErrorCode.ACCOUNT_NOT_FOUND.name());
-        }
-
-        if (!account.isPhoneVerified()) {
-            throw new CustomBusinessException(ErrorCode.PHONE_NOT_VERIFIED.name());
         }
 
         if (accountRepository.existsByEmail(requestDTO.getNewEmail())) {
             throw new CustomBusinessException(ErrorCode.EMAIL_ALREADY_EXISTS.name());
         }
 
+        if(!(verifyEmailOtp(requestDTO.getNewEmail(), requestDTO.getOtp())))
+            throw new CustomBusinessException("CAN_NOT_VERIFY");
+
         account.setEmail(requestDTO.getNewEmail());
+        account.setEmailVerified(true);
         accountRepository.save(account);
 
         BaseResponse<Void> response = new BaseResponse<>();
