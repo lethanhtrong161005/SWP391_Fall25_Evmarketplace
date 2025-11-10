@@ -27,14 +27,14 @@ import java.util.List;
 @Service
 public class ConsignmentSettlementServiceImp implements ConsignmentSettlementService {
     @Autowired
-    ConsignmentSettlementRepository consignmentSettlementRepository;
+    private ConsignmentSettlementRepository consignmentSettlementRepository;
     @Autowired
-    ConsignmentRequestRepository consignmentRequestRepository;
+    private ConsignmentRequestRepository consignmentRequestRepository;
     @Autowired
-    ConsignmentAgreementRepository consignmentAgreementRepository;
+    private ConsignmentAgreementRepository consignmentAgreementRepository;
 
     @Autowired
-    FileService fileService;
+    private FileService fileService;
 
     @Override
     public BaseResponse<List<ConsignmentSettlementResponseDto>> getAll() {

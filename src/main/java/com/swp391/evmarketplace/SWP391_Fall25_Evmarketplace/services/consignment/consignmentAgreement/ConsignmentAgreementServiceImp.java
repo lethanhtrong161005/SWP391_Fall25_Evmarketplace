@@ -30,15 +30,15 @@ import java.util.Map;
 @Service
 public class ConsignmentAgreementServiceImp implements ConsignmentAgreementService {
     @Autowired
-    AuthUtil authUtil;
+    private AuthUtil authUtil;
     @Autowired
-    ConsignmentAgreementRepository consignmentAgreementRepository;
+    private ConsignmentAgreementRepository consignmentAgreementRepository;
     @Autowired
-    ConsignmentRequestRepository consignmentRequestRepository;
+    private ConsignmentRequestRepository consignmentRequestRepository;
     @Autowired
-    ConsignmentInspectionRepository consignmentInspectionRepository;
+    private ConsignmentInspectionRepository consignmentInspectionRepository;
     @Autowired
-    FileService fileService;
+    private FileService fileService;
 
 
     @Transactional
