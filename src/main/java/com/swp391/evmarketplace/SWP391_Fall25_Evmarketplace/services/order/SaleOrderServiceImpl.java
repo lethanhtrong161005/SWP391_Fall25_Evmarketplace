@@ -14,6 +14,7 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.SaleOrder;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.*;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.*;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.payment.PaymentService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.AuthUtil;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
@@ -48,6 +49,7 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
     private final BrandRepository brandRepository;
     private final ModelRepository modelRepository;
     private final CategoryRepository categoryRepository;
+    private final NotificationService notificationService;
 
     @Value("${server.url}")
     private String serverUrl;
@@ -224,7 +226,13 @@ public class SaleOrderServiceImpl implements SaleOrderSerivce {
 
             SaleOrder saved = saleOrderRepository.saveAndFlush(order);
             entityManager.refresh(saved);
-
+            notificationService.notifyUserAfterCommit(
+                    buyer.getId(),
+                    listing.getId(),
+                    "CREATE_ORDER",
+                    "Bạn có đơn hàng mới",
+                    listing.getTitle()
+            );
             BaseResponse<Map<String, Object>> response = new BaseResponse<>();
             response.setMessage("Order created");
             response.setStatus(200);
