@@ -12,4 +12,5 @@ public interface NotificationService {
     void notifySellerAfterCommit(Listing l, String type, String title, String msg);
 
     void notifyUserAfterCommit(Long accountId, Long referenceId, String type, String title, String msg);
+
 }

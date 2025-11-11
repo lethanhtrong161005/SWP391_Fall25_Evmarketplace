@@ -1,14 +1,22 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.chat;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.account.AccountReponseDTO;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.chat.ChatConversationDto;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.PageResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.StoredFile;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.message.ChatMessageDto;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.Account;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ChatConversation;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ChatMessage;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.AccountStatus;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ChatMessageType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.exception.CustomBusinessException;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.AccountRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ChatConversationRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ChatMessageRepository;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.file.FileService;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.notification.NotificationService;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.utils.MedialUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +33,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -35,6 +45,7 @@ public class ChatServiceImpl implements ChatService {
     private final ChatMessageRepository messageRepo;
     private final SimpMessagingTemplate messaging;
     private final FileService fileService;
+    private final AccountRepository accountRepository;
 
     private static final String CHAT_QUEUE = "/queue/chat/";
 
@@ -66,8 +77,44 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ChatConversation> listConversations(Long me, Pageable pageable) {
-        return conversationRepo.findConversationsOf(me, pageable);
+    public BaseResponse<Object> listConversations(Long me, Pageable pageable) {
+        Page<ChatConversation> result = conversationRepo.findConversationsOf(me, pageable);
+        List<ChatConversationDto> chatConversationDtos = result.getContent().stream().map(
+                item -> {
+                    ChatConversationDto dto = new ChatConversationDto();
+                    dto.setId(item.getId());
+                    Account userA = accountRepository.findById(item.getUserAId()).orElseThrow(() -> new CustomBusinessException("User not found"));
+                    Account userB = accountRepository.findById(item.getUserBId()).orElseThrow(() -> new CustomBusinessException("User not found"));
+                    dto.setUserA(userA.toDto(userA, ""));
+                    dto.setUserB(userB.toDto(userB, ""));
+                    dto.setUserMinId(item.getUserMinId());
+                    dto.setUserMaxId(item.getUserMaxId());
+                    dto.setListingId(item.getListingId() != null ? item.getListingId() : null);
+                    dto.setLastMessageId(item.getLastMessageId());
+                    dto.setLastMessageAt(item.getLastMessageAt());
+                    dto.setCreatedAt(item.getCreatedAt());
+                    dto.setUpdatedAt(item.getUpdatedAt());
+                    return dto;
+                }
+        ).collect(Collectors.toList());
+
+        PageResponse<ChatConversationDto> pageRes= new PageResponse<>();
+        pageRes.setItems(chatConversationDtos);
+        pageRes.setTotalPages(result.getTotalPages());
+        pageRes.setTotalElements(result.getTotalElements());
+        pageRes.setHasNext(result.hasNext());
+        pageRes.setHasPrevious(result.hasPrevious());
+        pageRes.setPage(result.getNumber());
+        pageRes.setSize(result.getSize());
+
+        BaseResponse<Object> baseResponse = new BaseResponse<>();
+        baseResponse.setData(pageRes);
+        baseResponse.setStatus(200);
+        baseResponse.setMessage("Get All Conversations");
+        baseResponse.setSuccess(true);
+
+
+        return baseResponse;
     }
 
     @Override

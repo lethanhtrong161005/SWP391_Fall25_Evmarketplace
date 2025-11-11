@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.services.chat;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.message.ChatMessageDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ChatConversation;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ChatMessage;
@@ -10,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface ChatService {
     ChatConversation openOrGetConversation(Long me, Long other, Long listingId);
-    Page<ChatConversation> listConversations(Long me, Pageable pageable);
+    BaseResponse<Object> listConversations(Long me, Pageable pageable);
     Page<ChatMessageDto> listMessages(Long conversationId, Long me, Pageable pageable);
     ChatMessageDto sendMessage(Long conversationId,
                             Long senderId,
