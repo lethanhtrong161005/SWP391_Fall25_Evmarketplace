@@ -82,6 +82,13 @@ public class ManagerController {
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
+    @GetMapping("/agreements/search")
+    public ResponseEntity<BaseResponse<List<ConsignmentAgreementDTO>>> searchByPhone(@RequestParam String phone) {
+        BaseResponse<List<ConsignmentAgreementDTO>> res =
+                consignmentAgreementService.searchByPhone(phone);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
     @GetMapping("/listing")
     public ResponseEntity<?> getAllListing(
             @RequestParam(required = false) ListingStatus status,

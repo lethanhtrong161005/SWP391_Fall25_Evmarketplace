@@ -19,6 +19,7 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
                     
                     ca.owner.id AS ownerId,
                     ca.owner.profile.fullName AS ownerName,
+                    ca.owner.phoneNumber AS ownerPhone,
                     
                     s.id AS staffId,
                     s.profile.fullName AS staffName,
@@ -48,6 +49,7 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
                     
                     ca.owner.id AS ownerId,
                      ca.owner.profile.fullName AS ownerName,
+                     ca.owner.phoneNumber AS ownerPhone,
     
                      s.id AS staffId,
                      s.profile.fullName AS staffName,
@@ -70,6 +72,7 @@ public interface ConsignmentAgreementRepository extends JpaRepository<Consignmen
             """)
     List<ConsignmentAgreementProjection> findAllProjections();
 
+    List<ConsignmentAgreement> findAllByOwnerPhoneNumber(String phone);
 
     //    scheduler
     @Query("""

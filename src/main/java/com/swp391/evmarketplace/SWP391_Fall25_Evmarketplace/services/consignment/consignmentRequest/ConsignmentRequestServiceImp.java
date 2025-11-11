@@ -49,13 +49,13 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
     @Autowired
     private ConsignmentRequestMediaRepository consignmentRequestMediaRepository;
     @Autowired
-    AuthUtil authUtil;
+    private AuthUtil authUtil;
     @Value("${server.url}")
     private String serverUrl;
     @Autowired
     private AccountRepository accountRepository;
     @Autowired
-    NotificationService notificationService;
+    private NotificationService notificationService;
 
     @Transactional
     @Override

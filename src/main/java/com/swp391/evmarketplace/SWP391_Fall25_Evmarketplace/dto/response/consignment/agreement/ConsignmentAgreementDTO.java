@@ -13,6 +13,7 @@ public class ConsignmentAgreementDTO {
     private Long id;
     private Long requestId;
     private String ownerName;
+    private String phone;
     private String staffName;
     private String branchName;
     private BigDecimal commissionPercent;

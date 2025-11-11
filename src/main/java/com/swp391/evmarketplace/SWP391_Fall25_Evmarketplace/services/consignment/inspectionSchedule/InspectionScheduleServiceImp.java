@@ -29,19 +29,19 @@ import java.util.List;
 @Service
 public class InspectionScheduleServiceImp implements InspectionScheduleService {
     @Autowired
-    InspectionScheduleRepository inspectionScheduleRepository;
+    private InspectionScheduleRepository inspectionScheduleRepository;
     @Autowired
-    AccountRepository accountRepository;
+    private AccountRepository accountRepository;
     @Autowired
-    BranchRepository branchRepository;
+    private BranchRepository branchRepository;
     @Autowired
-    ConsignmentRequestRepository consignmentRequestRepository;
+    private ConsignmentRequestRepository consignmentRequestRepository;
     @Autowired
-    ShiftTemplateRepository shiftTemplateRepository;
+    private ShiftTemplateRepository shiftTemplateRepository;
     @Autowired
-    AuthUtil authUtil;
+    private AuthUtil authUtil;
     @Autowired
-    NotificationService notificationService;
+    private NotificationService notificationService;
 
 
     @Transactional
