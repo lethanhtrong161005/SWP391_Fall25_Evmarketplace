@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -119,7 +118,7 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
                 .findProjectionByRequestId(requestId)
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.AGREEMENT_NOT_FOUND.name()));
 
-        ConsignmentAgreementDTO c = toDto(agreement);
+        ConsignmentAgreementDTO c = projectionToDto(agreement);
         Map<String, Object> data = Map.of(
                 "item", c,
                 "isCreateListing", isCreateListing
@@ -137,7 +136,7 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
         List<ConsignmentAgreementProjection> list = consignmentAgreementRepository.findAllProjections();
 
         List<ConsignmentAgreementDTO> dtos = list.stream()
-                .map(this::toDto).toList();
+                .map(this::projectionToDto).toList();
 
         BaseResponse<List<ConsignmentAgreementDTO>> res = new BaseResponse<>();
         res.setData(dtos);
@@ -210,14 +209,30 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
         return res;
     }
 
+    @Override
+    public BaseResponse<List<ConsignmentAgreementDTO>> searchByPhone(String phone) {
+        List<ConsignmentAgreement> list = consignmentAgreementRepository.findAllByOwnerPhoneNumber(phone);
+
+        List<ConsignmentAgreementDTO> dtos = list.stream()
+                .map(this::toDto).toList();
+
+        BaseResponse<List<ConsignmentAgreementDTO>> res = new BaseResponse<>();
+        res.setData(dtos);
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage(dtos.isEmpty() ? "empty" : "OK");
+        return res;
+    }
+
 
     //===================HELPER===================
 
-    private ConsignmentAgreementDTO toDto(ConsignmentAgreementProjection projection) {
+    private ConsignmentAgreementDTO projectionToDto(ConsignmentAgreementProjection projection) {
         return ConsignmentAgreementDTO.builder()
                 .id(projection.getId())
                 .requestId(projection.getRequestId())
                 .ownerName(projection.getOwnerName())
+                .phone(projection.getOwnerPhone())
                 .staffName(projection.getStaffName())
                 .branchName(projection.getBranchName())
                 .commissionPercent(projection.getCommissionPercent())
@@ -229,6 +244,26 @@ public class ConsignmentAgreementServiceImp implements ConsignmentAgreementServi
                 .expireAt(projection.getExpireAt())
                 .createdAt(projection.getCreatedAt())
                 .updatedAt(projection.getUpdatedAt())
+                .build();
+    }
+
+    private ConsignmentAgreementDTO toDto(ConsignmentAgreement agreement) {
+        return ConsignmentAgreementDTO.builder()
+                .id(agreement.getId())
+                .requestId(agreement.getRequest().getId())
+                .ownerName(agreement.getOwner().getProfile().getFullName())
+                .phone(agreement.getOwner().getPhoneNumber())
+                .staffName(agreement.getStaff().getProfile().getFullName())
+                .branchName(agreement.getBranch().getName())
+                .commissionPercent(agreement.getCommissionPercent())
+                .acceptablePrice(agreement.getAcceptablePrice())
+                .status(agreement.getStatus().name())
+                .duration(agreement.getDuration().name())
+                .medialUrl(MedialUtils.converMediaNametoMedialUrl(agreement.getMedialUrl(), ""))
+                .startAt(agreement.getStartAt())
+                .expireAt(agreement.getExpireAt())
+                .createdAt(agreement.getCreatedAt())
+                .updatedAt(agreement.getUpdatedAt())
                 .build();
     }
 

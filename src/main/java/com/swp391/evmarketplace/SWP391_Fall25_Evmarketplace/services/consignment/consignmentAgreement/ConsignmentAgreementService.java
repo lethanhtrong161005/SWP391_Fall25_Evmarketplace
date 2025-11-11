@@ -15,4 +15,6 @@ public interface ConsignmentAgreementService {
     BaseResponse<List<ConsignmentAgreementDTO>> getAllAgreements();
     BaseResponse<Void> cancelAgreement(Long agreementId);
     BaseResponse<Void> updateAgreement(Long agreementId, AgreementDuration duration);
+
+    BaseResponse<List<ConsignmentAgreementDTO>> searchByPhone(String phone);
 }

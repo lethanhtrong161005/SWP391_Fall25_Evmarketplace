@@ -8,6 +8,7 @@ public interface ConsignmentAgreementProjection {
     Long getRequestId();
     Long getOwnerId();
     String getOwnerName();
+    String getOwnerPhone();
     Long getStaffId();
     String getStaffName();
     Long getBranchId();

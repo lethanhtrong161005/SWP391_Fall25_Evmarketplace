@@ -81,8 +81,6 @@ public class AccountController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
-    //update email
-    //Chưa Test
     @PostMapping("/email/request-otp")
     public ResponseEntity<BaseResponse<Void>> requestEmailOtp(@Valid @RequestBody EmailOtpRequestDTO dto) {
         BaseResponse<Void> response = accountService.sendOtpEmail(dto.getEmail());
