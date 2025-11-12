@@ -37,7 +37,7 @@ public class RevenueSummaryServiceImp implements RevenueSummaryService {
 
         // ---- Doanh thu theo source (map purpose -> business source) ----
         Map<String, BigDecimal> byPurpose = reportRevenueRepository.sumPaidAmountByPurpose(from, to);
-        BigDecimal post = byPurpose.getOrDefault("LISTING_FEE", BigDecimal.ZERO);
+        BigDecimal post = byPurpose.getOrDefault("PROMOTION", BigDecimal.ZERO);
         BigDecimal consignment =byPurpose.getOrDefault("ORDER", BigDecimal.ZERO);
         BigDecimal other = totalRevenue.subtract(post).subtract(consignment);
 

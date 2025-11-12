@@ -29,7 +29,7 @@ public class TransactionCountsServiceImp implements TransactionCountsService {
         double successRate = total == 0 ? 0.0 : ((double) success / total);
 
         Map<String, Long> byPurpose = reportTransactionRepository.countByPurposeCreated(from, to);
-        long post = byPurpose.getOrDefault("LISTING_FEE", 0L);
+        long post = byPurpose.getOrDefault("PROMOTION", 0L);
         long consignment = byPurpose.getOrDefault("ORDER", 0L);
         Long other = byPurpose.values().stream().mapToLong(Long::longValue).sum()
                 - post - consignment;

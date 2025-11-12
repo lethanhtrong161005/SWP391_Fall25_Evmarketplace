@@ -24,7 +24,6 @@ public class ConsignmentInspectionController {
             @Valid @RequestBody CreateInspectionDTO dto
     ) {
         BaseResponse<Void> res = inspectionService.createInspection(dto);
-        // 200 OK là ổn, nếu bạn muốn 201 CREATED thì đổi ở đây
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 
@@ -69,6 +68,19 @@ public class ConsignmentInspectionController {
     @GetMapping("/staff/all")
     public ResponseEntity<BaseResponse<List<ConsignmentInspectionProjection>>> getListInspectionByStaffId() {
         BaseResponse<List<ConsignmentInspectionProjection>> res = inspectionService.getListInspectionByStaffId();
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+
+    @GetMapping("/search")
+    public ResponseEntity<BaseResponse<List<ConsignmentInspectionProjection>>> searchByOwnerPhone(@RequestParam String phone) {
+        BaseResponse<List<ConsignmentInspectionProjection>> res = inspectionService.searchByOwnerPhone(phone);
+        return ResponseEntity.status(res.getStatus()).body(res);
+    }
+
+    @GetMapping("/staff/search")
+    public ResponseEntity<BaseResponse<List<ConsignmentInspectionProjection>>> staffSearchByOwnerPhone(@RequestParam String phone) {
+        BaseResponse<List<ConsignmentInspectionProjection>> res = inspectionService.staffSearchByOwnerPhone(phone);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 

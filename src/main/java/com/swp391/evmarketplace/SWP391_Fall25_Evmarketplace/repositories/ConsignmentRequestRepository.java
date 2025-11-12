@@ -299,6 +299,50 @@ public interface ConsignmentRequestRepository extends JpaRepository<ConsignmentR
 
     Optional<ConsignmentRequest> findByIdAndOwnerId(Long id, Long ownerId);
 
+    @Query(value = """
+                 select
+                   cr.id                   as id,
+                   a.phoneNumber           as accountPhone,
+                   p.fullName              as accountName,
+                   s.id                    as staffId,
+                   cr.rejectedReason       as rejectedReason,
+                   cr.itemType             as itemType,
+                   
+                   c.id                    as categoryId,
+                   c.name                  as category,
+                   
+                   cr.brandId              as brandId,
+                   cr.brand                as brand,
+                   
+                   cr.modelId              as modelId,
+                   cr.model                as model,
+                   
+                   cr.year                 as year,
+                   cr.batteryCapacityKwh   as batteryCapacityKwh,
+                   cr.sohPercent           as sohPercent,
+                   cr.mileageKm            as mileageKm,
+                   
+                   b.id                    as preferredBranchId,
+                   b.name                  as preferredBranchName,
+                   cr.ownerExpectedPrice   as ownerExpectedPrice,
+                   cr.status               as status,
+                   cr.createdAt            as createdAt,
+                   cb.id                   as cancelledById,
+                   cr.cancelledAt          as cancelledAt,
+                   cr.cancelledReason      as cancelledReason
+                 from ConsignmentRequest cr
+                 join cr.category c
+                 join cr.preferredBranch b
+                 join cr.owner a
+                 left join cr.staff s
+                 left join a.profile p
+                 left join cr.cancelledBy cb
+                 where a.phoneNumber = :phone
+            """
+    )
+    List<ConsignmentRequestProjection> searchByPhone(@Param("phone") String phone);
+
+
 
     //=======================schedule=======================
     //ngâm request quá 7 ngày không đặt lịch -> EXPIRED

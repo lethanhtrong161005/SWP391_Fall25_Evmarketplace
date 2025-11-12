@@ -14,4 +14,7 @@ public interface ConsignmentInspectionService {
     BaseResponse<List<ConsignmentInspectionProjection>> findAllViewsByStatus(Collection<ConsignmentInspectionResult> statuses, Boolean isActive);
     BaseResponse<List<ConsignmentInspectionProjection>> getListInspectionByStaffId();
     BaseResponse<Void> inactiveInspection(Long inspectionId);
+
+    BaseResponse<List<ConsignmentInspectionProjection>> searchByOwnerPhone(String phone);
+    BaseResponse<List<ConsignmentInspectionProjection>> staffSearchByOwnerPhone(String phone);
 }

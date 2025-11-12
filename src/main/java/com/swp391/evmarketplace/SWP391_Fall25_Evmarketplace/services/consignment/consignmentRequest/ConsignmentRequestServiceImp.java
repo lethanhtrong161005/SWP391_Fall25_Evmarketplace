@@ -619,6 +619,22 @@ public class ConsignmentRequestServiceImp implements ConsignmentRequestService {
 
     }
 
+    @Override
+    public BaseResponse<List<ConsignmentRequestListItemDTO>> searchByOwnerPhone(String phone) {
+        if(phone == null)
+            throw new CustomBusinessException("PHONE_NOT_FOUND");
+
+        List<ConsignmentRequestProjection> list = consignmentRequestRepository.searchByPhone(phone);
+        List<ConsignmentRequestListItemDTO> c = toList(list);
+
+        BaseResponse<List<ConsignmentRequestListItemDTO>> res = new BaseResponse<>();
+        res.setSuccess(true);
+        res.setStatus(200);
+        res.setMessage(c.isEmpty() ? "Empty" : "OK");
+        res.setData(c);
+        return res;
+    }
+
     //=========================HELPER============================
 
     private List<String> getAllImageUrlsOfRequest(Long requestId) {

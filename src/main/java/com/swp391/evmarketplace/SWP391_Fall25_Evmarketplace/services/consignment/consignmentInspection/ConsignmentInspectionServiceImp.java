@@ -120,6 +120,32 @@ public class ConsignmentInspectionServiceImp implements ConsignmentInspectionSer
     }
 
     @Override
+    public BaseResponse<List<ConsignmentInspectionProjection>> searchByOwnerPhone(String phone) {
+
+        List<ConsignmentInspectionProjection> list = consignmentInspectionRepository.searchByOwnerPhone(phone);
+
+        BaseResponse<List<ConsignmentInspectionProjection>> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage(list.isEmpty() ? "Empty list" : "OK");
+        response.setData(list);
+        return response;
+    }
+
+    @Override
+    public BaseResponse<List<ConsignmentInspectionProjection>> staffSearchByOwnerPhone(String phone) {
+        Account account = authUtil.getCurrentAccount();
+        List<ConsignmentInspectionProjection> list = consignmentInspectionRepository.staffSearchByOwnerPhone(phone, account.getId());
+
+        BaseResponse<List<ConsignmentInspectionProjection>> response = new BaseResponse<>();
+        response.setSuccess(true);
+        response.setStatus(200);
+        response.setMessage(list.isEmpty() ? "Empty list" : "OK");
+        response.setData(list);
+        return response;
+    }
+
+    @Override
     public BaseResponse<ConsignmentInspectionProjection> getInspectionByRequestId(Long requestId) {
         if (requestId == null) throw new CustomBusinessException("request id is required");
 
@@ -160,9 +186,7 @@ public class ConsignmentInspectionServiceImp implements ConsignmentInspectionSer
         response.setMessage(list.isEmpty() ? "Empty list" : "OK");
         response.setData(list);
         return response;
-
-
-
-
     }
+
+
 }

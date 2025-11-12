@@ -102,7 +102,6 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.GET, "/api/inspections/staff/{staffId}")
                             .hasAnyRole(AccountRole.STAFF.name());
 
-
 //                    auth.requestMatchers(HttpMethod.POST, "/api/inspections/add").hasRole(AccountRole.STAFF.name());
 //                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/**").hasRole(AccountRole.STAFF.name());
 //                    auth.requestMatchers(HttpMethod.PUT, "/api/inspections/{inspectionId}/inactive").hasRole(AccountRole.STAFF.name());
@@ -114,6 +113,11 @@ public class SecurityConfig {
                             .hasAnyRole(AccountRole.STAFF.name());
                     auth.requestMatchers(HttpMethod.PUT, "/api/agreements/**")
                             .hasAnyRole(AccountRole.STAFF.name());
+
+                    auth.requestMatchers(HttpMethod.GET,
+                            "/api/consignments_request/search")
+                            .hasAnyRole(AccountRole.MANAGER.name(), AccountRole.STAFF.name());
+
 
 
                     //moderator
@@ -148,6 +152,11 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.POST,
                                     "/api/consignment_settlement/")
                             .hasAnyRole(AccountRole.MANAGER.name());
+
+                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/search")
+                            .hasAnyRole(AccountRole.MANAGER.name());
+                    auth.requestMatchers(HttpMethod.GET, "/api/inspections/staff/search")
+                            .hasAnyRole(AccountRole.STAFF.name());
 
 
                     //admin
