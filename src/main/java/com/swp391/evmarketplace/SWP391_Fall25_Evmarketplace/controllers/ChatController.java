@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.controllers;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.custom.BaseResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.message.ChatMessageDto;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.ChatConversation;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.ChatMessageType;
@@ -10,7 +11,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -40,14 +43,24 @@ public class ChatController {
     }
 
     @GetMapping("/conversations")
-    public ResponseEntity<Page<ChatConversation>> myConversations(Pageable pageable) {
+    public ResponseEntity<?> myConversations(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
         Long me = requireLogin();
-        return ResponseEntity.ok(chatService.listConversations(me, pageable));
+        Pageable pageable = PageRequest.of(page, size);
+        var res = chatService.listConversations(me, pageable);
+        return ResponseEntity.status(res.getStatus()).body(res);
     }
 
     @GetMapping("/{cid}/messages")
-    public ResponseEntity<Page<ChatMessageDto>> listMessages(@PathVariable("cid") Long cid, Pageable pageable) {
+    public ResponseEntity<Page<ChatMessageDto>> listMessages(
+            @PathVariable("cid") Long cid,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size)
+    {
         Long me = requireLogin();
+        Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(chatService.listMessages(cid, me, pageable));
     }
 
