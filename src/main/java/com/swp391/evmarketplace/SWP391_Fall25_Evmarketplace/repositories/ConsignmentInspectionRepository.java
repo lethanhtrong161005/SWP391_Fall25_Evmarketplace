@@ -86,4 +86,54 @@ public interface ConsignmentInspectionRepository extends JpaRepository<Consignme
             @Param("staffId") Long staffId);
 
     Optional<ConsignmentInspection> findByRequestIdAndIsActiveTrue(Long requestId);
+
+    @Query("""
+                SELECT 
+                    ci.id AS id,
+                    ci.request.id AS requestId,
+                    o.phoneNumber AS requestOwnerPhone,
+                    p.fullName AS requestOwnerFullName,
+                    ci.branch.id AS branchId,
+                    ci.result AS result,
+                    ci.inspectionSummary AS inspectionSummary,
+                    ci.suggestedPrice AS suggestedPrice,
+                    ci.isActive AS isActive,
+                    ci.createdAt AS createdAt,
+                    ci.updatedAt AS updatedAt
+                FROM ConsignmentInspection ci 
+                JOIN ci.request.owner o
+                JOin o.profile p
+                WHERE 
+                    o.phoneNumber = :phone
+                    AND ci.isActive = true
+                ORDER BY ci.createdAt DESC
+            """)
+    List<ConsignmentInspectionProjection> searchByOwnerPhone(
+            @Param("phone") String phone);
+
+    @Query("""
+                SELECT 
+                    ci.id AS id,
+                    ci.request.id AS requestId,
+                    o.phoneNumber AS requestOwnerPhone,
+                    p.fullName AS requestOwnerFullName,
+                    ci.branch.id AS branchId,
+                    ci.result AS result,
+                    ci.inspectionSummary AS inspectionSummary,
+                    ci.suggestedPrice AS suggestedPrice,
+                    ci.isActive AS isActive,
+                    ci.createdAt AS createdAt,
+                    ci.updatedAt AS updatedAt
+                FROM ConsignmentInspection ci 
+                JOIN ci.request.owner o
+                JOin o.profile p
+                WHERE 
+                    o.phoneNumber = :phone
+                    AND ci.request.staff.id = :staffId
+                    AND ci.isActive = true
+                ORDER BY ci.createdAt DESC
+            """)
+    List<ConsignmentInspectionProjection> staffSearchByOwnerPhone(
+            @Param("phone") String phone,
+            @Param("staffId") Long staffId);
 }

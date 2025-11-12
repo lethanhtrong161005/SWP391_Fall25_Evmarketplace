@@ -26,4 +26,6 @@ public interface ConsignmentRequestService {
     BaseResponse<Void> UserCancelRequest(CancelConsignmentRequestDTO dto);
     BaseResponse<Void> userUpdateRequest(Long requestId, UpdateConsignmentRequestDTO dto, List<MultipartFile> newImages, List<MultipartFile> newVideos);
     BaseResponse<ConsignmentRequestListItemDTO> getRequestById(Long requestId);
+
+    BaseResponse<List<ConsignmentRequestListItemDTO>> searchByOwnerPhone(String phone);
 }

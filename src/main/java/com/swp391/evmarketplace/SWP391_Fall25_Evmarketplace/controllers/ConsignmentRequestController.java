@@ -87,5 +87,11 @@ public class ConsignmentRequestController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<BaseResponse<List<ConsignmentRequestListItemDTO>>> searchByOwnerPhone(@RequestParam String phone) {
+        BaseResponse<List<ConsignmentRequestListItemDTO>> response = consignmentRequestService.searchByOwnerPhone(phone);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
 
 }

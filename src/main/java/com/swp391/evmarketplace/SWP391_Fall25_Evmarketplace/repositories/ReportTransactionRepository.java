@@ -56,6 +56,7 @@ public class ReportTransactionRepository {
         Query q = em.createNativeQuery("""
                     SELECT s.purpose, COUNT(*) FROM sale_payment s
                     WHERE s.created_at >= :from AND s.created_at < :toPlus
+                    AND s.status = 'PAID'
                     GROUP BY s.purpose
                 """);
         setRange(q, from, to);
