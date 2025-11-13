@@ -52,7 +52,7 @@ public class AccountController {
 
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@Valid @RequestBody VerifyOtpDTO dto) {
-        BaseResponse<OtpResponse> response = accountService.verifyOtp(dto.getPhoneNumber(), dto.getOtp());
+        var response = accountService.verifyOtp(dto.getPhoneNumber(), dto.getOtp(), dto.getType());
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
