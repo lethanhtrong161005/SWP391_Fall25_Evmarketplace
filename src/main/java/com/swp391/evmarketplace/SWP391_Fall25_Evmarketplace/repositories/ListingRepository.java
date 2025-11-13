@@ -154,12 +154,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                              and l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED
                            )
                          )
-                order by
-                      case
-                          when l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED then 0
-                          else 1
-                      end,
-                      l.createdAt desc
+                order by l.createdAt desc
             """,
             countQuery = """
                       select count(l)
@@ -420,12 +415,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
             where l.deletedAt is null
               and l.status in :statuses
               and l.category.name <> 'BATTERY'
-            order by
-                      case
-                          when l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED then 0
-                          else 1
-                      end,
-                      l.createdAt desc
+            order by l.createdAt desc
             """,
             countQuery = """
                     select count(l.id)
@@ -474,12 +464,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
             where l.deletedAt is null
               and l.status in :statuses
               and l.category.name = 'BATTERY'
-            order by
-                      case
-                          when l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED then 0
-                          else 1
-                      end,
-                      l.createdAt desc
+            order by l.createdAt desc
             """,
             countQuery = """
                     select count(l.id)
@@ -529,12 +514,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
             where l.deletedAt is null
               and l.status in :statuses
               and l.category.name = :categoryCode
-            order by
-                  case
-                      when l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED then 0
-                      else 1
-                  end,
-                  l.createdAt desc
+            order by l.createdAt desc
             """,
             countQuery = """
                     select count(l.id)
