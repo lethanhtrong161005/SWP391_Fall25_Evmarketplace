@@ -168,6 +168,13 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                         join l.category c
                         join a.profile p
                       where l.status in :statuses
+                       AND  (
+                        :isBoosted is null
+                        or :isBoosted = false
+                        or ( :isBoosted = true
+                             and l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED
+                           )
+                         )
                     """)
     Page<ListingListProjection> getAllListWithFavPublic(
             @Param("statuses") Collection<ListingStatus> statuses,
