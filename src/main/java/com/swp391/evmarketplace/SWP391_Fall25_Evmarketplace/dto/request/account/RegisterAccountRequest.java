@@ -23,5 +23,4 @@ public class RegisterAccountRequest {
             message = "Full name must be 2-50 characters and contain only letters, spaces, hyphens or apostrophes"
     )
     private String fullName;
-
 }

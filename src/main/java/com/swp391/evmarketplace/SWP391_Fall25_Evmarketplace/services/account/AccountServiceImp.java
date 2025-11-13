@@ -113,7 +113,7 @@ public class AccountServiceImp implements AccountService {
 
 
     @Override
-    public BaseResponse<OtpResponse> verifyOtp(String phoneNumber, String otp) {
+    public BaseResponse<?> verifyOtp(String phoneNumber, String otp, String type) {
 
         Otp phoneOtp = otpRepository.findByPhoneNumber(phoneNumber)
 
@@ -133,6 +133,17 @@ public class AccountServiceImp implements AccountService {
             throw new CustomBusinessException("OTP is already used");
         }
 
+        if(type != null && !type.isEmpty()) {
+            if(type.equals("UPDATE_PHONE")){
+                Account ac = authUtil.getCurrentAccount();
+                ac.setPhoneNumber(phoneOtp.getPhoneNumber());
+                ac.setPhoneVerified(true);
+                accountRepository.save(ac);
+                otpRepository.delete(phoneOtp);
+                return new BaseResponse<>(200, true, "UPDATE PHONE SUCESS !", null, null, LocalDateTime.now());
+            }
+        }
+
         String tempToken = UUID.randomUUID().toString();
         phoneOtp.setTempToken(tempToken);
         phoneOtp.setTokenExpiredAt(now.plusMinutes(10));
@@ -142,6 +153,8 @@ public class AccountServiceImp implements AccountService {
         phoneOtp.setOtp(null);
 
         otpRepository.save(phoneOtp);
+
+
 
         OtpResponse otpResponse = new OtpResponse();
         otpResponse.setTempToken(tempToken);
