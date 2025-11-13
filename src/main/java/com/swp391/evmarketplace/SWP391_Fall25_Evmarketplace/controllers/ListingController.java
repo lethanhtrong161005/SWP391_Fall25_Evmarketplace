@@ -39,6 +39,7 @@ public class ListingController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) CategoryCode categoryCode,
             @RequestParam(required = false) ListingStatus status,
+            @RequestParam(required = false) Boolean isBoosted,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String sort,
@@ -46,7 +47,7 @@ public class ListingController {
     ) {
         status = status != null ? status : ListingStatus.ACTIVE;
         BaseResponse<PageResponse<ListingCardDTO>> res =
-                listingService.getAllListingsPublic(type, categoryCode, status.name(), page, size, sort, dir);
+                listingService.getAllListingsPublic(type, categoryCode, status.name(), isBoosted, page, size, sort, dir);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 

@@ -119,9 +119,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
     );
 
 
-
-
-
     @Query(value = """
                 select
                     l.id as id,
@@ -150,6 +147,13 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                     join a.profile p
                     left join Favorite f on f.listing = l
                 where l.status in :statuses
+                AND  (
+                        :isBoosted is null
+                        or :isBoosted = false
+                        or ( :isBoosted = true
+                             and l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED
+                           )
+                         )
                 order by
                       case
                           when l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED then 0
@@ -168,6 +172,7 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
     Page<ListingListProjection> getAllListWithFavPublic(
             @Param("statuses") Collection<ListingStatus> statuses,
             @Param("accountId") Long accountId,
+            @Param("isBoosted") Boolean isBoosted,
             Pageable pageable);
 
     @Query("""
