@@ -22,7 +22,7 @@ public class MedialUtils {
     public static String converMediaNametoMedialUrl(String mediaName, String mediaType) {
         String base = serverUrl != null ? serverUrl : "";
 
-        if (mediaName.startsWith("http")) {
+        if (mediaName != null && mediaName.startsWith("http")) {
             return mediaName;
         }
 
