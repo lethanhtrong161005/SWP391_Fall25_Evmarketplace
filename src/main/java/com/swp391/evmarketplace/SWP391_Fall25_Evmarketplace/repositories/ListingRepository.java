@@ -154,6 +154,12 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                              and l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED
                            )
                          )
+                AND (
+                        :isConsign is null or :isConsign = false
+                        or ( :isConsign = true
+                            and l.consigned = true
+                        )
+                )
                 order by l.createdAt desc
             """,
             countQuery = """
@@ -164,14 +170,21 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                         join a.profile p
                       where l.status in :statuses
                        AND  (
-                        :isBoosted is null
-                        or :isBoosted = false
-                        or ( :isBoosted = true
-                             and l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED
-                           )
-                         )
+                            :isBoosted is null
+                            or :isBoosted = false
+                            or ( :isBoosted = true
+                                 and l.visibility = com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Visibility.BOOSTED
+                               )
+                             )
+                         AND (
+                            :isConsign is null or :isConsign = false
+                            or ( :isConsign = true
+                                and l.consigned = true
+                            )
+                        )
                     """)
     Page<ListingListProjection> getAllListWithFavPublic(
+            @Param("isConsign") Boolean isConsign,
             @Param("statuses") Collection<ListingStatus> statuses,
             @Param("accountId") Long accountId,
             @Param("isBoosted") Boolean isBoosted,

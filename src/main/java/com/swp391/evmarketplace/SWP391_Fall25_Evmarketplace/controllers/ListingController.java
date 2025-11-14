@@ -36,6 +36,7 @@ public class ListingController {
     //TYPE: VEHICLE, BATTERY
     @GetMapping("/")
     public ResponseEntity<BaseResponse<PageResponse<ListingCardDTO>>> getAll(
+            @RequestParam(required = false) Boolean isConsign,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) CategoryCode categoryCode,
             @RequestParam(required = false) ListingStatus status,
@@ -47,7 +48,7 @@ public class ListingController {
     ) {
         status = status != null ? status : ListingStatus.ACTIVE;
         BaseResponse<PageResponse<ListingCardDTO>> res =
-                listingService.getAllListingsPublic(type, categoryCode, status.name(), isBoosted, page, size, sort, dir);
+                listingService.getAllListingsPublic(isConsign, type, categoryCode, status.name(), isBoosted, page, size, sort, dir);
         return ResponseEntity.status(res.getStatus()).body(res);
     }
 

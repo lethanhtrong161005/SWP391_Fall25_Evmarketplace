@@ -18,6 +18,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -148,10 +149,12 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
                 .orElseThrow(() -> new CustomBusinessException(ErrorCode.CONSIGNMENT_REQUEST_NOT_FOUND.name()));
 
         // validate date: not in the past and not over 10 days ahead
-        LocalDate today = LocalDate.now();
-        if (date.isBefore(today)) throw new CustomBusinessException("DATE_PAST_NOT_ALLOWED");
-        //đặt lịch không hơn 10 ngày kể từ ngày đặt
-        if (date.isAfter(today.plusDays(10))) throw new CustomBusinessException("DATE_EXCEEDS_10_DAYS_LIMIT");
+        validateDate(date);
+
+//        LocalDate today = LocalDate.now();
+//        if (date.isBefore(today)) throw new CustomBusinessException("DATE_PAST_NOT_ALLOWED");
+//        //đặt lịch không hơn 10 ngày kể từ ngày đặt
+//        if (date.isAfter(today.plusDays(10))) throw new CustomBusinessException("DATE_EXCEEDS_10_DAYS_LIMIT");
 
         var shifts = shiftTemplateRepository.findByBranch_IdAndItemTypeAndIsActiveTrue(
                 request.getPreferredBranch().getId(), request.getItemType());
@@ -252,10 +255,18 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
             throw new CustomBusinessException("ONLY_SCHEDULED_CAN_CHECKIN");
         }
 
+        //check late
+        LocalDateTime now = LocalDateTime.now();
+        Long minutesLate = Duration.between(s.getShift().getStartTime(), now).toMinutes();
+
+        if(minutesLate >= 20){
+            throw new CustomBusinessException("TOO_LATE_CANNOT_CHECKIN");
+        }
+
         s.setStatus(InspectionScheduleStatus.CHECKED_IN);
+        s.setCheckedInAt(now);
         ConsignmentRequest request = s.getRequest();
         request.setStatus(ConsignmentRequestStatus.INSPECTING);
-        s.setCheckedInAt(LocalDateTime.now());
 
         inspectionScheduleRepository.save(s);
         consignmentRequestRepository.save(request);
@@ -310,7 +321,7 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
     private static final List<InspectionScheduleStatus> ACTIVE =
             List.of(InspectionScheduleStatus.SCHEDULED, InspectionScheduleStatus.CHECKED_IN);
 
-    //kiểm tra ca này giờ này có thể book không
+    //kiểm tra ca này giờ này có thể book không (book trong cùng ngày)
     private boolean isShiftSelectableToday(LocalDate date, LocalTime start, LocalTime end) {
         if (!date.isEqual(LocalDate.now())) return true;
         var now = LocalTime.now();
@@ -328,6 +339,7 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
     private static final int CUTOFF_MINUTES = 60;
 
 
+    //for cancel
     private void ensureBeforeCutoff(LocalDate date, LocalTime start) {
         if (!date.isEqual(LocalDate.now())) return;
         if (LocalTime.now().plusMinutes(CUTOFF_MINUTES).isAfter(start))
