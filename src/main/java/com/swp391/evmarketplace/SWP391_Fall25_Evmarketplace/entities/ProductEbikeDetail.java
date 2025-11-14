@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.vehicle.EbikeDetailResponse;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -46,4 +47,17 @@ public class ProductEbikeDetail {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    public EbikeDetailResponse toDto(ProductEbikeDetail e){
+        EbikeDetailResponse dto = new EbikeDetailResponse();
+        dto.setFrameSize(e.getFrameSize());
+        dto.setWheelSize(e.getWheelSize());
+        dto.setWeightKg(e.getWeightKg());
+        dto.setMaxLoad(e.getMaxLoad());
+        dto.setGears(e.getGears());
+        dto.setRemovableBattery(e.getRemovableBattery());
+        dto.setThrottle(e.getThrottle());
+        return dto;
+    }
+
 }

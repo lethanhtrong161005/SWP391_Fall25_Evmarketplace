@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.vehicle.BikeDetailResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.BrakeType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.MotorLocation;
 import jakarta.persistence.*;
@@ -41,4 +42,14 @@ public class ProductBikeDetail {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    public BikeDetailResponse toDto(ProductBikeDetail b){
+        BikeDetailResponse dto = new BikeDetailResponse();
+        dto.setMotorLocation(b.getMotorLocation());
+        dto.setWheelSize(b.getWheelSize());
+        dto.setBrakeType(b.getBrakeType());
+        dto.setWeightKg(b.getWeightKg());
+        return dto;
+    }
+
 }
