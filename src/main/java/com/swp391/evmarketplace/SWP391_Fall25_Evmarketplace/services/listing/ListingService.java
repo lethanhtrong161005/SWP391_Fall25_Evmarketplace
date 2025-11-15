@@ -36,7 +36,7 @@ public interface ListingService {
     BaseResponse<Map<String, Object>> getAllListForModerator(int page, int size, String sort, String dir);
 
     BaseResponse<PageResponse<ListingCardDTO>> getAllListingsPublic(
-            String type, CategoryCode categoryCode, String status,Boolean isBoosted,
+            Boolean isVerified, String type, CategoryCode categoryCode, String status,Boolean isBoosted,
             int page, int size, String sort, String dir
     );
 

@@ -81,7 +81,7 @@ public class ListingServiceImp implements ListingService {
     @Override
     @Transactional(readOnly = true)
     public BaseResponse<PageResponse<ListingCardDTO>> getAllListingsPublic(
-            String type, CategoryCode cate, String status, Boolean isBoosted,
+            Boolean isConsign, String type, CategoryCode cate, String status, Boolean isBoosted,
             int page, int size, String sort, String dir
     ) {
 
@@ -108,7 +108,7 @@ public class ListingServiceImp implements ListingService {
         } else if (cate != null) {
             p = listingRepository.findByCategory(currentId, statuses, cate.name(), pageable);
         } else {
-            p = listingRepository.getAllListWithFavPublic(statuses, currentId, isBoosted, pageable);
+            p = listingRepository.getAllListWithFavPublic( isConsign,statuses, currentId, isBoosted, pageable);
         }
 
         List<ListingCardDTO> cards = p.getContent().stream().map(this::toCardDtoWithFav).toList();
