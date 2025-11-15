@@ -1,5 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities;
 
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.vehicle.CarDetailResponse;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.BodyType;
 import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.enums.Drivetrain;
 import jakarta.persistence.*;
@@ -39,4 +40,14 @@ public class ProductCarDetail {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    public CarDetailResponse toDto(ProductCarDetail c){
+        CarDetailResponse dto = new CarDetailResponse();
+        dto.setSeatingCapacity(c.getSeatingCapacity());
+        dto.setBodyType(c.getBodyType());
+        dto.setDrivetrain(c.getDrivetrain());
+        dto.setTrunkRearL(c.getTrunkRearL());
+        return dto;
+    }
+
 }

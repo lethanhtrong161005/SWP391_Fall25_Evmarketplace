@@ -138,6 +138,9 @@ public class ProductVehicle {
         dto.setDcChargingKw(productVehicle.getDcChargingKw());
         dto.setAcConnector(productVehicle.getAcConnector());
         dto.setDcConnector(productVehicle.getDcConnector());
+        dto.setEbike(productVehicle.getEbikeDetail() != null ? productVehicle.getEbikeDetail().toDto(productVehicle.getEbikeDetail()) : null);
+        dto.setCar(productVehicle.getCarDetail() != null ? productVehicle.getCarDetail().toDto(productVehicle.getCarDetail()) : null);
+        dto.setBike(productVehicle.getBikeDetail() != null ? productVehicle.getBikeDetail().toDto(productVehicle.getBikeDetail()) : null);
         return dto;
     }
 

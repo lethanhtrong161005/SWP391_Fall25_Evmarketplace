@@ -24,7 +24,7 @@ public interface AccountService {
     Account upsertUser(GoogleUserInfoDTO userInfo);
     BaseResponse<String> sendOtpRegister(String phoneNumber);
     BaseResponse<String> sendOtpReset(String phoneNumber);
-    BaseResponse<OtpResponse> verifyOtp(String phoneNumber, String otp);
+    BaseResponse<?> verifyOtp(String phoneNumber, String otp, String type);
     BaseResponse<LoginResponse> registerAccount(RegisterAccountRequest request);
     BaseResponse<Void> changePassword(ChangePasswordRequest request);
     BaseResponse<Void> updateEmail(UpdateEmailRequestDTO requestDTO);

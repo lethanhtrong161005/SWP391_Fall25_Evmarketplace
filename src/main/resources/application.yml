@@ -125,7 +125,7 @@ spring:
     activate:
       on-profile: local
   datasource:
-    url: jdbc:mysql://13.210.55.215:3310/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    url: jdbc:mysql://localhost:3307/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: admin123
     driver-class-name: com.mysql.cj.jdbc.Driver
