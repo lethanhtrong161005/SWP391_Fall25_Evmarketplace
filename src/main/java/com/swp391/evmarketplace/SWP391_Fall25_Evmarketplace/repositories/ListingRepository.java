@@ -160,7 +160,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                             and l.consigned = true
                         )
                 )
-                order by l.createdAt desc
             """,
             countQuery = """
                       select count(l)
