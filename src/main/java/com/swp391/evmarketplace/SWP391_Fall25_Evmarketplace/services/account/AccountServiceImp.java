@@ -670,7 +670,7 @@ public class AccountServiceImp implements AccountService {
         responseDTO.setFullName(profile.getFullName());
         responseDTO.setPhoneNumber(account.getPhoneNumber());
         responseDTO.setPassword(account.getPassword());
-        responseDTO.setBranchName(account.getBranch().getName());
+        responseDTO.setBranchName(requestDTO.getBranchId()==null? null: account.getBranch().getName());
 
         BaseResponse<StaffAccountResponseDTO> response = new BaseResponse<>();
         response.setSuccess(true);
