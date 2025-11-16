@@ -543,13 +543,10 @@ public class ListingServiceImp implements ListingService {
         dto.setListing(listingDto);
 
         //Lấy sellerId
-        AccountReponseDTO accountDto = new AccountReponseDTO();
-        accountDto.setId(listing.getSeller().getId());
-        accountDto.setEmail(listing.getSeller().getEmail());
-        accountDto.setProfile(listing.getSeller().getProfile());
-        accountDto.setPhoneNumber(listing.getSeller().getPhoneNumber());
-        dto.setSellerId(accountDto);
-
+        if(listing.getSeller() != null){
+            AccountReponseDTO accountDto = listing.getSeller().toDto(listing.getSeller(), null);
+            dto.setSellerId(accountDto);
+        }
 
         //Lấy cơ sở giữ dùng cho kí gửi
         if (listing.getBranch() != null) {
