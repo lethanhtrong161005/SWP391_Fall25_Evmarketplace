@@ -8,7 +8,7 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
     volumes:
       - db_data:/var/lib/mysql
-      - init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3310:3306"
     networks:
@@ -47,6 +47,8 @@ services:
       GOOGLE_USER_INFO_URI: ${GOOGLE_USER_INFO_URI}
       OPENAPI_SERVER_LOCAL: ${OPENAPI_SERVER_LOCAL}
       OPENAPI_SERVER_PRODUCT: ${OPENAPI_SERVER_PRODUCT}
+    volumes:
+       - /home/ubuntu/uploads:/uploads
     ports:
       - "8089:8089"
     networks:
