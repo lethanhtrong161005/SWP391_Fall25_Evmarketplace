@@ -25,6 +25,7 @@ public class ReportMarketRepository {
                     SELECT l.visibility, COUNT(*) AS cnt
                     FROM listing l
                     WHERE l.created_at >= :from AND l.created_at < :toPlus
+                    AND l.status = 'ACTIVE'
                     GROUP BY visibility
                 """);
         setRange(q, from, to);
@@ -42,6 +43,7 @@ public class ReportMarketRepository {
                     FROM listing l
                     JOIN category c ON c.id = l.category_id
                     WHERE l.created_at >= :from AND l.created_at < :toPlus
+                    AND l.status = 'ACTIVE'
                     GROUP BY c.name
                 """);
         setRange(q, from, to);
@@ -58,6 +60,7 @@ public class ReportMarketRepository {
                     FROM listing l
                     JOIN brand b ON b.id = l.brand_id
                     WHERE l.created_at >= :from AND l.created_at < :toPlus
+                    AND l.status = 'ACTIVE'
                     GROUP BY b.name
                     ORDER BY cnt DESC
                     LIMIT :lim
@@ -74,6 +77,7 @@ public class ReportMarketRepository {
                     FROM listing l
                     JOIN model m ON m.id = l.model_id
                     WHERE l.created_at >= :from AND l.created_at < :toPlus
+                    AND l.status = 'ACTIVE'
                     GROUP BY m.name
                     ORDER BY cnt DESC
                     LIMIT :lim
@@ -91,6 +95,7 @@ public class ReportMarketRepository {
                     JOIN category c ON c.id = l.category_id
                     WHERE l.price IS NOT NULL
                       AND l.created_at >= :from AND l.created_at < :toPlus
+                      AND l.status = 'ACTIVE'
                     GROUP BY c.name
                 """);
         setRange(q, from, to);

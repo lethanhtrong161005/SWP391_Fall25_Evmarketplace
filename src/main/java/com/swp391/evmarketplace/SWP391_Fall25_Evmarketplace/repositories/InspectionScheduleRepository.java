@@ -139,7 +139,7 @@ public interface InspectionScheduleRepository extends JpaRepository<InspectionSc
                 cr.status= 'RESCHEDULED'
             WHERE s.status = 'SCHEDULED'
                 AND s.checkin_at IS NULL
-                AND TIMESTAMP(s.schedule_date, st.start_time) >= (NOW() - INTERVAL :grace MINUTE)
+                AND TIMESTAMP(s.schedule_date, st.start_time) <= (NOW() - INTERVAL :grace MINUTE)
             """, nativeQuery = true)
     int markNoShow(@Param("grace") int graceMinutes);
 
