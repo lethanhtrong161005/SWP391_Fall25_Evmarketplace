@@ -78,10 +78,12 @@ smsSpeed:
 
 logging:
   level:
+    root: info
     org.hibernate.SQL: off
     org.hibernate.type.descriptor.sql.BasicBinder: off
-    org.springframework.web: info
-    org.springframework.transaction: debug
+    org.hibernate: warn
+    org.springframework.web: warn
+    org.springframework.transaction: warn
 
 jobs:
   listing-cleanup:
