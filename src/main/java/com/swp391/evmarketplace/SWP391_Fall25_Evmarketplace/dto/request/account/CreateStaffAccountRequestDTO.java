@@ -26,7 +26,6 @@ public class CreateStaffAccountRequestDTO {
     @NotBlank
     private String fullName;
 
-    @NotNull
     private Long branchId;
 
     @NotNull

@@ -145,7 +145,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                     join l.seller a
                     join l.category c
                     join a.profile p
-                    left join Favorite f on f.listing = l
                 where l.status in :statuses
                 AND  (
                         :isBoosted is null
@@ -160,7 +159,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long>, JpaSpec
                             and l.consigned = true
                         )
                 )
-                order by l.createdAt desc
             """,
             countQuery = """
                       select count(l)

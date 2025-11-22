@@ -78,10 +78,12 @@ smsSpeed:
 
 logging:
   level:
-    org.hibernate.SQL: debug
-    org.hibernate.type.descriptor.sql.BasicBinder: trace
-    org.springframework.web: info
-    org.springframework.transaction: debug
+    root: info
+    org.hibernate.SQL: off
+    org.hibernate.type.descriptor.sql.BasicBinder: off
+    org.hibernate: warn
+    org.springframework.web: warn
+    org.springframework.transaction: warn
 
 jobs:
   listing-cleanup:
@@ -98,9 +100,9 @@ jobs:
 
 file-upload:
   root-path:
-    images: ${UPLOAD_IMAGES_PATH:upload/images}
-    video: ${UPLOAD_VIDEO_PATH:upload/video}
-    contract: ${UPLOAD_CONTRACT_PATH:upload/contract}
+    images: ${UPLOAD_IMAGES_PATH}
+    video: ${UPLOAD_VIDEO_PATH}
+    contract: ${UPLOAD_CONTRACT_PATH}
 
 #VNPAY
 vnpay:

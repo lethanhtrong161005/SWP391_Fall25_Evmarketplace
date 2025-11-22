@@ -58,6 +58,7 @@ public class SpeedSMSAPI {
      * */
     public String sendSMS(String to, String content) throws IOException {
         to = normalizePhoneNumber(to);
+        System.out.println("PHONE NUMBER: " + to);
         String json = "{\"to\": [\"" + to + "\"], \"content\": \"" + EncodeNonAsciiCharacters(content) + "\", \"type\":" + type + ", \"brandname\":\"" + sender + "\"}";
         URL url = new URL(API_URL + "/sms/send");
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();

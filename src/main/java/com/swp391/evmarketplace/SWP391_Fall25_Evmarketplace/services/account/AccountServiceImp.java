@@ -356,17 +356,17 @@ public class AccountServiceImp implements AccountService {
         otpRepository.save(phoneOtp);
 
         String content = "Your OTP is: " + otp;
-        boolean isSendOtp = true; //Chỉnh logic chỗ này
+        boolean isSendOtp = false;
         String result = "";
-//        try {
-//            result = speedSMSAPI.sendSMS(
-//                    phoneNumber,
-//                    content
-//            );
-//            isSendOtp = true;
-//        } catch (Exception e) {
-//            throw new CustomBusinessException("SMS failed");
-//        }
+        try {
+            result = speedSMSAPI.sendSMS(
+                    phoneNumber,
+                    content
+            );
+            isSendOtp = true;
+        } catch (Exception e) {
+            throw new CustomBusinessException("SMS failed");
+        }
 
         BaseResponse<String> baseResponse = new BaseResponse<>();
         if (isSendOtp) {
@@ -629,6 +629,8 @@ public class AccountServiceImp implements AccountService {
         return response;
     }
 
+    private static final List<AccountRole> VALID_ROLE_STAFF = List.of(AccountRole.STAFF, AccountRole.MODERATOR);
+
     @Override
     public BaseResponse<StaffAccountResponseDTO> createStaffAccount(CreateStaffAccountRequestDTO requestDTO) {
 
@@ -636,17 +638,24 @@ public class AccountServiceImp implements AccountService {
             throw new CustomBusinessException("PHONE_NUMBER_EXIST");
         }
 
-        Branch branch = branchRepository.findById(requestDTO.getBranchId())
-                .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRANCH_NOT_FOUND.name()));
+        Account account = new Account();
 
-        if (!(requestDTO.getRole().equals(AccountRole.STAFF)) && !(requestDTO.getRole().equals(AccountRole.MODERATOR)))
+        if(requestDTO.getBranchId() != null){
+            Branch branch = branchRepository.findById(requestDTO.getBranchId())
+                    .orElseThrow(() -> new CustomBusinessException(ErrorCode.BRANCH_NOT_FOUND.name()));
+
+            account.setBranch(branch);
+        }
+
+        if (!(VALID_ROLE_STAFF.contains(requestDTO.getRole()))) {
             throw new CustomBusinessException("No condition to create new account");
+        }
 
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        Account account = new Account();
+
         account.setPhoneNumber(requestDTO.getPhoneNumber());
         account.setPassword(encoder.encode(requestDTO.getPassword()));
-        account.setBranch(branch);
+
         account.setRole(requestDTO.getRole());
 
         Profile profile = new Profile();
@@ -661,6 +670,7 @@ public class AccountServiceImp implements AccountService {
         responseDTO.setFullName(profile.getFullName());
         responseDTO.setPhoneNumber(account.getPhoneNumber());
         responseDTO.setPassword(account.getPassword());
+        responseDTO.setBranchName(requestDTO.getBranchId() == null ? null : account.getBranch().getName());
 
         BaseResponse<StaffAccountResponseDTO> response = new BaseResponse<>();
         response.setSuccess(true);
