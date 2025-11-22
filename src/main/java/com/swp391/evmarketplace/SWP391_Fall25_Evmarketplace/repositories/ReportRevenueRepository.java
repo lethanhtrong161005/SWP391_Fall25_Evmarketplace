@@ -50,5 +50,17 @@ public interface ReportRevenueRepository extends JpaRepository<SalePayment, Long
             @Param("toPlus") Timestamp toPlus
     );
 
+    @Query(value = """
+            SELECT COALESCE(SUM(cs.commission_amount), 0)
+            FROM consignment_settlement cs
+            WHERE cs.status = 'PAID'
+              AND cs.paid_at >= :from
+              AND cs.paid_at < :toPlus
+            """, nativeQuery = true)
+    BigDecimal sumConsignmentCommission(
+            @Param("from") Timestamp from,
+            @Param("toPlus") Timestamp toPlus
+    );
 
 }
+//
