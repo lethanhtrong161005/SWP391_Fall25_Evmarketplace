@@ -63,4 +63,3 @@ public interface ReportRevenueRepository extends JpaRepository<SalePayment, Long
     );
 
 }
-//

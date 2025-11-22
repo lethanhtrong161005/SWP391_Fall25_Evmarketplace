@@ -255,16 +255,22 @@ public class InspectionScheduleServiceImp implements InspectionScheduleService {
             throw new CustomBusinessException("ONLY_SCHEDULED_CAN_CHECKIN");
         }
 
+
         //check late
         LocalDateTime now = LocalDateTime.now();
-        Long minutesLate = Duration.between(s.getShift().getStartTime(), now).toMinutes();
+        LocalTime shiftStartTime = s.getShift().getStartTime();
+        LocalDate date = s.getScheduleDate();
 
-        if(minutesLate >= 20){
+        //date start
+        LocalDateTime shiftStartDate = LocalDateTime.of(date, shiftStartTime);
+        LocalDateTime cutoff = shiftStartDate.plusMinutes(30);
+
+        if (now.isAfter(cutoff)) {
             throw new CustomBusinessException("TOO_LATE_CANNOT_CHECKIN");
         }
 
         s.setStatus(InspectionScheduleStatus.CHECKED_IN);
-        s.setCheckedInAt(now);
+        s.setCheckedInAt(LocalDateTime.now());
         ConsignmentRequest request = s.getRequest();
         request.setStatus(ConsignmentRequestStatus.INSPECTING);
 
