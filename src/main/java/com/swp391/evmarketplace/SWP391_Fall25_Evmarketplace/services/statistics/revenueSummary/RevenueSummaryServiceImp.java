@@ -54,8 +54,10 @@ public class RevenueSummaryServiceImp implements RevenueSummaryService {
         Timestamp fromTs = start(from);
         Timestamp toPlusTs = end(to);
 
-        BigDecimal result = reportRevenueRepository.sumPaidAmount(fromTs, toPlusTs);
-        return result != null ? result : BigDecimal.ZERO;
+        BigDecimal promotion = reportRevenueRepository.sumPaidAmount(fromTs, toPlusTs);
+
+        BigDecimal order = reportRevenueRepository.sumConsignmentCommission(fromTs, toPlusTs);
+        return promotion.add(order);
     }
 
     @Override
