@@ -1,72 +1,54 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.Query;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.entities.SalePayment;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
-@Repository
-@RequiredArgsConstructor
-public class ReportRevenueRepository {
-
-    private final EntityManager em;
-
+public interface ReportRevenueRepository extends JpaRepository<SalePayment, Long> {
     // Tổng doanh thu (PAID)
-    public BigDecimal sumPaidAmount(LocalDate from, LocalDate to) {
-        Query q = em.createNativeQuery("""
-                    SELECT COALESCE(SUM(s.amount),0)
-                    FROM sale_payment s
-                    WHERE s.status = 'PAID'
-                      AND s.paid_at >= :from AND s.paid_at < :toPlus
-                """);
-        setRange(q, from, to);
-        Object r = q.getSingleResult();
-        return r == null ? BigDecimal.ZERO : (BigDecimal) r;
-    }
+    @Query(value = """
+            SELECT COALESCE(SUM(s.amount), 0)
+            FROM sale_payment s
+            WHERE s.status = 'PAID'
+              AND s.paid_at >= :from
+              AND s.paid_at < :toPlus
+            """, nativeQuery = true)
+    BigDecimal sumPaidAmount(
+            @Param("from") Timestamp from,
+            @Param("toPlus") Timestamp toPlus
+    );
 
     // Số payer unique đã thanh toán (PAID)
-    public long countDistinctPayingUsers(LocalDate from, LocalDate to) {
-        Query q = em.createNativeQuery("""
-                    SELECT COUNT(DISTINCT s.payer_id)
-                    FROM sale_payment s
-                    WHERE s.status = 'PAID'
-                      AND s.paid_at >= :from AND s.paid_at < :toPlus
-                """);
-        setRange(q, from, to);
-        return ((Number) q.getSingleResult()).longValue();
-    }
+    @Query(value = """
+            SELECT COUNT(DISTINCT s.payer_id)
+            FROM sale_payment s
+            WHERE s.status = 'PAID'
+              AND s.paid_at >= :from
+              AND s.paid_at < :toPlus
+            """, nativeQuery = true)
+    Long countDistinctPayingUsers(
+            @Param("from") Timestamp from,
+            @Param("toPlus") Timestamp toPlus
+    );
 
-    // Doanh thu theo purpose (PAID)
-    public Map<String, BigDecimal> sumPaidAmountByPurpose(LocalDate from, LocalDate to) {
-        Query q = em.createNativeQuery("""
-                    SELECT s.purpose, COALESCE(SUM(s.amount),0)
-                    FROM sale_payment s
-                    WHERE s.status = 'PAID'
-                      AND s.paid_at >= :from AND s.paid_at < :toPlus
-                    GROUP BY s.purpose
-                """);
-        setRange(q, from, to);
-        List<Object[]> rows = q.getResultList();
-        Map<String, BigDecimal> map = new LinkedHashMap<>();
-        for (Object[] r : rows) {
-            String purpose = Objects.toString(r[0], "UNKNOWN");
-            BigDecimal sum = (r[1] == null) ? BigDecimal.ZERO : (BigDecimal) r[1];
-            map.put(purpose, sum);
-        }
-        return map;
-    }
+    // Doanh thu theo nguồn thu (purpose) (PAID)
+    @Query(value = """
+            SELECT s.purpose, COALESCE(SUM(s.amount), 0)
+            FROM sale_payment s
+            WHERE s.status = 'PAID'
+              AND s.paid_at >= :from
+              AND s.paid_at < :toPlus
+            GROUP BY s.purpose
+            """, nativeQuery = true)
+    List<Object[]> sumPaidAmountByPurpose(
+            @Param("from") Timestamp from,
+            @Param("toPlus") Timestamp toPlus
+    );
 
-    private void setRange(Query q, LocalDate from, LocalDate to) {
-        q.setParameter("from", Timestamp.valueOf(from.atStartOfDay()));
-        q.setParameter("toPlus", Timestamp.valueOf(to.plusDays(1).atStartOfDay()));
-    }
 
 }

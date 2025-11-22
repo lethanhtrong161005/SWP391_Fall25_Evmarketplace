@@ -26,7 +26,7 @@ public class StatisticsController {
     RevenueSummaryService revenueSummaryService;
 
     @Autowired
-    MarketTrendsService getMarketTrends;
+    MarketTrendsService marketTrendsService;
 
     @GetMapping("/transaction-counts")
     public TransactionCountsDTO getCounts(
@@ -50,7 +50,7 @@ public class StatisticsController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @RequestParam(required = false, defaultValue = "10") Integer topLimit
     ) {
-        return getMarketTrends.getMarketTrends(from, to, topLimit);
+        return marketTrendsService.getMarketTrends(from, to, topLimit);
     }
 
 }

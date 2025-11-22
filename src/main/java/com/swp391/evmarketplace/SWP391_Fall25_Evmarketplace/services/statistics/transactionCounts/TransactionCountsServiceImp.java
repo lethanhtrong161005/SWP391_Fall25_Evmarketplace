@@ -5,49 +5,87 @@ import com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.repositories.ReportT
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class TransactionCountsServiceImp implements TransactionCountsService {
     @Autowired
-    ReportTransactionRepository reportTransactionRepository;
+    private ReportTransactionRepository reportTransactionRepository;
 
     @Override
     public TransactionCountsDTO getTransactionCountsDto(LocalDate from, LocalDate to) {
+
         boolean noRange = (from == null && to == null);
         if (noRange) {
             from = LocalDate.of(1970, 1, 1);
-            to = LocalDate.of(2100, 1, 1);
-        } else if (from == null) from = to.minusDays(30);
-        else if (to == null) to = LocalDate.now();
-
-        long total = reportTransactionRepository.countTotalCreated(from, to);
-        long success = reportTransactionRepository.countPaidSuccess(from, to);
-        long failOrCancel = reportTransactionRepository.countFailedOrRefundedCreated(from, to);
-        double successRate = total == 0 ? 0.0 : ((double) success / total);
-
-        Map<String, Long> byPurpose = reportTransactionRepository.countByPurposeCreated(from, to);
-        long post = byPurpose.getOrDefault("PROMOTION", 0L);
-        long consignment = byPurpose.getOrDefault("ORDER", 0L);
-        Long other = byPurpose.values().stream().mapToLong(Long::longValue).sum()
-                - post - consignment;
-
-        Map<String, Long> typeBreakdown = new LinkedHashMap<>();
-        typeBreakdown.put("POST", post);
-        typeBreakdown.put("CONSIGNMENT", consignment);
-        typeBreakdown.put("OTHER", other);
+            to   = LocalDate.of(2100, 1, 1);
+        } else if (from == null) {
+            from = to.minusDays(30);
+        } else if (to == null) {
+            to = LocalDate.now();
+        }
 
         return TransactionCountsDTO.builder()
                 .from(noRange ? null : from.toString())
                 .to(noRange ? null : to.toString())
-                .totalTransactions(total)
-                .transactionTypeBreakdown(typeBreakdown)
-                .successfulTransactions(success)
-                .successRate(round(successRate, 3))
-                .failedOrCancelledTransactions(failOrCancel)
+                .totalTransactions(countTotalCreated(from, to))
+                .transactionType(countByPurposeCreated(from, to))
+                .successfulTransactions(countPaidSuccess(from, to))
+                .successRate(successRate(from, to))
+                .failedOrCancelledTransactions(countFailed(from, to))
                 .build();
+    }
+
+    @Override
+    public long countTotalCreated(LocalDate from, LocalDate to) {
+        Long result = reportTransactionRepository.countTotalCreated(start(from), end(to));
+        return result;
+    }
+
+    @Override
+    public long countFailed(LocalDate from, LocalDate to) {
+        Long result = reportTransactionRepository.countFailedOrRefundedCreated(start(from), end(to));
+        return result != null ? result : 0L;
+    }
+
+    @Override
+    public long countPaidSuccess(LocalDate from, LocalDate to) {
+        Long result = reportTransactionRepository.countPaidSuccess(start(from), end(to));
+        return result != null ? result : 0L;
+    }
+
+    @Override
+    public Map<String, Long> countByPurposeCreated(LocalDate from, LocalDate to) {
+        List<Object[]> rows = reportTransactionRepository.countByPurposeCreated(start(from), end(to));
+
+        Map<String, Long> map = new LinkedHashMap<>();
+        for (Object[] r : rows) {
+            String purpose = r[0] != null ? r[0].toString() : "UNKNOWN";
+            Long count = r[1] != null ? ((Number) r[1]).longValue() : 0L;
+            map.put(purpose, count);
+        }
+        return map;
+    }
+
+    @Override
+    public double successRate(LocalDate from , LocalDate to) {
+        Double total = (double) countTotalCreated(from, to);
+        Double success = (double) countPaidSuccess(from, to);
+        double result = total == 0 ? 0.0 : ((double) success/ total);
+        return round(result, 3);
+    }
+
+    //HELPER
+    private Timestamp start(LocalDate d) {
+        return Timestamp.valueOf(d.atStartOfDay());
+    }
+
+    private Timestamp end(LocalDate d) {
+        return Timestamp.valueOf(d.plusDays(1).atStartOfDay());
     }
 
     private double round(double v, int s) {
