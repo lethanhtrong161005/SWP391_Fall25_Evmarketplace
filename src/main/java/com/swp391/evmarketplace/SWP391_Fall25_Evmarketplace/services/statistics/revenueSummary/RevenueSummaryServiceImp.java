@@ -84,15 +84,15 @@ public class RevenueSummaryServiceImp implements RevenueSummaryService {
             BigDecimal sum = r[1] == null ? BigDecimal.ZERO : (BigDecimal) r[1];
 
             switch (purpose) {
-                case "PROMOTION" -> promotionSum = promotionSum.add(sum);
-                case "ORDER" -> orderSum = orderSum.add(sum);
-                default -> otherSum = otherSum.add(sum);
+                case "PROMOTION": promotionSum = promotionSum.add(sum); break;
+                case "ORDER": orderSum = orderSum.add(sum); break;
+                default: otherSum = otherSum.add(sum); break;
             }
         }
         Map<String, BigDecimal> result = new LinkedHashMap<>();
         result.put("PROMOTION", promotionSum);
         result.put("ORDER", orderSum);
-        result.put("OTHER", otherSum);
+//        result.put("OTHER", otherSum);
         return result;
     }
 

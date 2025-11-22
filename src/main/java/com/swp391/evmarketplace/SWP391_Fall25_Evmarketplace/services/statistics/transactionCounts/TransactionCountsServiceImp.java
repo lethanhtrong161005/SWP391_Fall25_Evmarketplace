@@ -71,16 +71,16 @@ public class TransactionCountsServiceImp implements TransactionCountsService {
             Long count = r[1] != null ? ((Number) r[1]).longValue() : 0L;
 
             switch (purpose) {
-                case "PROMOTION": promotionCount += count;
-                case "ORDER": orderCount += count;
-                default: otherCount += count;
+                case "PROMOTION": promotionCount += count; break;
+                case "ORDER": orderCount += count; break;
+                default: otherCount += count; break;
             }
         }
 
         Map<String, Long> map = new LinkedHashMap<>();
         map.put("PROMOTION", promotionCount);
         map.put("ORDER", orderCount);
-        map.put("OTHER", otherCount);
+//        map.put("OTHER", otherCount);
 
         return map;
     }
