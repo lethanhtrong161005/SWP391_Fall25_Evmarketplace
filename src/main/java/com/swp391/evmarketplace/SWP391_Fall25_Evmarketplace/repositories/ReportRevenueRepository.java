@@ -15,6 +15,7 @@ public interface ReportRevenueRepository extends JpaRepository<SalePayment, Long
             SELECT COALESCE(SUM(s.amount), 0)
             FROM sale_payment s
             WHERE s.status = 'PAID'
+              AND s.purpose = 'PROMOTION'
               AND s.paid_at >= :from
               AND s.paid_at < :toPlus
             """, nativeQuery = true)
