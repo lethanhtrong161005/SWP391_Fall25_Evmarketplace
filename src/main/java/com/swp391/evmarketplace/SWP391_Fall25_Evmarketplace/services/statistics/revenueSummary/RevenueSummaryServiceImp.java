@@ -75,7 +75,6 @@ public class RevenueSummaryServiceImp implements RevenueSummaryService {
         List<Object[]> rows = reportRevenueRepository.sumPaidAmountByPurpose(fromTs, toPlusTs);
 
         BigDecimal promotionSum = BigDecimal.ZERO;
-        BigDecimal orderSum = BigDecimal.ZERO;
         BigDecimal otherSum = BigDecimal.ZERO;
 
 
@@ -84,11 +83,22 @@ public class RevenueSummaryServiceImp implements RevenueSummaryService {
             BigDecimal sum = r[1] == null ? BigDecimal.ZERO : (BigDecimal) r[1];
 
             switch (purpose) {
-                case "PROMOTION": promotionSum = promotionSum.add(sum); break;
-                case "ORDER": orderSum = orderSum.add(sum); break;
-                default: otherSum = otherSum.add(sum); break;
+                case "PROMOTION":
+                    promotionSum = promotionSum.add(sum);
+                    break;
+                case "ORDER":
+                    break;
+                default:
+                    otherSum = otherSum.add(sum);
+                    break;
             }
         }
+
+        BigDecimal orderSum = reportRevenueRepository.sumConsignmentCommission(fromTs, toPlusTs);
+        if (orderSum == null) {
+            orderSum = BigDecimal.ZERO;
+        }
+
         Map<String, BigDecimal> result = new LinkedHashMap<>();
         result.put("PROMOTION", promotionSum);
         result.put("ORDER", orderSum);
