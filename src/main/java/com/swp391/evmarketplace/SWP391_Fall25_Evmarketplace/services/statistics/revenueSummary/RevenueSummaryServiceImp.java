@@ -28,7 +28,7 @@ public class RevenueSummaryServiceImp implements RevenueSummaryService {
         boolean noRange = (from == null && to == null);
         if (noRange) {
             from = LocalDate.of(1970, 1, 1);
-            to   = LocalDate.of(2100, 1, 1);
+            to = LocalDate.of(2100, 1, 1);
         } else if (from == null) {
             from = to.minusDays(30);
         } else if (to == null) {
@@ -74,13 +74,26 @@ public class RevenueSummaryServiceImp implements RevenueSummaryService {
 
         List<Object[]> rows = reportRevenueRepository.sumPaidAmountByPurpose(fromTs, toPlusTs);
 
-        Map<String, BigDecimal> map = new LinkedHashMap<>();
+        BigDecimal promotionSum = BigDecimal.ZERO;
+        BigDecimal orderSum = BigDecimal.ZERO;
+        BigDecimal otherSum = BigDecimal.ZERO;
+
+
         for (Object[] r : rows) {
             String purpose = r[0] != null ? r[0].toString() : "UNKNOWN";
             BigDecimal sum = r[1] == null ? BigDecimal.ZERO : (BigDecimal) r[1];
-            map.put(purpose, sum);
+
+            switch (purpose) {
+                case "PROMOTION" -> promotionSum = promotionSum.add(sum);
+                case "ORDER" -> orderSum = orderSum.add(sum);
+                default -> otherSum = otherSum.add(sum);
+            }
         }
-        return map;
+        Map<String, BigDecimal> result = new LinkedHashMap<>();
+        result.put("PROMOTION", promotionSum);
+        result.put("ORDER", orderSum);
+        result.put("OTHER", otherSum);
+        return result;
     }
 
     @Override
@@ -113,7 +126,7 @@ public class RevenueSummaryServiceImp implements RevenueSummaryService {
     @Override
     public double consignmentListingRevenueRate(LocalDate from, LocalDate to) {
         Map<String, BigDecimal> byPurpose = sumPaidAmountByPurpose(from, to);
-        BigDecimal consignment =byPurpose.getOrDefault("ORDER", BigDecimal.ZERO);
+        BigDecimal consignment = byPurpose.getOrDefault("ORDER", BigDecimal.ZERO);
         double consignmentShare = sumPaidAmount(from, to).compareTo(BigDecimal.ZERO) == 0
                 ? 0.0
                 : consignment.divide(sumPaidAmount(from, to), 6, java.math.RoundingMode.HALF_UP).doubleValue();

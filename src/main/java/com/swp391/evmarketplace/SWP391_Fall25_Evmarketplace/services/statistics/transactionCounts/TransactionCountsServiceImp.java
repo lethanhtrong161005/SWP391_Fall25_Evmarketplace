@@ -62,12 +62,26 @@ public class TransactionCountsServiceImp implements TransactionCountsService {
     public Map<String, Long> countByPurposeCreated(LocalDate from, LocalDate to) {
         List<Object[]> rows = reportTransactionRepository.countByPurposeCreated(start(from), end(to));
 
-        Map<String, Long> map = new LinkedHashMap<>();
+        long promotionCount = 0L;
+        long orderCount = 0L;
+        long otherCount = 0L;
+
         for (Object[] r : rows) {
             String purpose = r[0] != null ? r[0].toString() : "UNKNOWN";
             Long count = r[1] != null ? ((Number) r[1]).longValue() : 0L;
-            map.put(purpose, count);
+
+            switch (purpose) {
+                case "PROMOTION": promotionCount += count;
+                case "ORDER": orderCount += count;
+                default: otherCount += count;
+            }
         }
+
+        Map<String, Long> map = new LinkedHashMap<>();
+        map.put("PROMOTION", promotionCount);
+        map.put("ORDER", orderCount);
+        map.put("OTHER", otherCount);
+
         return map;
     }
 
