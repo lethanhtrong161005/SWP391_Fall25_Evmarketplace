@@ -1,7 +1,6 @@
 package com.swp391.evmarketplace.SWP391_Fall25_Evmarketplace.dto.response.statistics;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -9,23 +8,24 @@ import java.util.Map;
 
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class MarketTrendsDTO {
 
-    private String from;                 // yyyy-MM-dd hoặc null nếu lấy tất cả
-    private String to;                   // yyyy-MM-dd hoặc null
-    private String currency;             // "VND"
+    private String from;
+    private String to;
+    private String currency;
 
     // 1) Phân loại loại bài: free, booster
-    private Map<String, Long> postTypeBreakdown;          // {"FREE": 123, "BOOSTER": 45}
+    private Map<String, Long> postType;
 
-    // 2) Phân loại theo loại sản phẩm
-    private Map<String, Long> categoryBreakdown;          // {"BATTERY": 30, "CAR": 80, ...}
+    // 2) Phân loại theo loại sản phẩm (cate)
+    private Map<String, Long> categoryCount;
 
-    // 3) Phân tích theo thương hiệu & model (top N)
-    private List<NameCount> topBrands;                    // [{"name":"VinFast","count":40}, ...]
-    private List<NameCount> topModels;                    // [{"name":"VF e34","count":18}, ...]
+    // 3) Phân tích theo thương hiệu & model (top)
+    private List<NameCount> topBrands;
+    private List<NameCount> topModels;
 
     // 4) Giá trung bình theo loại sản phẩm
-    private Map<String, BigDecimal> avgListingPriceByCategory; // {"BATTERY":"12,500,000.00", ...}
-
+    private Map<String, BigDecimal> avgPriceByCategory;
 }
